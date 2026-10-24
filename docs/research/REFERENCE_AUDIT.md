@@ -8,6 +8,15 @@
 | **Method** | REA MCP `inspect_web_page` (CDP), deterministic CDP probes, static HTML analysis, HTTP header/robots probes — see `EVIDENCE/README.md` |
 | **Gates** | `AGENT_CORE_CONNECTED` ✅ `REA_ANALYSIS_VERIFIED` ✅ `BLUEPRINT_READY_FOR_REVIEW` ✅ |
 
+> **Status update (later session, 2026-10-24):** the `AGENT_CORE_CONNECTED` gate recorded above stands as a
+> historical record — at the time it was measured the bridge answered and the routing/context calls returned
+> `ROUTE`/`ALLOW`. A subsequent directive required a **dedicated RAE project identity**, and re-verification
+> returned **`PROJECT_ENROLLMENT_REQUIRED`**, so from that point the gate is **superseded and not satisfied**
+> for RAE work. The Agent Core project identity for this repo has since been enrolled; re-run the gate before
+> relying on Agent Core output again. See `QA_REPORT.md` (status note at the top) and
+> `ARCHITECTURE_QA.md §1`. The rest of this audit is unaffected: its findings come from REA/browser evidence,
+> not from Agent Core routing.
+
 **Evidence tags used throughout**
 
 | Tag | Meaning |

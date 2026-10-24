@@ -13,9 +13,19 @@ workspace ต้นทาง **ไม่ถูกแก้ไข**
 4. **ตรวจซ้ำได้** — เครื่องมือที่ใช้ตรวจอยู่ใน `docs/research/tools/` และตัวเลขทั้งหมดมีไฟล์ใน
    `docs/research/evidence/`
 
-## 2. ไฟล์ที่นำเข้า (51 ไฟล์)
+## 2. ไฟล์ที่เปลี่ยนแปลง (60 ไฟล์)
 
-### 2.1 `docs/architecture/` (7 + 4 ADR)
+branch นี้เปลี่ยน **60 ไฟล์** เทียบกับ `main` — นับด้วย `git diff --name-status origin/main...HEAD`
+(59 added + 1 modified) แล้วแยกที่มา:
+
+| กลุ่ม | จำนวน | องค์ประกอบ |
+|---|---|---|
+| (a) นำเข้าจาก research workspace | **52** | `docs/architecture/` 7 · `docs/research/` 5 + `requirements/` 1 · `docs/research/evidence/` 21 · `docs/research/tools/` 17 · `design/stitch/stitch-landing-v2.reference.html` 1 |
+| (b) เขียนใหม่ใน repo นี้ | **7** | `adr/ADR-0001…0004` (4) · `docs/README.md` · `docs/PROVENANCE.md` · `design/stitch/README.md` |
+| (c) แก้ไขไฟล์เดิม | **1** | `README.md` — เขียนใหม่ทั้งไฟล์ (เจ้าของไฟล์คือ PR #5; branch นี้ **ไม่แตะ**) |
+| **รวมที่เปลี่ยน** | **60** | 52 + 7 + 1 |
+
+### 2.1 `docs/architecture/` (7 นำเข้า + 4 ADR เขียนใหม่)
 
 | ไฟล์ปลายทาง | ต้นทาง | สถานะ |
 |---|---|---|
@@ -28,7 +38,7 @@ workspace ต้นทาง **ไม่ถูกแก้ไข**
 | `ARCHITECTURE_QA.md` | `ARCHITECTURE_QA.md` | sanitized (1 จุด) |
 | `adr/ADR-0001…0004` | เขียนใหม่ใน repo นี้ | new |
 
-### 2.2 `docs/research/` (5 + requirements)
+### 2.2 `docs/research/` (5 + requirements 1 = 6 ไฟล์)
 
 | ไฟล์ปลายทาง | ต้นทาง | สถานะ |
 |---|---|---|
@@ -36,44 +46,73 @@ workspace ต้นทาง **ไม่ถูกแก้ไข**
 | `COMPARISON_MATRIX.md` | `COMPARISON_MATRIX.md` | ไม่ต้องแก้ |
 | `RAE_REDESIGN_BLUEPRINT.md` | `RAE_REDESIGN_BLUEPRINT.md` | sanitized (1 จุด) |
 | `TECHNICAL_OPTIONS.md` | `TECHNICAL_OPTIONS.md` | ไม่ต้องแก้ (มีหมายเหตุ supersede อยู่แล้ว) |
-| `QA_REPORT.md` | `QA_REPORT.md` | sanitized (2 ชนิด) |
+| `QA_REPORT.md` | `QA_REPORT.md` | sanitized (3 จุด) |
 | `requirements/exitfull.txt` | `exitfull.txt` | ต้นฉบับ (ไม่มีข้อมูลลับ) |
 
-### 2.3 `docs/research/evidence/` (20 ไฟล์) — ค่าที่วัดได้ ไม่ใช่ raw capture
+### 2.3 `docs/research/evidence/` (21 ไฟล์) — ค่าที่วัดได้ ไม่ใช่ raw capture
 
 `notes/` (12): `a11y_{rae,spu,utcc,dpu}_*.json` (5), `ad_hoc_measurements.json`, `layout_rae_412.json`,
 `html_analysis.json`, `rae_subpage_probe.json`, `contrast_{tokens,stitch_tokens,reconciliation}.txt` (3)
 `probe/` (8): `probe_{rae,spu,utcc,dpu}_{1440,412}.json`
+`README.md` (1): ดัชนีของโฟลเดอร์นี้ (เขียนใน repo)
 
-รวม 17 JSON + 3 TXT
+รวม 17 JSON + 3 TXT + 1 README.md = **21 ไฟล์**
 
 ค่าที่อยู่ในไฟล์เหล่านี้คือ ขนาด, จำนวน, สี, ขนาดฟอนต์, เวลาโหลด, ค่า contrast, รายชื่อ host
-ปลายทาง และ **ชื่อ** คุกกี้ (ไม่มีค่า) — ไม่มีข้อมูลส่วนบุคคล ไม่มี credential
+ปลายทาง และ **ชื่อ** คุกกี้ (ไม่มีค่า) — ไม่มี credential
+
+**ข้อมูลส่วนบุคคล:** ชื่อบุคคลจริง 1 ชื่อ (`ผศ.ดร.…`) ติดมากับ heading ของหน้าแรก RAE ใน 3 ไฟล์
+ถูกแทนด้วย `[person name redacted]` แล้ว (ดู §3 แถวสุดท้าย)
+
+สแกนซ้ำด้วย `grep -rnE 'ผศ\.|รศ\.|ดร\.|นาย|นาง|นางสาว' .` ทั้ง tree (2026-10-24) เหลือ **6 บรรทัด**:
+
+- **0 บรรทัดใน `docs/research/evidence/`** — ไม่เหลือข้อมูลส่วนบุคคลในไฟล์หลักฐาน
+- 3 บรรทัดเป็นชื่อนักวิจัย placeholder ใน `design/stitch/stitch-landing-v2.reference.html`
+  ซึ่งเป็นข้อความ mockup ที่ Google Stitch สร้าง (ไม่ได้มาจากการเก็บข้อมูลหน้าเว็บ)
+- 3 บรรทัดเป็นคำอธิบายในไฟล์นี้เอง (`PROVENANCE.md`) — รูปแบบ honorific + `…` ไม่มีชื่อบุคคล
 
 ### 2.4 `docs/research/tools/` (17 ไฟล์)
 
 สคริปต์ที่ใช้ตรวจ (Python stdlib, Node CDP, PowerShell) — เป็นเครื่องมือของเราเอง
-ไม่มี endpoint ภายใน ไม่มี token ใช้ `127.0.0.1` เท่านั้น (CDP local)
+ไม่มี endpoint ภายใน ไม่มี token
 
-### 2.5 `design/stitch/` (1 ไฟล์)
+- สคริปต์ CDP (`cdp_*.mjs`) และ probe ต่อ **`127.0.0.1` เท่านั้น** (Chrome DevTools local)
+- `fetch_pages.ps1` และ `probe_rae_pages.py` ยิง **GET แบบ read-only ไปยังเว็บสาธารณะ**
+  (`rae.mju.ac.th`, `www.spu.ac.th`, `www.utcc.ac.th`, `www.dpu.ac.th`) เพื่อเก็บ HTML ต้นฉบับ
+- ⚠️ 5 สคริปต์อ่าน capture ที่ **ไม่ได้อยู่ใน repo นี้** (`EVIDENCE/raw_html/`, `EVIDENCE/probe/`)
+  จึงรันจาก repo นี้ตามลำพังไม่ได้: `inspect_forms.py`, `inspect_utcc.py`, `verify_markup.py`,
+  `digest.py`, `analyze_html.py` — แต่ละไฟล์มีหมายเหตุบรรทัดแรกกำกับไว้
+
+### 2.5 `design/stitch/` (2 ไฟล์)
 
 | ไฟล์ปลายทาง | ต้นทาง | หมายเหตุ |
 |---|---|---|
-| `stitch-landing-v2.reference.html` | `StitchCode.MD` | คัดลอกตรงตามต้นฉบับ, เปลี่ยนชื่อไฟล์ |
+| `stitch-landing-v2.reference.html` | `StitchCode.MD` | คัดลอกตรงตามต้นฉบับ, เปลี่ยนชื่อไฟล์ + เพิ่มหัว comment `REFERENCE ONLY` และ `<meta name="robots" content="noindex">` |
+| `README.md` | เขียนใหม่ใน repo นี้ | ขอบเขตการใช้งาน + สถานะ approval |
 
 ## 3. ตาราง redaction
 
-| ข้อความต้นทาง | แทนที่ด้วย | เหตุผล |
-|---|---|---|
-| Agent Core bridge hostname | `[Agent Core bridge host — internal, redacted]` | internal endpoint |
-| project id ของอีกโครงการ | `a different, non-RAE project identity` | ไม่เกี่ยวกับ repo นี้ |
-| ชุดตัวแปร env ของ SQL ภายใน | `internal SQL connector variables (names and host redacted)` | internal DB contract |
-| ชื่อ secret ใน CI | `a repository secret (name redacted)` | secret name |
-| ชื่อไฟล์ workflow ภายใน | `a scheduled snapshot workflow` | internal CI file |
-| ชื่อ view/DB ภายใน | `an internal read-only view (name redacted)` | internal DB object |
-| โดเมน third-party ที่ไม่ได้บริหาร (2 โดเมน) | `two unmanaged third-party app domains (names withheld)` | ความเสี่ยงด้านความปลอดภัย |
+นับทุกครั้งที่ข้อความแทนที่ปรากฏในไฟล์ (ไม่นับตารางนี้เอง) — **19 จุด ใน 9 ไฟล์**
 
-รวม **10 จุด ใน 5 ไฟล์** (ดู log เต็มได้จากประวัติ commit ของ branch นี้)
+| ข้อความต้นทาง | ข้อความที่ใช้แทน (ตามที่ปรากฏจริงในไฟล์) | จุด | ไฟล์ | เหตุผล |
+|---|---|:--:|---|---|
+| Agent Core bridge hostname | `[Agent Core bridge host — internal, redacted]` | 1 | `QA_REPORT.md` | internal endpoint |
+| project id ของอีกโครงการ | `a different, non-RAE project identity` | 4 | `LEGACY_REUSE_ASSESSMENT.md` (1), `ARCHITECTURE_QA.md` (1), `QA_REPORT.md` (2) | ไม่เกี่ยวกับ repo นี้ |
+| ชุดตัวแปร env ของ SQL ภายใน | `environment variables (**names and host redacted**)` | 1 | `LEGACY_REUSE_ASSESSMENT.md` | internal DB contract |
+| ชื่อ secret ใน CI | `a repository secret` (ใน `credentials from a repository secret in a scheduled snapshot workflow`) | 1 | `LEGACY_REUSE_ASSESSMENT.md` | secret name |
+| ชื่อไฟล์ workflow ภายใน | `a scheduled snapshot workflow` | 2 | `LEGACY_REUSE_ASSESSMENT.md` | internal CI file |
+| ชื่อ view/DB ภายใน | `an internal read-only view (name redacted)` | 1 | `LEGACY_REUSE_ASSESSMENT.md` | internal DB object |
+| โดเมน third-party ที่ไม่ได้บริหาร | `two unmanaged third-party app domains (names withheld)` / `an unmanaged third-party app domain (name withheld)` / `redacted-unmanaged-app.example` | 6 | `REFERENCE_AUDIT.md`, `RAE_REDESIGN_BLUEPRINT.md`, `evidence/notes/ad_hoc_measurements.json`, `evidence/notes/html_analysis.json` | ความเสี่ยงด้านความปลอดภัย |
+| **ชื่อบุคคลจริง** (`ผศ.ดร.…`) เก็บได้จาก heading ของหน้าแรก RAE | `[person name redacted]` | 3 | `evidence/probe/probe_rae_1440.json`, `evidence/probe/probe_rae_412.json`, `evidence/notes/html_analysis.json` | ข้อมูลส่วนบุคคล — repo เป็น public |
+| **รวม** | | **19** | **9 ไฟล์** | |
+
+ตรวจซ้ำได้ด้วย:
+
+```bash
+grep -rnoE '\[Agent Core bridge host — internal, redacted\]|a different, non-RAE project identity|environment variables \(\*\*names and host redacted\*\*\)|a repository secret|a scheduled snapshot workflow|an internal read-only view \(name redacted\)|names withheld|name withheld|redacted-unmanaged-app\.example|\[person name redacted\]' . --exclude-dir=.git --exclude=PROVENANCE.md
+```
+
+(ก่อนซิงก์มี 16 จุดใน 7 ไฟล์; การปิดข้อมูลส่วนบุคคลเพิ่ม 3 จุดใน 2 ไฟล์ใหม่ → 19 ใน 9)
 
 ## 4. สิ่งที่ **ไม่** นำเข้า (และเหตุผล)
 
@@ -114,5 +153,10 @@ workspace ต้นทาง **ไม่ถูกแก้ไข**
 | IP address scan | ผ่าน — เหลือเฉพาะ `127.0.0.1` (CDP local, ตั้งใจ) |
 | internal hostname scan | ผ่าน — ไม่พบหลัง redaction |
 | markdown link check | ผ่าน — ทุกลิงก์ภายในชี้ไฟล์ที่มีจริง |
-| JSON validity (evidence) | ผ่าน — 21 ไฟล์ parse ได้ทั้งหมด |
+| JSON/TXT validity | ผ่าน — 21 ไฟล์ใน branch (17 `.json` + 4 `.txt`) parse/อ่านได้ทั้งหมด |
 | ไฟล์ที่อ้างในเอกสารแต่ไม่มีใน repo | บันทึกไว้ใน `docs/research/evidence/README.md §4` |
+
+**หมายเหตุ §7 (re-encoding):** `docs/research/evidence/notes/contrast_reconciliation.txt` และ
+`contrast_stitch_tokens.txt` เดิมถูกบันทึกเป็น **UTF-16LE ไม่มี BOM** (ได้จาก workspace ต้นทาง)
+จึงอ่านเป็นขยะและถูก `grep` ข้าม ทั้งสองไฟล์ถูก re-encode เป็น **UTF-8 ไม่มี BOM** โดยข้อความเหมือนเดิม
+ทุกบรรทัด (80 และ 44 บรรทัด) — ปัจจุบัน `file` รายงานว่าเป็น ASCII text และ `grep` อ่านได้ตามปกติ

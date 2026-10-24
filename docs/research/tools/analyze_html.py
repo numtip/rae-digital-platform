@@ -1,3 +1,4 @@
+# Requires EVIDENCE/raw_html/{rae,spu,utcc,dpu}_home.html from the research workspace — that capture is excluded from this repo, so this script cannot run here as shipped.
 import sys, json, re, io
 from html.parser import HTMLParser
 from urllib.parse import urljoin, urlparse

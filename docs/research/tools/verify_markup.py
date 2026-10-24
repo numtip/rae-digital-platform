@@ -1,3 +1,4 @@
+# Requires EVIDENCE/raw_html/ (rae_home.html) from the research workspace — that capture is excluded from this repo, so this script cannot run here as shipped.
 import re
 h = open('EVIDENCE/raw_html/rae_home.html', encoding='utf-8', errors='replace').read()
 
