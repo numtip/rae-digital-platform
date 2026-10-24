@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Required status check on main. The job always runs so the check always
+  # reports; only the app steps are conditional, so a docs-only PR is green
+  # without skipping the workflow itself.
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect application
+        id: app
+        run: |
+          if [ -f package.json ]; then
+            echo "present=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=no" >> "$GITHUB_OUTPUT"
+            echo "docs-only ref - no package.json, npm steps skipped, required check still reports" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.app.outputs.present == 'yes'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        if: steps.app.outputs.present == 'yes'
+        run: npm ci
+
+      - name: Typecheck
+        if: steps.app.outputs.present == 'yes'
+        run: npm run typecheck
+
+      - name: Build
+        if: steps.app.outputs.present == 'yes'
+        run: npm run build
+
+      - name: Docs-only (app build not required)
+        if: steps.app.outputs.present == 'no'
+        run: echo "docs-only ref - app steps skipped, required check satisfied"
