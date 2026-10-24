@@ -185,7 +185,7 @@ Grid: 12 columns · container 1280 px · gutter 24 · mobile margin 16. Heights 
 │ แม่โจ้ · MJU Mail · ERP   │  ค้นหา   │  ไทย/EN   │  บุคลากรเข้าสู่ระบบ        │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ HEADER  h=80 (sticky on scroll-up)                                           │
-│ [emblem 48] สำนักวิจัยและส่งเสริมวิชาการการเกษตร   │ nav 7 │ 🔍 │ TH│EN        │
+│ [emblem 48] สำนักวิจัยและบริการวิชาการ   │ nav 7 │ 🔍 │ TH│EN        │
 │             The Office of Agricultural Research and Extension, Maejo Univ.  │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ HERO  single message, no autoplay · 420 px desktop (min 320 / max 480) · 4:3 crop ≈ 292 px mobile
@@ -414,7 +414,7 @@ Rejected: DPU's 13 bespoke `min-width` breakpoints and RAE's 11 font sizes — b
 
 | Area | Rule |
 |---|---|
-| Title | `{Page} | สำนักวิจัยและส่งเสริมวิชาการการเกษตร มหาวิทยาลัยแม่โจ้` ≤ 60 chars; news: `{Headline} | ข่าว RAE` |
+| Title | `{Page} | สำนักวิจัยและบริการวิชาการ มหาวิทยาลัยแม่โจ้` ≤ 60 chars; news: `{Headline} | ข่าว RAE` |
 | Description | 120–155 chars, Thai, action-oriented, unique per page; never empty (today: empty on wID pages, `D-08`) |
 | H1 | exactly one; mirrors the page intent, not the logo |
 | Canonical | self-referencing on every page, both locales |

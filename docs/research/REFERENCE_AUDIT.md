@@ -64,7 +64,7 @@ Reading note: transfer-size and TTFB figures were partly served from a warm loca
 
 ### 2.1 Identity & platform `[V]`
 
-- Title: `สำนักวิจัยและส่งเสริมวิชาการการเกษตร มหาวิทยาลัยแม่โจ้`; English name rendered in the header: *The Office of Agricultural Research and Extension Maejo University*.
+- Title: `สำนักวิจัยและบริการวิชาการ มหาวิทยาลัยแม่โจ้`; English name rendered in the header: *The Office of Agricultural Research and Extension Maejo University*.
 - Server: `Microsoft-IIS/10.0`, `X-Powered-By: ASP.NET`, `X-AspNet-Version: 4.0.30319`, `Cache-Control: private` on every page sampled.
 - CMS: footer credit **"Web Template Management 2021"**; all content is addressed by opaque numeric IDs: `wtms_webpageDetail.aspx?wID=2022`, `wtms_newsDetail.aspx?nID=38764`.
 - Front-end assets: `/wtms_system/bootstrap/css/bootstrap.css` + `bootstrap-grid.css` + `bootstrap-utilities.css`, `bootstrap-icons.css`, `jquery-3.5.1.min.js`, `bootstrap.min.js`, `mainCSS.css`; custom webfont `myFont`, plus Sarabun.
