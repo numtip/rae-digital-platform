@@ -1,0 +1,58 @@
+{
+  "note": "Ad-hoc CDP measurements captured 2026-10-24 with tools/cdp_eval.mjs (one live page per run, 1440x1000 or 412x915). Values quoted in REFERENCE_AUDIT.md / RAE_REDESIGN_BLUEPRINT.md that are not present in the probe JSONs live here.",
+  "captured_at": "2026-10-24T15:10:00Z",
+  "rae": {
+    "hero": { "selector": ".carousel", "height_px_desktop": 450, "slides": 7, "autoplay": true, "banner_natural_size": "1600x500", "height_px_mobile": 129 },
+    "nav_bar_bg": "rgb(1, 127, 63)",
+    "nav_anchors": 16,
+    "nav_top_level_destinations": 4,
+    "mobile_header_display_at_1440": "block (height 0)",
+    "mobile_menu": {
+      "type": "bootstrap modal",
+      "target": "#siteMenu",
+      "trigger": "<a href=\"#\" data-bs-toggle=\"modal\" data-bs-target=\"#siteMenu\"><i class=\"bi-grid-3x3-gap-fill\">",
+      "trigger_accessible_name": null,
+      "modal_role_attribute": null,
+      "modal_aria_labelledby": "exampleModalLabel",
+      "modal_links": 17,
+      "fixed_top_wrappers": 1,
+      "unnamed_links_at_412": 2
+    },
+    "images_lazy": 6,
+    "youtube_iframes": 4,
+    "external_hosts_on_home": ["erp.mju.ac.th", "goffice.mju.ac.th", "irb.mju.ac.th", "kb.mju.ac.th", "maejovision.mju.ac.th", "rspg.mju.ac.th", "royal.mju.ac.th", "sciencebase.mju.ac.th", "li01.tci-thaijo.org", "online.anyflip.com", "docs.google.com", "datastudio.google.com", "script.google.com", "office.com", "an unmanaged third-party app domain (name withheld)", "an unmanaged third-party app domain (name withheld)"]
+  },
+  "spu": {
+    "hero_height_px": 650,
+    "quick_access_tiles": 11,
+    "header_position": "static",
+    "first_menu_container_links": 102,
+    "live_chat_h1": "👋 มีคำถามเรื่องสมัครเรียนทักได้เลย!!"
+  },
+  "utcc": {
+    "article_nodes": 2637,
+    "article_nodes_visible": 46,
+    "iso_container_height_px": 439,
+    "iso_container_display": "block",
+    "section_h2s": ["Dreams come true", "UTCC Highlights", "Cool Courses", "News & Events"],
+    "header_position": "fixed",
+    "viewport_meta": "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0",
+    "youtube_iframes": 5
+  },
+  "dpu": {
+    "heading_elements_total": 2,
+    "heading_elements": [
+      { "tag": "H2", "text": "Cookie settings", "height_px": 0 },
+      { "tag": "H2", "text": "Consent preference management", "height_px": 0 }
+    ],
+    "content_headings_h1_to_h3": 0,
+    "swiper_instances": 4,
+    "video_elements": 2,
+    "search_inputs": 0,
+    "header_position": "absolute",
+    "header_tags": 9,
+    "main_landmarks": 16,
+    "footer_landmarks": 0,
+    "menu_container_links": 46
+  }
+}

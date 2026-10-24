@@ -1,0 +1,645 @@
+{
+  "url": "https://www.utcc.ac.th/",
+  "finalUrl": "about:blank",
+  "port": 9444,
+  "viewport": {
+    "w": 412,
+    "h": 915
+  },
+  "loaded": true,
+  "capturedAt": "2026-10-24T14:56:58.258Z",
+  "probe": {
+    "title": "หน้าแรก - มหาวิทยาลัยหอการค้าไทย",
+    "meta": {
+      "description": "เหนือกว่าด้วยหลักสูตรการประกอบการที่ ขับเคลื่อนโดยนวัตกรรม IDE สร้างธุรกิจใหม่ ต่อยอดการขายด้วยแพลตฟอร์มอีคอมเมิร์ซระดับโลก เน้นให้นักศึกษาได้ฝึกปฏิบัติจริง",
+      "keywords": null,
+      "viewport": "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0",
+      "generator": "All in One SEO (AIOSEO) 4.9.0",
+      "ogSite": "มหาวิทยาลัยหอการค้าไทย - มหาวิทยาลัยหอการค้าไทย",
+      "ogImage": "https://www.utcc.ac.th/wp-content/uploads/2025/08/มหาวิทยาลัยหอการค้าไทย-utcc.jpg",
+      "ogTitle": "หน้าแรก - มหาวิทยาลัยหอการค้าไทย",
+      "robots": "max-image-preview:large",
+      "canonical": "https://www.utcc.ac.th/",
+      "hreflang": [],
+      "charset": "UTF-8"
+    },
+    "h1": [
+      "Happy University"
+    ],
+    "headings": [
+      {
+        "t": "H1",
+        "text": "Happy University",
+        "size": "40px"
+      },
+      {
+        "t": "H3",
+        "text": "ทำไมการตั้งคำถาม จึงสำคัญกว่าการหาคำตอบในยุค AI",
+        "size": "15px"
+      },
+      {
+        "t": "H3",
+        "text": "Google ไม่ได้หายไป แต่ AI กำลังเปลี่ยนวิธีค้นหาและการเรียนรู้ของนักศึกษา",
+        "size": "15px"
+      },
+      {
+        "t": "H3",
+        "text": "ใช้ AI ยังไงให้เรียนเก่งขึ้น คู่มือใช้ AI สำหรับนักเรียนและนักศึกษา",
+        "size": "15px"
+      },
+      {
+        "t": "H2",
+        "text": "Dreams come true",
+        "size": "40px"
+      },
+      {
+        "t": "H2",
+        "text": "UTCC Highlights",
+        "size": "40px"
+      },
+      {
+        "t": "H3",
+        "text": "รางวัลชนะเลิศอันดับที่ 1 (ประเภทหญิงเดี่ยว) และรางวัลชนะเลิศอันดับที่ 1 (ประเภทหญิงคู่) จา",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "“เด็กหัวการค้าโกอินเตอร์! ‘บูม ธิดาพร’ เหมาคว้า 2 แชมป์แบดมินตันนานาชาติที่เวียดนาม”",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "เด็กญี่ปุ่น UTCC ผงาดแชมป์ประเทศ! คว้ารางวัลชนะเลิศเวทีสุนทรพจน์ภาษาญี่ปุ่นระดับประเทศ ขอแ",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "การแข่งขันทำอาหารระดับนานาชาติ “Thailand Ultimate Chef Challenge 2026 (TUCC)” ในงาน THAIFE",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "การแข่งขันนำเสนอแนวคิดการจัดงานคอนเสิร์ต (MICE Concert Design Challenge)",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "นักศึกษาทุน Harbour.Space@UTCC ผงาดเวทีโอลิมปิก AI คว้าเหรียญเงิน–ทองแดง APOAI 2026 พร้อมร",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "UTCC สุดปัง! คว้า 5 เหรียญทอง ในการแข่งขันกีฬาเชียร์ลีดดิ้งชิงแชมป์ประเทศไทย ครั้งที่ 30 ป",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "ขอแสดงความยินดี มหาวิทยาลัยหอการค้าไทย ขอแสดงความยินดีกับนักศึกษาตัวแทนมหาวิทยาลัย ที่สร้า",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "เด็กมนุษยศาสตร์ UTCC เจ๋ง! คว้าชัยการประกวดสุนทรพจน์ภาษาญี่ปุ่นระดับประเทศ ประจำปี 2026",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "รับรางวัลชนะเลิศ จากการเข้าร่วมแข่งขันการประกวดสุนทรพจน์ The 1st President’s Trophy Japane",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "รางวัลชนะเลิศอันดับที่ 1 (ประเภทหญิงเดี่ยว) และรางวัลชนะเลิศอันดับที่ 1 (ประเภทหญิงคู่) จา",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "“เด็กหัวการค้าโกอินเตอร์! ‘บูม ธิดาพร’ เหมาคว้า 2 แชมป์แบดมินตันนานาชาติที่เวียดนาม”",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "เด็กญี่ปุ่น UTCC ผงาดแชมป์ประเทศ! คว้ารางวัลชนะเลิศเวทีสุนทรพจน์ภาษาญี่ปุ่นระดับประเทศ ขอแ",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "การแข่งขันทำอาหารระดับนานาชาติ “Thailand Ultimate Chef Challenge 2026 (TUCC)” ในงาน THAIFE",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "การแข่งขันนำเสนอแนวคิดการจัดงานคอนเสิร์ต (MICE Concert Design Challenge)",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "นักศึกษาทุน Harbour.Space@UTCC ผงาดเวทีโอลิมปิก AI คว้าเหรียญเงิน–ทองแดง APOAI 2026 พร้อมร",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "UTCC สุดปัง! คว้า 5 เหรียญทอง ในการแข่งขันกีฬาเชียร์ลีดดิ้งชิงแชมป์ประเทศไทย ครั้งที่ 30 ป",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "ขอแสดงความยินดี มหาวิทยาลัยหอการค้าไทย ขอแสดงความยินดีกับนักศึกษาตัวแทนมหาวิทยาลัย ที่สร้า",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "เด็กมนุษยศาสตร์ UTCC เจ๋ง! คว้าชัยการประกวดสุนทรพจน์ภาษาญี่ปุ่นระดับประเทศ ประจำปี 2026",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "รับรางวัลชนะเลิศ จากการเข้าร่วมแข่งขันการประกวดสุนทรพจน์ The 1st President’s Trophy Japane",
+        "size": "18px"
+      },
+      {
+        "t": "H2",
+        "text": "Cool Courses",
+        "size": "40px"
+      },
+      {
+        "t": "H3",
+        "text": "เศรษฐศาสตร์… ไม่ใช่แค่ตัวเลข แต่คือ “ทักษะที่ตลาดงานต้องการ” #DEK69 คณะเศรษฐศาสตร์หอการค้า",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "Dek 69 ฟังทางนี้! ค้นพบตัวตนที่ใช่… ที่นิเทศศาสตร์ ม.หอการค้าไทย",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "พลิกโฉมทายาทธุรกิจ สู่ผู้บริหารมืออาชีพ ด้วยหลักสูตร FAMZ MBA มหาวิทยาลัยหอการค้าไทย",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "CCE UTCC มัดรวมหลักสูตรนอกเวลาที่จริงใจและเข้าใจคนรุ่นใหม่ที่สุด",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "ปริญญาเอกไม่ไกลเกินเอื้อม: เปิดบ้านบัณฑิตวิทยาลัย ม.หอการค้าไทย (UTCC) จุดประกายการเรียนรู",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "หลักสูตร ICT โฉมใหม่ ปี 2569 มาแล้ว! หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาเทคโนโลยีสารสนเทศและ",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "#Dek69 อยากเรียนวิศวะ ต้อง ”วิศวะโลจิสติกส์หอการค้า“",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "คิดเป็น วิเคราะห์เป็น ด้วยเศรษฐศาสตร์",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "Design Your L.I.F.E. ออกแบบอนาคตและความสำเร็จในเวอร์ชันที่ดีกว่าเดิม",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "เป็นตัวเองได้อย่างไม่จำกัด กับ คณะมนุษยศาสตร์ ม.หอการค้าไทย เปิด 7 สาขา ที่สุดของความหลากห",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "เศรษฐศาสตร์… ไม่ใช่แค่ตัวเลข แต่คือ “ทักษะที่ตลาดงานต้องการ” #DEK69 คณะเศรษฐศาสตร์หอการค้า",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "Dek 69 ฟังทางนี้! ค้นพบตัวตนที่ใช่… ที่นิเทศศาสตร์ ม.หอการค้าไทย",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "พลิกโฉมทายาทธุรกิจ สู่ผู้บริหารมืออาชีพ ด้วยหลักสูตร FAMZ MBA มหาวิทยาลัยหอการค้าไทย",
+        "size": "18px"
+      }
+    ],
+    "navs": [],
+    "searchForms": 1,
+    "counts": {
+      "a": 10717,
+      "img": 2676,
+      "form": 3,
+      "iframe": 6,
+      "video": 0,
+      "section": 4,
+      "article": 2637,
+      "table": 0,
+      "button": 6,
+      "svg": 9,
+      "picture": 0,
+      "elements": 1272
+    },
+    "widgetMarkers": {
+      "carousel": [
+        ".owl-carousel"
+      ],
+      "tabs": [],
+      "accordion": [],
+      "modal": [
+        "[role=\"dialog\"]"
+      ],
+      "cookieBanner": [
+        "[id*=\"cookie\" i]"
+      ],
+      "backToTop": [
+        "[class*=\"scroll-top\" i]"
+      ],
+      "langSwitch": []
+    },
+    "sticky": [
+      "html>body#the7-body>div#page>div:fixed",
+      "html>body#the7-body>div:fixed"
+    ],
+    "palette": {
+      "text": [
+        {
+          "k": "rgb(139, 141, 148)",
+          "v": 903
+        },
+        {
+          "k": "rgb(255, 255, 255)",
+          "v": 226
+        },
+        {
+          "k": "rgb(51, 51, 51)",
+          "v": 111
+        },
+        {
+          "k": "rgb(173, 175, 179)",
+          "v": 18
+        },
+        {
+          "k": "rgb(46, 49, 145)",
+          "v": 6
+        },
+        {
+          "k": "rgb(238, 238, 238)",
+          "v": 6
+        },
+        {
+          "k": "rgb(33, 117, 155)",
+          "v": 1
+        },
+        {
+          "k": "rgba(51, 51, 51, 0.17)",
+          "v": 1
+        }
+      ],
+      "background": [
+        {
+          "k": "rgba(139, 141, 148, 0.05)",
+          "v": 41
+        },
+        {
+          "k": "rgb(247, 247, 247)",
+          "v": 6
+        },
+        {
+          "k": "rgb(255, 255, 255)",
+          "v": 4
+        },
+        {
+          "k": "rgb(229, 229, 229)",
+          "v": 4
+        },
+        {
+          "k": "rgb(46, 49, 145)",
+          "v": 2
+        },
+        {
+          "k": "rgb(241, 241, 241)",
+          "v": 1
+        },
+        {
+          "k": "rgb(221, 51, 51)",
+          "v": 1
+        },
+        {
+          "k": "rgb(237, 150, 0)",
+          "v": 1
+        }
+      ],
+      "fontFamily": [
+        {
+          "k": "CSPraJad",
+          "v": 119
+        },
+        {
+          "k": "WhetisakDojo-Regular",
+          "v": 56
+        },
+        {
+          "k": "Arial",
+          "v": 8
+        }
+      ],
+      "fontSize": [
+        {
+          "k": "16px",
+          "v": 106
+        },
+        {
+          "k": "18px",
+          "v": 51
+        },
+        {
+          "k": "15px",
+          "v": 13
+        },
+        {
+          "k": "14px",
+          "v": 8
+        },
+        {
+          "k": "40px",
+          "v": 5
+        }
+      ]
+    },
+    "cssVars": null,
+    "css": {
+      "sheets": 53,
+      "sameOriginReadable": 32,
+      "mediaBreakpoints": [
+        "(min-width: 782px)",
+        "(max-width: 781px)",
+        "(prefers-reduced-motion: reduce)",
+        "(min-width: 600px)",
+        "(max-width: 600px)",
+        "screen and (max-width: 843px)",
+        "(min-width: 844px)",
+        "(max-width: 843px)",
+        "(min-width: 844px) and (max-width: 991px)",
+        "(min-width: 992px) and (max-width: 1199px)",
+        "(min-width: 1200px)",
+        "(min-width: 992px)",
+        "(min-width: 576px)",
+        "(min-width: 768px)",
+        "(-ms-high-contrast: active), (-ms-high-contrast: none)",
+        "(max-width: 480px)",
+        "(max-width: 844px)",
+        "(-webkit-min-device-pixel-ratio: 1.1), (-webkit-min-device-pixel-ratio: 1.09375), (min-resolution: 105dpi), (min-resolution: 1.1dppx)",
+        "screen and (max-width: 1024px)",
+        "(max-width: 500px)"
+      ],
+      "topClasses": [
+        {
+          "k": "",
+          "v": 18535
+        },
+        {
+          "k": "#page",
+          "v": 230
+        },
+        {
+          "k": "#main",
+          "v": 66
+        },
+        {
+          "k": "#bottom-bar",
+          "v": 54
+        },
+        {
+          "k": "#phantom",
+          "v": 40
+        },
+        {
+          "k": "#rev_slider_14_3_wrapper",
+          "v": 30
+        },
+        {
+          "k": "#rev_slider_15_4_wrapper",
+          "v": 27
+        },
+        {
+          "k": "#main-slideshow",
+          "v": 25
+        },
+        {
+          "k": "#fancy-header",
+          "v": 24
+        },
+        {
+          "k": "#wp-calendar",
+          "v": 22
+        },
+        {
+          "k": "#footer",
+          "v": 22
+        },
+        {
+          "k": "#content",
+          "v": 8
+        },
+        {
+          "k": "#comments",
+          "v": 7
+        },
+        {
+          "k": "#sidebar",
+          "v": 7
+        },
+        {
+          "k": "#custom_html-3",
+          "v": 6
+        },
+        {
+          "k": "#top-bar",
+          "v": 4
+        },
+        {
+          "k": "#customer_login",
+          "v": 4
+        },
+        {
+          "k": "#reply-title",
+          "v": 3
+        },
+        {
+          "k": "#main-nav",
+          "v": 3
+        },
+        {
+          "k": "#reviews",
+          "v": 3
+        }
+      ],
+      "fontFaces": [
+        "Defaults",
+        "icomoon-material-24x24",
+        "icomoon-icomoonfree-16x16",
+        "icomoon-elegent-line-icons-32x32",
+        "icomoon-numbers-32x32",
+        "icomoon-pixeden-stroke-32x32",
+        "vcpb-plugin-icons",
+        "vc_grid_v1",
+        "icomoon-the7-font",
+        "\"Font Awesome 5 Brands\""
+      ]
+    },
+    "fontsLoaded": [
+      "Defaults normal unloaded",
+      "icomoon-material-24x24 normal unloaded",
+      "icomoon-icomoonfree-16x16 normal unloaded",
+      "icomoon-elegent-line-icons-32x32 normal unloaded",
+      "icomoon-numbers-32x32 normal unloaded",
+      "icomoon-pixeden-stroke-32x32 normal unloaded",
+      "vcpb-plugin-icons normal unloaded",
+      "vc_grid_v1 normal unloaded",
+      "Open Sans 400 unloaded",
+      "Open Sans 400 loaded",
+      "Open Sans 600 unloaded",
+      "Open Sans 700 unloaded"
+    ],
+    "tech": {
+      "jquery": "3.6.0",
+      "bootstrap": null,
+      "react": false,
+      "vue": true,
+      "next": false,
+      "nuxt": false,
+      "angular": false,
+      "gtm": true,
+      "ga": true,
+      "fbq": false,
+      "recaptcha": false
+    },
+    "resources": {
+      "total": 123,
+      "byType": {
+        "script": 41,
+        "link": 35,
+        "img": 22,
+        "css": 8,
+        "fetch": 4,
+        "xmlhttprequest": 3,
+        "iframe": 10
+      },
+      "bytes": 363990,
+      "hosts": [
+        [
+          "www.utcc.ac.th",
+          74
+        ],
+        [
+          "www.youtube.com",
+          12
+        ],
+        [
+          "www.googletagmanager.com",
+          4
+        ],
+        [
+          "cdn.jsdelivr.net",
+          4
+        ],
+        [
+          "fonts.googleapis.com",
+          3
+        ],
+        [
+          "api-devv2.t-reg.co",
+          2
+        ],
+        [
+          "tr.line.me",
+          2
+        ],
+        [
+          "www.google-analytics.com",
+          2
+        ],
+        [
+          "s.w.org",
+          2
+        ],
+        [
+          "cdnjs.cloudflare.com",
+          1
+        ],
+        [
+          "js.hs-scripts.com",
+          1
+        ],
+        [
+          "d.line-scdn.net",
+          1
+        ],
+        [
+          "tag.flvcdn.net",
+          1
+        ],
+        [
+          "www.google.com",
+          1
+        ],
+        [
+          "js-na2.hubspot.com",
+          1
+        ]
+      ]
+    },
+    "perf": {
+      "ttfb": 921,
+      "domContentLoaded": 3813,
+      "load": 8246,
+      "transferSize": 591570,
+      "decodedBodySize": 8959324
+    },
+    "layout": {
+      "docWidth": 412,
+      "viewport": 412,
+      "horizontalOverflow": false,
+      "docHeight": 14221
+    },
+    "a11y": {
+      "lang": "th",
+      "skipLink": true,
+      "landmarks": {
+        "header": 2,
+        "nav": 0,
+        "main": 1,
+        "footer": 1
+      },
+      "imgTotal": 2676,
+      "imgWithAlt": 2670,
+      "imgEmptyAlt": 2380,
+      "imgNoAlt": 6,
+      "ariaLabelCount": 2724,
+      "buttons": 6,
+      "inputsWithoutLabel": 6,
+      "smallFonts": 1
+    },
+    "cookies": [
+      "_gcl_au",
+      "__lt__cid",
+      "__lt__sid",
+      "_gid",
+      "__hstc",
+      "hubspotutk",
+      "__hssrc",
+      "_gat_UA-194967001-1",
+      "_ga_Z1ZTBXL677",
+      "_ga",
+      "__hssc"
+    ],
+    "bodyBg": "rgb(247, 247, 247)",
+    "bodyFont": "CSPraJad, Helvetica, Arial, Verdana, sans-serif",
+    "bodyFontSize": "18px"
+  }
+}
