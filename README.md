@@ -1,6 +1,6 @@
 # rae-digital-platform
 
-แพลตฟอร์มดิจิทัลของสำนักวิจัยและส่งเสริมวิชาการการเกษตร (RAE) — มหาวิทยาลัยแม่โจ้
+แพลตฟอร์มดิจิทัลของสำนักวิจัยและบริการวิชาการ (RAE) — มหาวิทยาลัยแม่โจ้
 _Digital platform for the Office of Agricultural Research and Extension (RAE), Maejo University._
 
 Repo นี้เป็น **canonical development repository** สำหรับ Cursor และ Hermes: เอกสารสถาปัตยกรรม,
