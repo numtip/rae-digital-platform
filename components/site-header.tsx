@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-// Destinations that do not exist yet are rendered as disabled text, never as
-// href="#" — an empty anchor is a dead control (issue #2 rule). Real routes are
+// Destinations that do not exist yet are rendered as disabled text, never as an
+// empty hash anchor — that is a dead control (issue #2 rule). Real routes are
 // added here as pages land.
 type NavItem = { label: string; href?: string; current?: boolean };
 
@@ -13,6 +13,10 @@ const NAV_ITEMS: NavItem[] = [
   { label: "เอกสารเผยแพร่" },
   { label: "ข่าวสารและกิจกรรม" },
 ];
+
+// Gold on brand-700 is 5.1:1, so the ring passes WCAG 1.4.11.
+const FOCUS_RING =
+  "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold-500";
 
 function NavLink({ item }: { item: NavItem }) {
   const base = "text-sm font-medium leading-none";
@@ -31,7 +35,7 @@ function NavLink({ item }: { item: NavItem }) {
     <Link
       href={item.href}
       aria-current={item.current ? "page" : undefined}
-      className={`${base} ${item.current ? "text-gold-500" : "transition-colors hover:text-gold-500"}`}
+      className={`${base} ${FOCUS_RING} ${item.current ? "text-gold-500" : "transition-colors hover:text-gold-500"}`}
     >
       {item.label}
     </Link>
@@ -70,7 +74,7 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3">
         {/* TODO(issue #2): real RAE logo asset. The reference logo is a Google
             hotlink; until RAE supplies the file this is the text mark only. */}
-        <div className="flex items-center gap-3">
+        <Link href="/" className={`flex items-center gap-3 ${FOCUS_RING}`}>
           <div
             aria-hidden="true"
             className="flex h-12 w-12 items-center justify-center rounded-full bg-white font-bold text-brand-500"
@@ -78,14 +82,15 @@ export function SiteHeader() {
             RAE
           </div>
           <div>
-            <h1 className="text-xl font-bold leading-tight">RAE</h1>
+            {/* The wordmark is not a heading: the page's h1 is its content headline. */}
+            <p className="text-xl font-bold leading-tight">RAE</p>
             <p className="text-xs leading-tight text-neutral-300">
               สำนักวิจัยและส่งเสริมวิชาการการเกษตร
               <br />
               มหาวิทยาลัยแม่โจ้
             </p>
           </div>
-        </div>
+        </Link>
 
         <nav aria-label="เมนูหลัก" className="hidden items-center gap-6 lg:flex">
           {navLinks}
@@ -107,7 +112,7 @@ export function SiteHeader() {
         </div>
 
         <details className="lg:hidden">
-          <summary className="cursor-pointer list-none p-2 [&::-webkit-details-marker]:hidden">
+          <summary className={`cursor-pointer list-none p-2 [&::-webkit-details-marker]:hidden ${FOCUS_RING}`}>
             <span className="sr-only">เปิดเมนูหลัก</span>
             {MenuIcon}
           </summary>
