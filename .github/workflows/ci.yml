@@ -44,11 +44,16 @@ jobs:
           base_has=yes   # fail closed: unknown base counts as "has app"
           if [ -z "${BASE_REF}" ]; then
             base_has="$head_has"
-          elif git fetch --no-tags --depth=1 origin "${BASE_REF}" 2>/dev/null \
-               && git show FETCH_HEAD:package.json >/dev/null 2>&1; then
-            base_has=yes
+          elif git fetch --no-tags --depth=1 origin "${BASE_REF}" 2>/dev/null; then
+            # Fetch succeeded, so an unreadable package.json means it is really
+            # absent on the base ref (docs-only base), not that we lost the ref.
+            if git show FETCH_HEAD:package.json >/dev/null 2>&1; then
+              base_has=yes
+            else
+              base_has=no
+            fi
           else
-            echo "::warning::could not read package.json from base '${BASE_REF}' - treating as app present (fail closed)"
+            echo "::warning::could not fetch base '${BASE_REF}' - treating as app present (fail closed)"
             base_has=yes
           fi
 
