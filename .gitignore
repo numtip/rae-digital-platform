@@ -1,0 +1,27 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*agent-core.token
+*credentials*
+
+# Runtime / build (สำหรับโค้ดที่จะเพิ่มภายหลัง)
+node_modules/
+dist/
+build/
+.astro/
+.next/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.log
