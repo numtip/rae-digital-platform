@@ -12,19 +12,24 @@ Thumbs.db
 *.pem
 *.key
 *agent-core.token
-*credentials*
+*credentials*.json
+.credentials/
 
-# Runtime / build (สำหรับโค้ดที่จะเพิ่มภายหลัง)
+# Runtime / build
 node_modules/
-dist/
-build/
+/.next/
+/out/
+/build/
+/dist/
+/coverage/
+/.vercel/
 .astro/
-.next/
 __pycache__/
 *.py[cod]
 .venv/
 venv/
 *.log
 
-# TS build info
+# TypeScript / Next generated — never hand-edit
+next-env.d.ts
 *.tsbuildinfo

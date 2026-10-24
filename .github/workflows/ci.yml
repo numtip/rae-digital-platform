@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+    branches: [main]
   push:
     branches: [main]
 
@@ -10,7 +11,11 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Never cancel a run on main: a cancelled required check blocks the branch.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
 
 jobs:
   # Required status check on main. The job always runs so the check always
@@ -19,20 +24,43 @@ jobs:
   build:
     name: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
+      # Fail closed: app steps are skipped ONLY when package.json is absent on
+      # both the head and the base ref. A PR that deletes package.json from an
+      # app-having base still gets installed/typechecked/built (and therefore
+      # fails), so the skip cannot be used to buy a green required check.
       - name: Detect application
         id: app
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          if [ -f package.json ]; then
-            echo "present=yes" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          head_has=no
+          [ -f package.json ] && head_has=yes
+
+          base_has=yes   # fail closed: unknown base counts as "has app"
+          if [ -z "${BASE_REF}" ]; then
+            base_has="$head_has"
+          elif git fetch --no-tags --depth=1 origin "${BASE_REF}" 2>/dev/null \
+               && git show FETCH_HEAD:package.json >/dev/null 2>&1; then
+            base_has=yes
           else
-            echo "present=no" >> "$GITHUB_OUTPUT"
-            echo "docs-only ref - no package.json, npm steps skipped, required check still reports" >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::could not read package.json from base '${BASE_REF}' - treating as app present (fail closed)"
+            base_has=yes
           fi
 
-      - uses: actions/setup-node@v4
+          if [ "$head_has" = "no" ] && [ "$base_has" = "no" ]; then
+            echo "present=no" >> "$GITHUB_OUTPUT"
+            echo "docs-only ref: no package.json on head or base - app steps skipped, required check still reports" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "present=yes" >> "$GITHUB_OUTPUT"
+            echo "app present (head=${head_has} base=${base_has}) - full gate runs" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         if: steps.app.outputs.present == 'yes'
         with:
           node-version-file: .nvmrc
@@ -41,6 +69,10 @@ jobs:
       - name: Install
         if: steps.app.outputs.present == 'yes'
         run: npm ci
+
+      - name: Lint
+        if: steps.app.outputs.present == 'yes'
+        run: npm run lint
 
       - name: Typecheck
         if: steps.app.outputs.present == 'yes'
