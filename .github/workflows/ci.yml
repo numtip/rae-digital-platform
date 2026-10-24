@@ -1,8 +1,9 @@
 name: CI
 
 on:
+  # Every PR is gated, including stacked PRs whose base is another feature
+  # branch — narrowing this to main silently left stacked work unbuilt.
   pull_request:
-    branches: [main]
   push:
     branches: [main]
 
