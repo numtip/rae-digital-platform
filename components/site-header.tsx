@@ -85,7 +85,7 @@ export function SiteHeader() {
             {/* The wordmark is not a heading: the page's h1 is its content headline. */}
             <p className="text-xl font-bold leading-tight">RAE</p>
             <p className="text-xs leading-tight text-neutral-300">
-              สำนักวิจัยและส่งเสริมวิชาการการเกษตร
+              สำนักวิจัยและบริการวิชาการ
               <br />
               มหาวิทยาลัยแม่โจ้
             </p>

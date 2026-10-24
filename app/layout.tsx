@@ -14,7 +14,7 @@ const sarabun = Sarabun({
 export const metadata: Metadata = {
   title: "RAE Digital Platform",
   description:
-    "แพลตฟอร์มดิจิทัลของสำนักวิจัยและส่งเสริมวิชาการการเกษตร มหาวิทยาลัยแม่โจ้",
+    "แพลตฟอร์มดิจิทัลของสำนักวิจัยและบริการวิชาการ มหาวิทยาลัยแม่โจ้",
 };
 
 export default function RootLayout({
