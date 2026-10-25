@@ -5,6 +5,8 @@
 on the night of 25→26 October 2026. The path is kept exactly as requested so the owner
 finds it where they said to look.
 **Mode:** autonomous, Agent Core identity `rae-digital-platform`, Ponytail full.
+**Last refreshed:** 2026-10-26 05:30 +07 by the one-shot finalize job — QA re-run on this
+branch, PR list and gates re-verified.
 **Gates:** `RAE_OVERNIGHT_QA = PASS` · `RAE_OWNER_REVIEW_REQUIRED = YES`
 
 ---
@@ -23,24 +25,27 @@ finalizes at 05:30 (QA, report refresh, Telegram), and never merges.
 
 ## 2. Completed work
 
-Three draft PRs, all with green CI. Nothing was merged; protection was never lowered.
+Four draft PRs, all with green CI. Nothing was merged; protection was never lowered.
 
 | PR | Branch | Scope |
 |---|---|---|
 | **#35** | `nightly/2026-10-26-landing-links` | *from the 01:00 job* — hero CTAs were crossed (label "เกี่ยวกับเรา" linked to `/services`), `moreHref` accepted but ignored. Verified against `main` before accepting. |
 | **#34** | `feat/content-gate-and-ia` | content contract + `npm test` gate, document category routes with breadcrumbs, `/contact` + 7th nav item, breadcrumbs + `BreadcrumbList` on every interior page |
 | **#36** | `feat/qa-gates` | gates wired into CI, `scripts/check-export.mjs`, and the English photo-parity bug it caught |
+| **#37** | `feat/news-pagination` | news index paginated at 12 per page, `/news/` is page 1, TH/EN — opened 02:40, build SUCCESS |
 
-Merge order: **#35 → #34 → #36**. #35 and #34 were trial-merged locally: clean, no conflicts.
+Merge order: **#35 → #34 → #36 → #37**. #35 and #34 were trial-merged locally: clean, no
+conflicts. #37 was rebased onto #34 and goes last (it moves the breadcrumb into the shared
+news index component).
 
-### 2.1 Content gate (`npm test` — 7 tests, no dependencies)
+### 2.1 Content gate (`npm test` — 6 tests here, 7 with #36, no dependencies)
 
 Enforces: equal content files per locale · every content URL is https · every `source`
 block has `retrieved:` · homepage statistics keep their sample-data label · no content
 value left as `TODO(translate)` · news items have unique ids, ISO dates and newest-first
 order · English news derives its photo set from the Thai source.
 
-### 2.2 Export integrity (`scripts/check-export.mjs`)
+### 2.2 Export integrity (`scripts/check-export.mjs` — on #36)
 
 Walks `out/` and fails on: internal links that do not resolve, missing asset or `srcset`
 candidates, `href="#"` / `href=""`, plain-http links, and any Thai route without an
@@ -64,19 +69,27 @@ fails if it is hardcoded again.
 - Breadcrumbs + `BreadcrumbList` on **every interior page**; 68 of 69 exported Thai pages now carry one (the home page deliberately does not)
 - The category page no longer emits a duplicate `BreadcrumbList`; the shared component builds the visible trail and the structured data from the same array
 
-## 3. QA evidence (real output, this session)
+## 3. QA evidence (real output)
 
-```
-npm test            → 7 tests, 7 pass, 0 fail
-npm run lint        → 0 errors (9 warnings, all pre-existing research scripts)
-npm run typecheck   → ✓ Types generated successfully, tsc clean
-npm run build       → OK (server mode)
-npm run build:export + check:export → OK (141 files / 140 routes / 7,254 internal refs)
-npm audit           → found 0 vulnerabilities
-secret scan         → no tokens, keys, .env or .pem tracked
-```
+Re-run at 05:30 on `feat/content-gate-and-ia` at commit `8612b43`, clean working tree,
+one command at a time. These are the actual exit codes and counts.
 
-Verified on a combined local build of #34 + #36 (temporary branch, deleted afterwards).
+| Command | Exit | Real output lines |
+|---|---|---|
+| `npm test` | **0** | `1..6` / `# tests 6` / `# pass 6` / `# fail 0` |
+| `npm run lint` | **0** | `✖ 9 problems (0 errors, 9 warnings)` |
+| `npm run typecheck` | **0** | `✓ Types generated successfully` (then `tsc --noEmit` silent) |
+| `npm run build` | **0** | full route table for `/th`, `/en` and interior pages, `○ (Static)` + `● (SSG)` |
+
+**Scope warning, do not misread this section.** The export integrity walk (141 files /
+140 routes / 7,254 internal refs), `scripts/check-export.mjs`, `npm run build:export` and
+`npm test` inside CI are **not** on this branch — they live on **#36** (`feat/qa-gates`).
+This branch has only `tests/content.test.mjs` (6 tests) and no `scripts/` directory; its
+CI runs lint, typecheck and build only. Those export numbers were measured earlier on a
+combined #34 + #36 build and stay unproven until #36 lands.
+
+Earlier in the session, on that combined branch: `npm audit` 0 vulnerabilities, secret
+scan clean (no tokens, keys, `.env` or `.pem` tracked). Not re-run at 05:30.
 
 ## 4. TH/EN coverage
 
@@ -114,7 +127,7 @@ Also this session: #36 and #37 were rebased onto the updated #34 / #36 (the pagi
 5. **Duplicated rule** — #35 and #36 both fix the English photo set (in `lib/i18n.ts` and `content/en/news.ts`). #36's copy becomes redundant once #35 lands; remove it so the rule lives once.
 6. **Which contact e-mail is monitored** — the page now shows the three addresses the office publishes on its about page; the owner has to say which is authoritative before launch.
 7. **Warnings in `docs/research/tools/*.mjs`** (9 ESLint warnings) — research scripts from the Cursor handoff, out of scope but still noise.
-5. **Breadcrumb on the home page is absent by design** — noted so nobody "fixes" it later.
+8. **Breadcrumb on the home page is absent by design** — noted so nobody "fixes" it later.
 
 ## 6. Deferred scope (blocked, not forgotten)
 
@@ -132,7 +145,7 @@ Also this session: #36 and #37 were rebased onto the updated #34 / #36 (the pagi
 
 ## 7. Next priorities (in order)
 
-1. **Owner review + merge #35 → #34 → #36** (this unblocks everything else).
+1. **Owner review + merge #35 → #34 → #36 → #37** (this unblocks everything else).
 2. News index pagination or "load more" (needs the URL-shape decision).
 3. FAQ / knowledge section once copy is approved.
 4. Weekly news refresh (a cron that re-runs the harvest; same scripts, guarded by the gates).
@@ -140,8 +153,9 @@ Also this session: #36 and #37 were rebased onto the updated #34 / #36 (the pagi
 
 ## 8. Owner decisions requested
 
-1. Approve merging the three draft PRs, in the order above.
-2. Decide the news index shape: keep one long page, or paginate (`/news/page/2`) / "load more".
+1. Approve merging the four draft PRs, in the order above.
+2. Approve or reject #37's pagination shape (`/news/` = page 1, `/news/page/2`…) versus one
+   long page with "load more" — the URL shape is hard to change after launch.
 3. Confirm that the CI workflow change in #36 (adding `npm test` + export integrity) is acceptable — it is the first workflow edit in this project.
 4. Decide whether the four photo-less news items should get a generic office photo (needs an approved asset) or stay photo-less.
 5. Say when to start on the real domain, so `SITE_URL` can be switched in one place.
