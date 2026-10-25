@@ -10,6 +10,7 @@ export const th = {
   a11y: {
     skipToContent: "ข้ามไปยังเนื้อหาหลัก",
   },
+  breadcrumbLabel: "เส้นทางนำทาง",
   header: {
     staffLogin: "เข้าสู่ระบบสำหรับบุคลากร",
     orgShort: "RAE",

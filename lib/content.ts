@@ -2,9 +2,9 @@
 // these are the shapes the page copy has to satisfy so that a page can always show
 // where its text came from and so that nothing is published without a source.
 //
-// The gate that enforces this on the raw content files is scripts/check-content.mjs
-// (`npm test`), because those files are TypeScript sources and the check must run
-// without a build step.
+// `SourceLine` in components/page-shell.tsx takes a Provenance, so a page cannot print
+// a source line without a url and a retrieval note. The gate over the raw content files
+// is tests/content.test.mjs (`npm test`), which needs no build step.
 
 export type Provenance = {
   /** Label in the page's own language, e.g. "ที่มาของข้อมูล" / "Source". */

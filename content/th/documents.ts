@@ -45,6 +45,7 @@ export const thDocuments = {
       ],
     },
   ],
+  backToIndex: "กลับไปหน้ารวมเอกสาร",
   note: "ไฟล์เอกสารอยู่บนระบบของมหาวิทยาลัย (rae.mju.ac.th / erp.mju.ac.th / researchex.mju.ac.th) — หน้านี้ลิงก์ไปที่ต้นทางโดยตรง ไม่ได้สำเนาไฟล์มาเก็บ",
   source: {
     label: "ที่มาของข้อมูล",

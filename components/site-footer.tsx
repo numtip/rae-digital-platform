@@ -1,4 +1,5 @@
 import type { SiteContent } from "@/lib/i18n";
+import { telHref } from "@/lib/phone";
 
 // Contact details are the only real links in the footer: every footer menu item
 // in the reference points at a page that does not exist yet, so those columns
@@ -21,7 +22,7 @@ export function SiteFooter({ content }: { content: SiteContent }) {
           <span className="font-medium text-white">{footer.contactLabel}</span>
           <span>{footer.address}</span>
           <a
-            href={`tel:${footer.phone.replace(/\s/g, "")}`}
+            href={`tel:${telHref(footer.phone)}`}
             className="w-fit hover:text-gold-500 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold-500"
           >
             {footer.phone}

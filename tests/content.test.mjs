@@ -24,11 +24,13 @@ const files = walk(CONTENT).filter((f) => f.endsWith(".ts"));
 const read = (f) => readFileSync(f, "utf8");
 const rel = (f) => f.slice(process.cwd().length + 1);
 
-test("content files exist for both locales", () => {
-  const th = files.filter((f) => f.includes("/th/")).length;
-  const en = files.filter((f) => f.includes("/en/")).length;
-  assert.ok(th > 0, "no Thai content files found");
-  assert.equal(th, en, `Thai has ${th} content files, English has ${en} — they must match`);
+test("every content file exists in both locales", () => {
+  // Compare names, not counts: a count check passes when one file per locale is renamed.
+  const name = (f) => f.slice(f.indexOf("/content/") + "/content/".length).replace(/^(th|en)\//, "");
+  const th = files.filter((f) => f.includes("/th/")).map(name).sort();
+  const en = files.filter((f) => f.includes("/en/")).map(name).sort();
+  assert.ok(th.length > 0, "no Thai content files found");
+  assert.deepEqual(en, th, `locale file sets differ — th only: ${th.filter((n) => !en.includes(n))}, en only: ${en.filter((n) => !th.includes(n))}`);
 });
 
 test("every url in content is https", () => {
@@ -41,14 +43,14 @@ test("every url in content is https", () => {
   assert.deepEqual(bad, [], `non-https urls:\n${bad.join("\n")}`);
 });
 
-test("every page that names a source also names when it was retrieved", () => {
+test("every source block names when it was retrieved", () => {
+  // Check ALL blocks in a file, not just the first: a page with two sources is legal.
   const missing = [];
   for (const file of files) {
     const src = read(file);
-    if (!src.includes("source: {")) continue;
-    const block = src.slice(src.indexOf("source: {"));
-    const end = block.indexOf("}");
-    if (!block.slice(0, end).includes("retrieved:")) missing.push(rel(file));
+    for (const m of src.matchAll(/source:\s*\{([^}]*)\}/g)) {
+      if (!m[1].includes("retrieved:")) missing.push(`${rel(file)}: ${m[1].trim().slice(0, 50)}`);
+    }
   }
   assert.deepEqual(missing, [], `source block without retrieved:\n${missing.join("\n")}`);
 });
@@ -76,9 +78,12 @@ test("no unresolved translation markers in content VALUES", () => {
 
 test("news items all carry a source date and a stable id", () => {
   const src = read(join(CONTENT, "th/news.ts"));
+  const enSrc = read(join(CONTENT, "en/news.ts"));
   const items = src.slice(src.indexOf("items: ["));
   const ids = [...items.matchAll(/nid: "(\d+)"/g)].map((m) => m[1]);
   const isos = [...items.matchAll(/dateIso: "([\d-]+)"/g)].map((m) => m[1]);
+  const enIds = [...enSrc.matchAll(/item\("(\d+)"/g)].map((m) => m[1]);
+  assert.deepEqual(enIds, ids, "English news ids must match the Thai list, in order");
   assert.ok(ids.length > 0, "no news items found");
   assert.equal(ids.length, isos.length, `${ids.length} items but ${isos.length} dates`);
   assert.equal(new Set(ids).size, ids.length, "duplicate nid in news items");

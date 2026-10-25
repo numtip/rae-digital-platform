@@ -86,6 +86,7 @@ export default async function NewsItemPage({ params }: Props) {
       <section className="bg-surface-50 py-12">
         <div className="mx-auto w-full max-w-4xl px-4">
           <Breadcrumb
+            locale={locale}
             trail={[
               { label: getContent(locale).nav.home, href: `/${locale}` },
               { label: news.hero.title, href: `/${locale}/news` },

@@ -48,6 +48,7 @@ export default async function DocumentCategory({ params }: Props) {
       <section className="bg-surface-50 py-16">
         <div className="mx-auto w-full max-w-4xl px-4">
           <Breadcrumb
+            locale={locale}
             trail={[
               { label: getContent(locale).nav.home, href: `/${locale}` },
               { label: documents.hero.title, href: `/${locale}/documents` },
@@ -79,7 +80,7 @@ export default async function DocumentCategory({ params }: Props) {
               className="rounded-md bg-brand-600 px-5 py-3 font-semibold text-white hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-500"
               href={`/${locale}/documents`}
             >
-              {documents.hero.title}
+              {documents.backToIndex}
             </Link>
           </div>
 

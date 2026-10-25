@@ -19,11 +19,11 @@ Legend — **Status**: ✅ implemented · 🟡 partial · ⬜ not started · ⛔
 | M01 | Public shell, routing, i18n, design system | BUILD | M15, M20 | 🟡 | `app/[locale]/layout.tsx`, `lib/i18n.ts` (NAV 7 links + search), `components/site-header.tsx`; `/knowledge` still absent | #29, #34 |
 | M02 | Homepage & content sections | BUILD | M14, M18 | 🟡 | `app/[locale]/page.tsx`: hero photo, real CTAs, section links; statistics still labelled sample data | — |
 | M03 | Document Center (public library) | BUILD | M15 | 🟡 | `/documents` + `/documents/category/<slug>` for 3 categories (10 outbound links), breadcrumb + `BreadcrumbList`; no record ids, versions or counts | #34 |
-| M04 | Knowledge & static pages | BUILD | M14 | 🟡 | `/about`, `/research`, `/services`, `/documents`, `/news`, `/search` exist; no FAQ/knowledge articles, no breadcrumb | — |
+| M04 | Knowledge & static pages | BUILD | M14 | 🟡 | `/about`, `/research`, `/services`, `/documents`, `/news`, `/contact`, `/search` exist and carry a breadcrumb + `BreadcrumbList`; no FAQ/knowledge articles | #34 |
 | M05 | Events & calendar | BUILD | M14 | ⬜ | no event route, no event data | — |
 | M06 | Global search | BUILD | M03, M04, M12, M14 | 🟡 | `/search` + `lib/search-index.ts` + `components/content-search.tsx`, header form, now indexes document categories and contact too; still no personnel (M12 absent) | #29, #34 |
 | M07 | Contact & FAQ | BUILD | M15, M20 | 🟡 | `/contact` renders the verified address/phone/email from `content/*/about.ts` + `site.ts`; **no form** (needs SMTP + PDPA basis) and no FAQ copy | #34 |
-| M08 | SEO, analytics, accessibility | BUILD | M01 | 🟡 | `app/sitemap.ts` (38 URLs), `app/robots.ts`, Organization JSON-LD, per-page canonical/hreflang, `NewsArticle` JSON-LD on news pages; no analytics, no automated axe/contrast gate | #30 |
+| M08 | SEO, analytics, accessibility | BUILD | M01 | 🟡 | `app/sitemap.ts` (146 URLs incl. paginated news and document categories), `app/robots.ts`, Organization JSON-LD, per-page canonical/hreflang, `NewsArticle` JSON-LD on news pages; no analytics, no automated axe/contrast gate | #30 |
 | M14 | News (data shape + detail pages) | BUILD | M15, M10 | 🟡 | full news items (title, date, type, body, image) in `content/th/news.ts`; `/news/[nid]` for 12 items × 2 locales; no authoring workflow, no revisions (that needs M10/M15) | #30 |
 
 ## Deferred / blocked modules

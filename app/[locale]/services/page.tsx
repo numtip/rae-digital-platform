@@ -34,6 +34,7 @@ export default async function Services({ params }: Props) {
       <section className="bg-surface-50 py-16">
         <div className="mx-auto w-full max-w-7xl px-4">
           <Breadcrumb
+            locale={locale}
             trail={[
               { label: getContent(locale).nav.home, href: `/${locale}` },
               { label: services.hero.title },
