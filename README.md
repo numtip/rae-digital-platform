@@ -1,14 +1,17 @@
 # rae-digital-platform
 
-แพลตฟอร์มดิจิทัลของสำนักวิจัยและส่งเสริมวิชาการการเกษตร (RAE) — มหาวิทยาลัยแม่โจ้
+แพลตฟอร์มดิจิทัลของสำนักวิจัยและบริการวิชาการ (RAE) — มหาวิทยาลัยแม่โจ้
 _Digital platform for the Office of Agricultural Research and Extension (RAE), Maejo University._
 
 Repo นี้เป็น **canonical development repository** สำหรับ Cursor และ Hermes: เอกสารสถาปัตยกรรม,
 ข้อกำหนด, หลักฐานงานวิจัย และ design reference ทั้งหมดอยู่ในที่นี้
 
-> **สถานะปัจจุบัน:** เอกสารเท่านั้น (docs-only) — ยังไม่มีโค้ดแอปพลิเคชันบน `main`
-> PR แรกคือ `docs/initial-architecture` ซึ่งนำเข้าเอกสารสถาปัตยกรรมที่ผ่านการตรวจแล้ว
-> โค้ด Phase 1 ถูก scaffold แยกบน branch `chore/phase1-scaffold`
+> **สถานะปัจจุบัน (อัปเดต 2026-10-24):** `main` ยังเป็น docs-only — ยังไม่มีโค้ดแอปพลิเคชัน
+> เรียงตามลำดับที่จะ merge: **PR #1** `chore/phase1-scaffold` (Next.js + TS + Tailwind + CI) ก่อน
+> แล้วจึง **PR #3** `docs/initial-architecture` (เอกสารชุดนี้) และ PR ปรับ README นี้ให้ตรงขอบเขต Phase 1
+>
+> `main` ถูกป้องกันแล้ว: ต้องผ่าน PR + required check `build` + review 1 คน, ห้าม force-push/ลบ branch
+> ไม่มี auto-merge และไม่มีการ deploy อัตโนมัติ
 
 ---
 
@@ -29,21 +32,26 @@ Repo นี้เป็น **canonical development repository** สำหรั�
 
 ---
 
-## 2. ลำดับความสำคัญ Phase 1 (Foundation)
+## 2. ลำดับความสำคัญ Phase 1 (public website เท่านั้น)
 
-Phase 1 คือ **6 สัปดาห์ foundation เท่านั้น** ยังไม่เปิดหน้าเว็บ public จริง
+**การตัดสินใจของเจ้าของโครงการ (2026-10-24):** Phase 1 = **หน้าเว็บ public เท่านั้น**
+ระบบภายใน, CMS backend และ AI module เลื่อนไปเป็น Phase ถัดไปที่ต้องอนุมัติแยก
 
-1. Repo + CI + design tokens + การบังคับใช้ token (ไม่มี raw hex, ไม่มี `href="#"`)
-2. Prisma schema ฝั่ง identity/organisation + migration + seed
-3. Authentication: local (Argon2id + TOTP) ก่อน, Entra ID OIDC ตามหลัง flag
-4. Session แบบ opaque ใน DB + middleware guard + permission catalogue
-5. Admin shell (dark mode), จัดการผู้ใช้/บทบาท, audit trail
-6. หน่วยงาน + media library (derivative หลายขนาด, บังคับ alt)
-7. Settings (SMTP, ชื่อองค์กร, maintenance mode) + job runner
-8. Public shell ด้วย token จาก Stitch V2 + nav 7 เมนูจริง + `<html lang>` ถูกต้อง
+ลำดับที่ใช้จริง:
 
-**Gate ของ Phase 1:** ทุก endpoint ของ admin ต้องมี `requirePermission` (เทสต์ยืนยัน 403),
-ทุก mutation เขียน audit row, axe = 0 บนหน้า login + users list, CI เขียว
+1. Repo + CI (typecheck, build, secret scan) + branch protection + design tokens จาก Stitch V2
+2. Public shell: `app/` (Next.js App Router) + nav 7 เมนู + `<html lang>` + SEO พื้นฐาน
+3. หน้าเนื้อหาชุดแรกจาก design reference — ข้อความทุกจุดต้องมาจากเอกสาร RAE จริง ห้ามแต่ง
+4. Accessibility + performance gate (axe = 0 บนหน้าที่ส่งมอบ, ไม่มี raw hex, ไม่มี `href="#"`)
+
+**Gate ของ Phase 1 (public website):** CI เขียวทุก PR, required check `build` ต้องรายงานทุก PR
+(ข้ามเฉพาะ step ที่ไม่เกี่ยว ไม่ข้าม workflow), axe = 0, ไม่มี credential/internal endpoint ใน repo
+
+> **ข้อต่างที่ต้องรู้:** `docs/architecture/DEVELOPMENT_ROADMAP.md` และ
+> `MODULE_REQUIREMENTS_MATRIX.md` ยังเขียน Phase 1 = foundation 6 สัปดาห์ (identity/DB/admin shell)
+> ตามงานวิจัยรอบก่อน เอกสารเหล่านั้น **ไม่ถูกแก้ใน PR นี้** — ต้องมี PR แยกเพื่อจัดลำดับ phase
+> ให้ตรงกับการตัดสินใจข้างบน ก่อนเริ่มงาน Phase 2 ระบบภายใน (identity, session, admin shell, Prisma schema,
+> media library, settings) ถูกเก็บไว้เป็น **Phase 2** ตามลำดับเดิมในเอกสาร ไม่ได้ตัดทิ้ง
 
 Module ทั้ง 29 รายการพร้อมลำดับ phase: `docs/architecture/MODULE_REQUIREMENTS_MATRIX.md`
 
@@ -114,15 +122,18 @@ public อ่านอย่างเดียว (read-only projection), admin 
 - ถ้า Agent Core ยังไม่ enroll โครงการนี้ → รายงาน `PROJECT_ENROLLMENT_REQUIRED` แล้วหยุด
 - งานที่แตะ security (auth, session, permission, upload, audit) ต้องมีเทสต์ปฏิเสธสิทธิ์ (403) ทุกครั้ง
 
-**สถานะ gate ที่ยังเปิดอยู่**
+**สถานะ gate**
 
 | Gate | เรื่อง | สถานะ |
 |---|---|---|
-| A-0 | Agent Core project identity สำหรับ repo นี้ | ❌ ยังไม่มี (`PROJECT_ENROLLMENT_REQUIRED`) |
+| A-0 | Agent Core project identity สำหรับ repo นี้ | ✅ enrolled 2026-10-24 (identity แยกของ repo นี้, scope decision/route/context/qa/metrics) |
 | A-1 | Hosting: Node runtime, MySQL version, TLS, backup | ⏳ รอ MJU IT |
-| A-2 | ยืนยัน Stitch V2 เป็น baseline (repo เดิมมี V6) | ⏳ รอ owner |
+| A-2 | ยืนยัน Stitch V2 เป็น baseline (repo เดิมมี V6) | ✅ อนุมัติโดยเจ้าของ 2026-10-24 (ADR-0002) |
 | A-3 | Entra ID OIDC contract + test account | ⏳ รอ MJU IT |
 | A-4 | PDPA basis สำหรับทำเนียบผู้เชี่ยวชาญ | ⏳ รอ RAE + legal |
+| A-5 | Branch protection + required check `build` บน `main` | ✅ เปิดใช้แล้ว 2026-10-24 (ยังมี bypass ของ admin — รอ identity อัตโนมัติแยก) |
+| A-6 | GitHub automation identity (least privilege, ไม่มี admin/bypass) | ⏳ **owner-only** — ต้องสร้างบัญชี/App เอง |
+| A-7 | Issue ที่อนุมัติแล้ว (`agent-ready`) สำหรับ nightly | ⏳ ยังไม่มี |
 
 ---
 
@@ -131,12 +142,21 @@ public อ่านอย่างเดียว (read-only projection), admin 
 - เปลี่ยนโค้ดผ่าน branch → Pull Request → CI ผ่าน → **Prinya อนุมัติแล้วจึง merge**
 - ไม่มี auto-merge และไม่มีการ deploy ขึ้น production อัตโนมัติ
 - ไม่ commit ความลับ (key/token/รหัส) — เก็บในไฟล์สิทธิ์ 0600 บนโฮสต์เท่านั้น
+- required check `build` ต้องรายงาน **ทุก** PR — PR ที่เป็นเอกสารล้วนให้ข้ามเฉพาะ step ของแอป ไม่ใช่ข้าม workflow
 
 ## Nightly development
 
 แผน: ทำงานอัตโนมัติช่วง 01:00 และสรุปรายงานทาง Telegram 07:00 (Asia/Bangkok)
-— **ยังไม่เปิดใช้งาน** จนกว่าจะผ่าน security gate ครบ (branch protection, required checks,
-Agent Core project enrollment) การ sync เอกสารครั้งนี้ **ไม่** เปิดใช้งาน nightly development
+**ยังไม่เปิดใช้งาน** — เปิดได้เมื่อครบทุกข้อ:
+
+1. automation identity แยกที่มี least privilege (ข้อ A-6) — ยังไม่มี จึงยังใช้สิทธิ์เจ้าของ
+2. branch protection + required CI บังคับใช้โดยไม่มี bypass — เปิดแล้วบางส่วน (A-5)
+3. PR #1 และ PR #3 integrate เสร็จและเจ้าของอนุมัติ
+4. Agent Core อนุญาตให้เริ่มรัน (ปัจจุบันให้ **HOLD**)
+5. มี issue ที่ติด label `agent-ready` และเจ้าของอนุมัติแล้ว
+
+นโยบายเมื่อเปิด: 1 issue ที่อนุมัติ → Agent Core decision/route → subagent เมื่อคุ้ม → implement → QA →
+Draft PR → รายงานเช้า ห้าม merge/deploy เอง ห้ามขยาย scope เกิน issue
 
 ## License
 
