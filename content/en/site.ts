@@ -72,7 +72,9 @@ export const en: SiteContent = {
     // confirmation there (see the note in content/th/site.ts).
     stats: {
       title: "Outputs and statistics",
-      subtitle: "(brief figures)",
+      // Sample figures from the Stitch V2 design reference — not verified
+      // organisational KPIs. Never present them as official numbers.
+      subtitle: "(sample data from the prototype — pending office verification)",
       more: "View all statistics",
       items: [
         { label: "Active research projects", value: "586", unit: "projects" },
