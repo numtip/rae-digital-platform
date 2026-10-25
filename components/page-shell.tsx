@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SITE_URL } from "@/lib/i18n";
 
 // Shared shell for the interior content pages, so five pages do not each carry
 // their own copy of the hero band, the card style and the source line.
@@ -34,6 +35,18 @@ export function SourceLine({ label, url, retrieved }: { label: string; url: stri
 // Home › section › this page. The last crumb is plain text because a link to the
 // page you are on is noise for both sighted and screen-reader users.
 export function Breadcrumb({ trail }: { trail: { label: string; href?: string }[] }) {
+  // The visible trail and the BreadcrumbList carry the same items, built once, so they
+  // cannot disagree. Absolute URLs come from SITE_URL for the structured data only.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: trail.map((crumb, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: crumb.label,
+      ...(crumb.href ? { item: `${SITE_URL}${crumb.href}/` } : {}),
+    })),
+  };
   return (
     <nav aria-label="breadcrumb" className="mb-6">
       <ol className="flex flex-wrap items-center gap-2 text-sm text-neutral-600">
@@ -54,6 +67,7 @@ export function Breadcrumb({ trail }: { trail: { label: string; href?: string }[
           </li>
         ))}
       </ol>
+      <script dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} type="application/ld+json" />
     </nav>
   );
 }

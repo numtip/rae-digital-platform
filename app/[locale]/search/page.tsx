@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ContentSearch } from "@/components/content-search";
-import { PageHero } from "@/components/page-shell";
-import { getSearch, isLocale } from "@/lib/i18n";
+import { Breadcrumb, PageHero } from "@/components/page-shell";
+import { getContent, getSearch, isLocale } from "@/lib/i18n";
 import { buildSearchIndex } from "@/lib/search-index";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -32,6 +32,12 @@ export default async function Search({ params }: Props) {
       <PageHero title={search.hero.title} lead={search.hero.lead} />
       <section className="bg-surface-50 py-16">
         <div className="mx-auto w-full max-w-7xl px-4">
+          <Breadcrumb
+            trail={[
+              { label: getContent(locale).nav.home, href: `/${locale}` },
+              { label: search.hero.title },
+            ]}
+          />
           <Suspense fallback={<p className="text-neutral-700">{search.labels.empty}</p>}>
             <ContentSearch entries={buildSearchIndex(locale)} labels={search.labels} />
           </Suspense>

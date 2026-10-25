@@ -41,21 +41,6 @@ export default async function DocumentCategory({ params }: Props) {
   const group = documents.groups.find((entry) => entry.slug === slug);
   if (!group) notFound();
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: getContent(locale).nav.home, item: `${SITE_URL}/${locale}/` },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: documents.hero.title,
-        item: `${SITE_URL}/${locale}/documents/`,
-      },
-      { "@type": "ListItem", position: 3, name: group.title },
-    ],
-  };
-
   return (
     <main id="main-content" tabIndex={-1}>
       <PageHero title={group.title} lead={documents.hero.lead} />
@@ -104,7 +89,6 @@ export default async function DocumentCategory({ params }: Props) {
         </div>
       </section>
 
-      <script dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} type="application/ld+json" />
     </main>
   );
 }

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { NewsImage } from "@/components/news-image";
-import { CARD, ExternalLink, PageHero, SourceLine } from "@/components/page-shell";
-import { getNews, isLocale } from "@/lib/i18n";
+import { Breadcrumb, CARD, ExternalLink, PageHero, SourceLine } from "@/components/page-shell";
+import { getContent, getNews, isLocale } from "@/lib/i18n";
 
 // Headlines, dates and lead images come from content/<locale>/news.ts — a dated
 // snapshot of the official news list. Each item opens its own page; the office
@@ -39,6 +39,12 @@ export default async function News({ params }: Props) {
 
       <section className="bg-surface-50 py-16">
         <div className="mx-auto w-full max-w-7xl px-4">
+          <Breadcrumb
+            trail={[
+              { label: getContent(locale).nav.home, href: `/${locale}` },
+              { label: news.hero.title },
+            ]}
+          />
           <p className="mb-6 text-sm text-neutral-600">{news.snapshotNote}</p>
 
           <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

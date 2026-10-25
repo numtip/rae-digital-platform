@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CARD, PageHero, SourceLine } from "@/components/page-shell";
+import { Breadcrumb, CARD, PageHero, SourceLine } from "@/components/page-shell";
 import { getAbout, getContent, isLocale } from "@/lib/i18n";
 
 // Rendered only from copy that is already in the repo: the office's own contact
@@ -36,6 +36,12 @@ export default async function Contact({ params }: Props) {
 
       <section className="bg-surface-50 py-16">
         <div className="mx-auto w-full max-w-4xl px-4">
+          <Breadcrumb
+            trail={[
+              { label: getContent(locale).nav.home, href: `/${locale}` },
+              { label: site.nav.contact },
+            ]}
+          />
           <div className={CARD}>
             <dl className="space-y-6 text-neutral-700">
               <div>
