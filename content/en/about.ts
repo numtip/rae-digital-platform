@@ -1,0 +1,95 @@
+// English copy for /en/about/ — a faithful translation of content/th/about.ts,
+// which is the source of truth. No new facts are introduced here; numbers,
+// dates, names and the address/phone/e-mail values are carried over unchanged.
+import type { AboutContent } from "../th/about";
+
+export const enAbout: AboutContent = {
+  meta: {
+    title: "About us — The Office of Research and Academic Services",
+    description:
+      "History, philosophy, vision, mission and contact details of The Office of Research and Academic Services, Maejo University.",
+  },
+  hero: {
+    title: "About us",
+    lead: "A faculty-equivalent office committed to research and academic services for society, built on an agricultural foundation and aiming at international standing.",
+  },
+  philosophy: {
+    title: "Philosophy",
+    text: "To develop and administer research and academic services for society, with agriculture as the foundation.",
+  },
+  vision: {
+    title: "Vision",
+    text: "To be the centre for the administration of research and academic services that drives the university to international standing.",
+  },
+  mission: {
+    title: "Mission",
+    items: [
+      "Build and develop the research and academic-service administration system.",
+      "Develop the capacity and potential of researchers and academic-service staff.",
+      "Apply knowledge to solve problems, develop communities and generate income.",
+    ],
+  },
+  history: {
+    title: "History",
+    items: [
+      {
+        year: "1975",
+        title: "The office is founded",
+        text: "Founded together with the Faculty of Agricultural Production and the Faculty of Business Administration in Agriculture, with three divisions: research, training and agricultural extension.",
+      },
+      {
+        year: "1979",
+        title: "Plant and animal propagation division established",
+        text: "Responsible for producing and propagating plants and animals as a service to the community.",
+      },
+      {
+        year: "1980",
+        title: "Highland agriculture development division established",
+        text: "Responsible for academic services to highland farmers in support of royal-initiated projects.",
+      },
+      {
+        year: "2000",
+        title: "Responsibility for the International Study and Training Centre",
+        text: "Assigned by the university to manage the International Study and Training Centre.",
+      },
+      {
+        year: "2014",
+        title: "Organic agriculture strategy",
+        text: "The university designated royal-initiated projects as a core strategy, aiming to become an Organic University.",
+      },
+      {
+        year: "2019",
+        title: "Organisational restructuring",
+        text: "Divided into three divisions: the office administration division, the research administration division and the academic-service administration division.",
+      },
+    ],
+  },
+  contact: {
+    title: "Address and contact",
+    addressLabel: "Address",
+    addressLines: [
+      "3rd floor, Chalerm Phrakiat Somdet Phra Thep Rattana Ratchasuda Building",
+      "63 Moo 4, Nong Han, San Sai, Chiang Mai 50290, Thailand",
+    ],
+    phoneLabel: "Phone",
+    phone: "(+66) 0 5387 3400",
+    emailLabel: "E-mail",
+    emails: ["raemju@gmail.com", "researchmju@mju.ac.th"],
+  },
+  images: {
+    building: {
+      alt: "Office building of The Office of Research and Academic Services, Maejo University",
+    },
+    annex: {
+      alt: "Second office building of The Office of Research and Academic Services",
+    },
+    logo: {
+      alt: "Emblem of The Office of Research and Academic Services",
+    },
+  },
+  source: {
+    label: "Source",
+    url: "https://rae.mju.ac.th/wtms_about.aspx?lang=th-TH",
+    retrieved: "Retrieved 25 October 2026",
+  },
+};
