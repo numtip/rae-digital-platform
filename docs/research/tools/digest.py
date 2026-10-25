@@ -1,3 +1,4 @@
+# Requires EVIDENCE/probe/probe_*.json from the research workspace (and Windows-style paths) — excluded from this repo, so this script cannot run here as shipped.
 import json, glob, os, sys
 
 files = sorted(glob.glob(r"EVIDENCE\probe\probe_*.json"))

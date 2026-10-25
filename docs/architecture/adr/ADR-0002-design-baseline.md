@@ -1,6 +1,6 @@
 # ADR-0002 — Design baseline and colour authority
 
-- **Status:** Proposed (gate A-2 unresolved)
+- **Status:** **Approved (2026-10-24)** — gate A-2 closed: the owner approved Stitch Landing V2 as the design baseline.
 - **Date:** 2026-10-24
 - **Context doc:** `../DESIGN_SYSTEM_RECONCILIATION.md`
 
@@ -38,6 +38,7 @@ Additionally, two ACL failures exist in the baseline: white text on `#D8A01A` = 
 - Any new colour must be added to the token table with a computed ratio, not chosen by eye.
 - **Gate A-2:** repo docs state that Stitch V6 superseded V2. The owner must confirm V2 remains
   the baseline; if V6 wins, sections must be re-reconciled before Phase 2 UI work.
+  → **Resolved 2026-10-24:** the owner approved Stitch Landing V2 as the design baseline; V6 is not adopted.
 
 ## Enforcement
 

@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Date** | 2026-10-24 |
-| **Requirement source** | `exitfull.txt` — every capability block traced 1:1 in §5 (30 rows, 0 unowned) |
+| **Requirement source** | `exitfull.txt` — every capability block traced 1:1 in §5 (30 blocks → 30 rows, 29 owned + 1 deferred, 0 unowned) |
 | **Architecture** | `RAE_PLATFORM_ARCHITECTURE.md` (Option 1 — modular monolith, recommended) |
 | **Status** | `RAE_ARCHITECTURE_READY_FOR_REVIEW` · blocker `PROJECT_ENROLLMENT_REQUIRED` |
 
@@ -101,6 +101,8 @@ Phase 1 foundation → 2 content → 3 operations I → 4 operations II → 5 in
 ## 5. `exitfull.txt` coverage check
 
 Every enumerated capability block is owned by at least one module. This table is the traceability record.
+`exitfull.txt` has **30 capability blocks** (sections 1–30, delimited by `⸻`); section 31
+`ผลลัพธ์ที่ต้องการ` is the expected-outcome summary, not a capability block. Rows are numbered 1–30.
 
 | # | Capability block in `exitfull.txt` | Owner module(s) | Class |
 |---|---|---|---|
@@ -133,9 +135,9 @@ Every enumerated capability block is owned by at least one module. This table is
 | 27 | Security: CSRF/XSS/SQLi/hash/roles/timeout/captcha/HTTPS | X-01…X-07 + M10/M11 | BUILD |
 | 28 | Backup: auto/manual/restore/download | M22 | BUILD |
 | 29 | Uploads: types, size limit, rename, preview | M15 | BUILD |
-| AI | AI search/summarise/chatbot/write/Q&A/dashboard | M37 | DEFER |
+| 30 | AI search/summarise/chatbot/write/Q&A/dashboard | M37 | DEFER |
 
-**Coverage: 30/30 blocks assigned. 0 unowned requirements.**
+**Coverage: 30/30 blocks assigned — 29 owned by a BUILD/INTEGRATE module + 1 deferred (block 30 → M37). 0 unowned requirements.**
 
 ---
 
@@ -158,7 +160,7 @@ Every enumerated capability block is owned by at least one module. This table is
 
 | Item | Decision | Trigger to revisit |
 |---|---|---|
-| M37 AI features | DEFER to phase 5 | A named provider with a data-processing agreement + budget cap |
+| M37 AI features (`exitfull.txt` block 30 — the only block with no BUILD/INTEGRATE owner) | DEFER to phase 5 | A named provider with a data-processing agreement + budget cap |
 | LINE Notify / Telegram | DEFER | Staff request + token provisioning |
 | Weather widget | DEFER | A licensed free-tier API is approved |
 | Microsoft Graph document proxy | EXCLUDED (v1) | A validated need to serve files that SharePoint cannot share externally |

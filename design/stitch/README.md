@@ -4,9 +4,9 @@
 
 | ของ | สถานะ | ใช้ทำอะไร |
 |---|---|---|
-| **Stitch Landing V2 (React port)** ใน `numtip/rae-nextjs-main` | ✅ **approved design baseline** | ต้นแบบ UI ที่จะ implement จริง |
+| **Stitch Landing V2 (React port)** ใน `numtip/rae-nextjs-main` | ✅ **approved design baseline** (เจ้าของอนุมัติ **2026-10-24**) | ต้นแบบ UI ที่จะ implement จริง |
 | `stitch-landing-v2.reference.html` (ไฟล์ในโฟลเดอร์นี้) | 📐 enhancement reference | เทียบlayout/ระยะ/ลำดับ section; **ห้ามใช้เป็นโค้ด production** |
-| Stitch Landing V6 (ใน repo เดียวกัน) | ⏸ frozen alternative | รอ gate A-2 |
+| Stitch Landing V6 (ใน repo เดียวกัน) | ⏸ frozen alternative — ไม่ถูกใช้ | gate A-2 ปิดแล้ว (2026-10-24): V2 เป็น baseline |
 
 ## ไฟล์ในโฟลเดอร์นี้
 
