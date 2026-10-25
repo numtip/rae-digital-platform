@@ -30,6 +30,9 @@ export default async function News({ params }: Props) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const news = getNews(locale);
+  // Untranslated items fall back to the Thai headline rather than a guess.
+  const thaiTitles = new Map(getNews("th").items.map((entry) => [entry.nid, entry.title]));
+  const thaiTitle = (nid: string) => thaiTitles.get(nid) ?? nid;
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -43,19 +46,26 @@ export default async function News({ params }: Props) {
             {news.items.map((item) => (
               <li key={item.nid} className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
                 <Link className="group block" href={`/${locale}/news/${item.nid}`}>
-                  <Image
-                    alt={item.image.alt}
-                    className="h-44 w-full object-cover"
-                    height={800}
-                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                    src={asset(item.image.src)}
-                    width={1200}
-                  />
+                  {item.image ? (
+                    <Image
+                      alt={item.image.alt}
+                      className="h-44 w-full object-cover"
+                      height={800}
+                      sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                      src={asset(item.image.src)}
+                      width={1200}
+                    />
+                  ) : (
+                    <div aria-hidden="true" className="h-2 bg-brand-600/20" />
+                  )}
                   <div className="p-5">
                     <p className="text-xs font-semibold text-gold-600">{item.date}</p>
                     <h2 className="mt-2 text-lg font-bold leading-snug text-neutral-800 group-hover:text-brand-600">
-                      {item.title}
+                      {item.title || thaiTitle(item.nid)}
                     </h2>
+                    {!item.title && news.labels.headlineThaiOnly && (
+                      <p className="mt-1 text-xs text-neutral-500">{news.labels.headlineThaiOnly}</p>
+                    )}
                     <p className="mt-3 text-sm font-semibold text-brand-600 underline underline-offset-2">
                       {news.labels.read}
                     </p>

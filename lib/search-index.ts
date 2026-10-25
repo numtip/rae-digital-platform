@@ -76,8 +76,9 @@ export function buildSearchIndex(locale: Locale): SearchEntry[] {
 
   const news = getNews(locale);
   page(`${base}/news`, news.hero.title, join(news.hero.lead, news.snapshotNote, news.categories.items));
+  const thaiNews = new Map(getNews("th").items.map((entry) => [entry.nid, entry.title]));
   news.items.forEach((entry) =>
-    item(`${base}/news/${entry.nid}`, entry.title, join(entry.date, entry.type, entry.body)),
+    item(`${base}/news/${entry.nid}`, entry.title || thaiNews.get(entry.nid) || entry.nid, join(entry.date, entry.type, entry.body)),
   );
 
   return entries;

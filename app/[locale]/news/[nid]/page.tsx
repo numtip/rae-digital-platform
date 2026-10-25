@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: item.title,
       type: "article",
-      images: [{ url: item.image.src }],
+      images: item.image ? [{ url: item.image.src }] : [],
     },
   };
 }
@@ -51,16 +51,18 @@ export default async function NewsItemPage({ params }: Props) {
   if (!item) notFound();
 
   // Bodies exist in Thai only; show them in both locales, labelled honestly.
-  const body = item.body.length > 0 ? item.body : (getNews("th").items.find((e) => e.nid === nid)?.body ?? []);
+  const thai = getNews("th").items.find((entry) => entry.nid === nid);
+  const body = item.body.length > 0 ? item.body : (thai?.body ?? []);
+  const title = item.title || thai?.title || nid;
   const showThaiOnlyNotice = item.body.length === 0 && body.length > 0;
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
-    headline: item.title,
+    headline: item.title || title,
     datePublished: item.dateIso,
     inLanguage: "th",
-    image: [`${SITE_URL}${asset(item.image.src)}`],
+    image: item.image ? [`${SITE_URL}${asset(item.image.src)}`] : undefined,
     publisher: { "@type": "Organization", name: getContent(locale).header.orgFull },
   };
 
@@ -71,7 +73,10 @@ export default async function NewsItemPage({ params }: Props) {
           <p className="text-sm text-neutral-200">
             {news.labels.type}: {item.type}
           </p>
-          <h1 className="mt-2 text-3xl font-bold leading-tight md:text-4xl">{item.title}</h1>
+          <h1 className="mt-2 text-3xl font-bold leading-tight md:text-4xl">{title}</h1>
+          {!item.title && news.labels.headlineThaiOnly && (
+            <p className="mt-2 text-sm text-neutral-300">{news.labels.headlineThaiOnly}</p>
+          )}
           <p className="mt-3 text-neutral-200">
             {news.labels.published}: {item.date}
           </p>
@@ -80,15 +85,17 @@ export default async function NewsItemPage({ params }: Props) {
 
       <section className="bg-surface-50 py-12">
         <div className="mx-auto w-full max-w-4xl px-4">
-          <Image
-            alt={item.image.alt}
-            className="w-full rounded-lg object-cover shadow-sm"
-            height={800}
-            priority
-            sizes="(min-width: 1024px) 56rem, 100vw"
-            src={asset(item.image.src)}
-            width={1200}
-          />
+          {item.image && (
+            <Image
+              alt={item.image.alt}
+              className="w-full rounded-lg object-cover shadow-sm"
+              height={800}
+              priority
+              sizes="(min-width: 1024px) 56rem, 100vw"
+              src={asset(item.image.src)}
+              width={1200}
+            />
+          )}
 
           <div className={`${CARD} mt-6`}>
             {showThaiOnlyNotice && (
