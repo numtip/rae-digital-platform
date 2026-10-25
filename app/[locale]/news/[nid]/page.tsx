@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { NewsImage } from "@/components/news-image";
 import { CARD, SourceLine } from "@/components/page-shell";
 import { asset } from "@/lib/assets";
 import { SITE_URL, getContent, getNews, isLocale } from "@/lib/i18n";
@@ -86,14 +86,12 @@ export default async function NewsItemPage({ params }: Props) {
       <section className="bg-surface-50 py-12">
         <div className="mx-auto w-full max-w-4xl px-4">
           {item.image && (
-            <Image
-              alt={item.image.alt}
-              className="w-full rounded-lg object-cover shadow-sm"
-              height={800}
-              priority
+            <NewsImage
+              alt={item.image.alt || title}
+              className="aspect-[16/10] w-full rounded-lg object-cover shadow-sm"
+              eager
               sizes="(min-width: 1024px) 56rem, 100vw"
-              src={asset(item.image.src)}
-              width={1200}
+              src={item.image.src}
             />
           )}
 

@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { NewsImage } from "@/components/news-image";
 import { CARD, ExternalLink, PageHero, SourceLine } from "@/components/page-shell";
-import { asset } from "@/lib/assets";
 import { getNews, isLocale } from "@/lib/i18n";
 
 // Headlines, dates and lead images come from content/<locale>/news.ts — a dated
@@ -47,13 +46,11 @@ export default async function News({ params }: Props) {
               <li key={item.nid} className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
                 <Link className="group block" href={`/${locale}/news/${item.nid}`}>
                   {item.image ? (
-                    <Image
-                      alt={item.image.alt}
+                    <NewsImage
+                      alt={item.image.alt || item.title || thaiTitle(item.nid)}
                       className="h-44 w-full object-cover"
-                      height={800}
                       sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                      src={asset(item.image.src)}
-                      width={1200}
+                      src={item.image.src}
                     />
                   ) : (
                     <div aria-hidden="true" className="h-2 bg-brand-600/20" />
