@@ -1,7 +1,15 @@
 import { en } from "@/content/en/site";
 import { enAbout } from "@/content/en/about";
+import { enDocuments } from "@/content/en/documents";
+import { enNews } from "@/content/en/news";
+import { enResearch } from "@/content/en/research";
+import { enServices } from "@/content/en/services";
 import { th, type SiteContent } from "@/content/th/site";
 import { thAbout, type AboutContent } from "@/content/th/about";
+import { thDocuments, type DocumentsContent } from "@/content/th/documents";
+import { thNews, type NewsContent } from "@/content/th/news";
+import { thResearch, type ResearchContent } from "@/content/th/research";
+import { thServices, type ServicesContent } from "@/content/th/services";
 
 export const LOCALES = ["th", "en"] as const;
 export type Locale = (typeof LOCALES)[number];
@@ -9,12 +17,20 @@ export const DEFAULT_LOCALE: Locale = "th";
 
 export type { SiteContent } from "@/content/th/site";
 export type { AboutContent } from "@/content/th/about";
+export type { ResearchContent } from "@/content/th/research";
+export type { ServicesContent } from "@/content/th/services";
+export type { DocumentsContent } from "@/content/th/documents";
+export type { NewsContent } from "@/content/th/news";
 
 const CONTENT: Record<Locale, SiteContent> = { th, en };
 
 // One entry per page whose copy lives in its own file. The TH file defines the
 // shape, so a missing/extra English key fails `npm run typecheck`.
 const ABOUT: Record<Locale, AboutContent> = { th: thAbout, en: enAbout };
+const RESEARCH: Record<Locale, ResearchContent> = { th: thResearch, en: enResearch };
+const SERVICES: Record<Locale, ServicesContent> = { th: thServices, en: enServices };
+const DOCUMENTS: Record<Locale, DocumentsContent> = { th: thDocuments, en: enDocuments };
+const NEWS: Record<Locale, NewsContent> = { th: thNews, en: enNews };
 
 export function isLocale(value: string): value is Locale {
   return (LOCALES as readonly string[]).includes(value);
@@ -28,6 +44,22 @@ export function getAbout(locale: Locale): AboutContent {
   return ABOUT[locale];
 }
 
+export function getResearch(locale: Locale): ResearchContent {
+  return RESEARCH[locale];
+}
+
+export function getServices(locale: Locale): ServicesContent {
+  return SERVICES[locale];
+}
+
+export function getDocuments(locale: Locale): DocumentsContent {
+  return DOCUMENTS[locale];
+}
+
+export function getNews(locale: Locale): NewsContent {
+  return NEWS[locale];
+}
+
 // Each language named in that language — a switcher label readers recognise.
 export const LOCALE_LABEL: Record<Locale, string> = { th: "ไทย", en: "English" };
 
@@ -36,14 +68,14 @@ export const LOCALE_LABEL: Record<Locale, string> = { th: "ไทย", en: "Engl
 export const NAV: { key: keyof SiteContent["nav"]; href?: (locale: Locale) => string }[] = [
   { key: "home", href: (locale) => `/${locale}` },
   { key: "about", href: (locale) => `/${locale}/about` },
-  { key: "research" },
-  { key: "services" },
-  { key: "documents" },
-  { key: "news" },
+  { key: "research", href: (locale) => `/${locale}/research` },
+  { key: "services", href: (locale) => `/${locale}/services` },
+  { key: "documents", href: (locale) => `/${locale}/documents` },
+  { key: "news", href: (locale) => `/${locale}/news` },
 ];
 
 // Interior pages that exist in every locale, in the order the sitemap lists them.
-export const PAGES = ["about"] as const;
+export const PAGES = ["about", "research", "services", "documents", "news"] as const;
 
 // shortcut: placeholder origin until the owner names the production domain;
 // canonical/hreflang/sitemap need an absolute base, so set NEXT_PUBLIC_SITE_URL

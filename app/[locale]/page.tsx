@@ -1,4 +1,7 @@
+import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { asset } from "@/lib/assets";
 import { getContent, isLocale } from "@/lib/i18n";
 
 // Nothing here is invented: every string comes from content/<locale>/site.ts,
@@ -11,12 +14,14 @@ function SectionHead({
   title,
   subtitle,
   more,
+  moreHref,
   notAvailable,
 }: {
   id: string;
   title: string;
   subtitle?: string;
   more?: string;
+  moreHref?: string;
   notAvailable: string;
 }) {
   return (
@@ -46,10 +51,19 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
   return (
     <main id="main-content" tabIndex={-1}>
-      {/* TODO(issue #2): real RAE hero photo + the dark scrim that sits over it.
-          The reference photo is a Google hotlink (forbidden), so the hero is the
-          brand token until the owner supplies the asset. */}
-      <section className="flex min-h-[600px] items-center bg-brand-700">
+      {/* Hero photograph is the office's own building, taken from the official
+          site (see public/README.md). brand-700 stays underneath so the text is
+          readable even before the image loads. */}
+      <section className="relative flex min-h-[600px] items-center bg-brand-700">
+        <Image
+          src={asset("/images/about/office-building.webp")}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div aria-hidden="true" className="absolute inset-0 bg-brand-700/80" />
         <div className="relative mx-auto w-full max-w-7xl px-4">
           <div className="text-white">
             <h1 className="mb-4 max-w-2xl text-4xl font-bold leading-tight md:text-5xl lg:max-w-4xl lg:text-6xl">
@@ -62,22 +76,18 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                 Disabled <button>s speak the truth to screen readers; no dead anchors.
                 Gold keeps dark text: white on gold-500 is 2.3:1 and would fail AA. */}
             <div className="flex flex-wrap gap-4">
-              <button
-                type="button"
-                disabled
-                title={header.notAvailable}
-                className="rounded-md bg-brand-500 px-8 py-3 font-medium text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
+              <Link
+                href={`/${locale}/services`}
+                className="rounded-md bg-brand-500 px-8 py-3 font-medium text-white shadow-lg hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-500"
               >
                 {hero.primaryCta}
-              </button>
-              <button
-                type="button"
-                disabled
-                title={header.notAvailable}
-                className="rounded-md bg-gold-500 px-8 py-3 font-medium text-brand-700 shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
+              </Link>
+              <Link
+                href={`/${locale}/about`}
+                className="rounded-md bg-gold-500 px-8 py-3 font-medium text-brand-700 shadow-lg hover:bg-gold-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
               >
                 {hero.secondaryCta}
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -85,7 +95,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
       <section aria-labelledby="services" className="bg-surface-50 py-16">
         <div className="mx-auto max-w-7xl px-4">
-          <SectionHead id="services" {...sections.services} notAvailable={header.notAvailable} />
+          <SectionHead id="services" {...sections.services} moreHref={`/${locale}/services`} notAvailable={header.notAvailable} />
           <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {sections.services.items.map((item) => (
               <li key={item.title} className={CARD}>
@@ -114,7 +124,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
       <section aria-labelledby="research" className="bg-white py-16">
         <div className="mx-auto max-w-7xl px-4">
-          <SectionHead id="research" {...sections.research} notAvailable={header.notAvailable} />
+          <SectionHead id="research" {...sections.research} moreHref={`/${locale}/research`} notAvailable={header.notAvailable} />
           <ul className="grid gap-6 md:grid-cols-3">
             {sections.research.items.map((item) => (
               <li key={item.title} className="overflow-hidden rounded-lg border border-neutral-200 shadow-sm">
@@ -133,7 +143,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
       <section aria-labelledby="news" className="bg-surface-50 py-16">
         <div className="mx-auto max-w-7xl px-4">
-          <SectionHead id="news" {...sections.news} notAvailable={header.notAvailable} />
+          <SectionHead id="news" {...sections.news} moreHref={`/${locale}/news`} notAvailable={header.notAvailable} />
           <ul className="grid gap-4 md:grid-cols-2">
             {sections.news.items.map((item) => (
               <li key={item.title} className={`${CARD} flex flex-col gap-2`}>
