@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/* Design tokens ported from the approved Stitch Landing V2 reference
+   (design/stitch/stitch-landing-v2.reference.html). This block is the ONLY
+   place raw hex may appear — components use the token utilities (bg-brand-600,
+   text-gold-500, …). Changing a colour means changing it here. */
+@theme {
+  --color-brand-500: #005C3B;
+  --color-brand-600: #014D35;
+  --color-brand-700: #003F2A;
+  --color-gold-500: #D8A01A;
+  --color-gold-600: #c79318;
+  --color-cream-50: #F7F3EA;
+  --color-surface-50: #f8f9fa;
+
+  --font-sans: var(--font-sarabun), ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  @apply bg-surface-50 text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
+}
