@@ -1,0 +1,92 @@
+name: Pages preview
+
+# PREVIEW ONLY — static export of the public site published to GitHub Pages.
+# Production hosting is a separate, owner-approved step; this workflow never
+# touches a VPS, DNS, Cloudflare or any secret.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-preview
+  cancel-in-progress: true
+
+env:
+  # Absolute origin for canonical/hreflang/sitemap. The real domain stays a
+  # TODO(owner) — see lib/i18n.ts; no file hardcodes a domain.
+  NEXT_PUBLIC_SITE_URL: https://numtip.github.io/rae-digital-platform
+  NEXT_PAGES_PREVIEW: "1"
+
+jobs:
+  build:
+    name: build-preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      # GitHub Pages serves files only: `redirects()` cannot run there, so `/`
+      # gets a static redirect document pointing at the default locale.
+      - name: Root redirect to /th/
+        run: |
+          cat > out/index.html <<'HTML'
+          <!doctype html>
+          <html lang="th">
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <title>RAE — สำนักวิจัยและบริการวิชาการ</title>
+              <link rel="canonical" href="https://numtip.github.io/rae-digital-platform/th/">
+              <link rel="alternate" hreflang="th" href="https://numtip.github.io/rae-digital-platform/th/">
+              <link rel="alternate" hreflang="en" href="https://numtip.github.io/rae-digital-platform/en/">
+              <meta http-equiv="refresh" content="0; url=/rae-digital-platform/th/">
+            </head>
+            <body>
+              <p>
+                <a href="/rae-digital-platform/th/" lang="th">ไปที่หน้าหลัก (ภาษาไทย)</a> ·
+                <a href="/rae-digital-platform/en/" lang="en" hreflang="en">Continue in English</a>
+              </p>
+            </body>
+          </html>
+          HTML
+      # Keeps _next/ assets reachable on Pages (no Jekyll processing).
+      - run: touch out/.nojekyll
+      - name: Verify export layout
+        run: |
+          set -e
+          test -f out/th/index.html
+          test -f out/en/index.html
+          test -f out/index.html
+          test -f out/sitemap.xml
+          test -f out/robots.txt
+          if grep -rq "cdn.tailwindcss.com\|googleusercontent.com" out; then
+            echo "forbidden external asset reference in the export"; exit 1
+          fi
+          echo "export OK: th=$(wc -c < out/th/index.html) en=$(wc -c < out/en/index.html) root=$(wc -c < out/index.html) bytes"
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: out
+
+  deploy:
+    name: deploy-preview
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
