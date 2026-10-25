@@ -1,0 +1,163 @@
+import { notFound } from "next/navigation";
+import { getContent, isLocale } from "@/lib/i18n";
+
+// Nothing here is invented: every string comes from content/<locale>/site.ts,
+// which is transcribed from the approved Stitch V2 reference.
+
+const CARD = "rounded-lg border border-neutral-200 bg-white p-6 shadow-sm";
+
+function SectionHead({
+  id,
+  title,
+  subtitle,
+  more,
+  notAvailable,
+}: {
+  id: string;
+  title: string;
+  subtitle?: string;
+  more?: string;
+  notAvailable: string;
+}) {
+  return (
+    <div className="mb-10 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2 id={id} className="text-2xl font-bold text-neutral-800 md:text-3xl">
+          {title}
+        </h2>
+        {subtitle && <p className="mt-1 text-sm text-neutral-600">{subtitle}</p>}
+      </div>
+      {/* TODO(issue #2): the target pages do not exist yet, so this is plain
+          text, never a href="#" dead control. neutral-600 keeps it above AA. */}
+      {more && (
+        <span aria-disabled="true" title={notAvailable} className="cursor-not-allowed text-sm text-neutral-600">
+          {more}
+        </span>
+      )}
+    </div>
+  );
+}
+
+export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  if (!isLocale(locale)) notFound();
+  const content = getContent(locale);
+  const { hero, sections, header } = content;
+
+  return (
+    <main>
+      {/* TODO(issue #2): real RAE hero photo + the dark scrim that sits over it.
+          The reference photo is a Google hotlink (forbidden), so the hero is the
+          brand token until the owner supplies the asset. */}
+      <section className="flex min-h-[600px] items-center bg-brand-700">
+        <div className="relative mx-auto w-full max-w-7xl px-4">
+          <div className="text-white">
+            <h1 className="mb-4 max-w-2xl text-4xl font-bold leading-tight md:text-5xl lg:max-w-4xl lg:text-6xl">
+              {hero.title}
+              <br />
+              <span className="text-gold-500">{hero.titleAccent}</span>
+            </h1>
+            <p className="mb-8 max-w-2xl text-lg text-neutral-200 md:text-xl">{hero.description}</p>
+            {/* TODO(issue #2): both CTAs land in the next slices (/about, /services).
+                Disabled <button>s speak the truth to screen readers; no dead anchors.
+                Gold keeps dark text: white on gold-500 is 2.3:1 and would fail AA. */}
+            <div className="flex flex-wrap gap-4">
+              <button
+                type="button"
+                disabled
+                title={header.notAvailable}
+                className="rounded-md bg-brand-500 px-8 py-3 font-medium text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {hero.primaryCta}
+              </button>
+              <button
+                type="button"
+                disabled
+                title={header.notAvailable}
+                className="rounded-md bg-gold-500 px-8 py-3 font-medium text-brand-700 shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {hero.secondaryCta}
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="services" className="bg-surface-50 py-16">
+        <div className="mx-auto max-w-7xl px-4">
+          <SectionHead id="services" {...sections.services} notAvailable={header.notAvailable} />
+          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {sections.services.items.map((item) => (
+              <li key={item.title} className={CARD}>
+                <h3 className="mb-2 text-lg font-bold text-neutral-800">{item.title}</h3>
+                <p className="text-sm leading-relaxed text-neutral-600">{item.description}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section aria-labelledby="stats" className="bg-cream-50 py-16">
+        <div className="mx-auto max-w-7xl px-4">
+          <SectionHead id="stats" {...sections.stats} notAvailable={header.notAvailable} />
+          <ul className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+            {sections.stats.items.map((item) => (
+              <li key={item.label} className="text-center">
+                <p className="text-4xl font-bold text-brand-600 md:text-5xl">{item.value}</p>
+                <p className="mt-2 text-sm font-medium text-neutral-800">{item.label}</p>
+                <p className="text-xs text-neutral-600">{item.unit}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section aria-labelledby="research" className="bg-white py-16">
+        <div className="mx-auto max-w-7xl px-4">
+          <SectionHead id="research" {...sections.research} notAvailable={header.notAvailable} />
+          <ul className="grid gap-6 md:grid-cols-3">
+            {sections.research.items.map((item) => (
+              <li key={item.title} className="overflow-hidden rounded-lg border border-neutral-200 shadow-sm">
+                {/* TODO(issue #2): research photo per card (`public/` slot). */}
+                <div aria-hidden="true" className="h-40 bg-brand-600/10" />
+                <div className="p-5">
+                  {/* brand-600, not gold: gold on white is 2.8:1 and fails AA. */}
+                  <span className="text-xs font-medium tracking-wide text-brand-600">{item.tag}</span>
+                  <h3 className="mt-2 text-lg font-bold leading-snug text-neutral-800">{item.title}</h3>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section aria-labelledby="news" className="bg-surface-50 py-16">
+        <div className="mx-auto max-w-7xl px-4">
+          <SectionHead id="news" {...sections.news} notAvailable={header.notAvailable} />
+          <ul className="grid gap-4 md:grid-cols-2">
+            {sections.news.items.map((item) => (
+              <li key={item.title} className={`${CARD} flex flex-col gap-2`}>
+                <p className="text-xs text-neutral-500">{item.date}</p>
+                <h3 className="text-base font-semibold leading-snug text-neutral-800">{item.title}</h3>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section aria-labelledby="knowledge" className="bg-white py-16">
+        <div className="mx-auto max-w-7xl px-4">
+          <SectionHead id="knowledge" {...sections.knowledge} notAvailable={header.notAvailable} />
+          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {sections.knowledge.items.map((item) => (
+              <li key={item.title} className={CARD}>
+                <h3 className="mb-2 text-lg font-bold text-neutral-800">{item.title}</h3>
+                <p className="text-sm leading-relaxed text-neutral-600">{item.description}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    </main>
+  );
+}
