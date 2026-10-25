@@ -1,18 +1,19 @@
 // English copy for /en/news/ — typed against content/th/news.ts.
 //
-// Headlines are translated. Article bodies are NOT: ADR-0005 says a missing
-// translation must be explicit and never machine-guessed, so `body` is empty here
-// and the detail page shows the Thai text as published, with `thaiOnly` above it.
+// Headlines of the 12 newest stories are translated. The rest keep an empty title
+// on purpose: ADR-0005 says a missing translation is explicit and never
+// machine-guessed, so those items show the Thai headline with a stated notice, and
+// article bodies are always the Thai text as published.
 import type { NewsContent } from "../th/news";
 
-const item = (nid: string, title: string, alt: string) => ({
+const item = (nid: string, dateIso: string, title: string) => ({
   nid,
   title,
-  date: "6 October 2026",
-  dateIso: "2026-10-06",
+  date: new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(dateIso)),
+  dateIso,
   type: "Activities",
   body: [] as string[],
-  image: { src: `/images/news/${nid}.webp`, alt },
+  image: { src: `/images/news/${nid}.webp`, alt: "" },
 });
 
 export const enNews: NewsContent = {
@@ -23,15 +24,16 @@ export const enNews: NewsContent = {
   },
   hero: {
     title: "News and activities",
-    lead: "Activity news, press releases and announcements from the office.",
+    lead: "Activity news, press releases and announcements from the office, newest first.",
   },
-  snapshotNote: "List as of 25 October 2026 — new items always appear on the office website first.",
+  snapshotNote: "58 items from 2026-07-13 to 2026-10-06, newest first — new items always appear on the office website first.",
   labels: {
     read: "Read the story",
     published: "Published",
     type: "News type",
     back: "Back to all news",
     thaiOnly: "This story is published in Thai only; the Thai text is shown below as published.",
+    headlineThaiOnly: "Headline shown in Thai — an English translation is not available yet.",
     imageAlt: "Photo from the news story",
   },
   categories: {
@@ -48,37 +50,63 @@ export const enNews: NewsContent = {
     retrieved: "Retrieved 25 October 2026",
   },
   items: [
-    item(
-      "38764",
-      "Welcoming students of the Faculty of Agricultural Production to learn organic plant standards and quality control",
-      "Students attending the organic plant quality training",
-    ),
-    item(
-      "38763",
-      "Executives and staff joined the flag-raising and national-anthem activity",
-      "Executives and staff at the flag-raising activity",
-    ),
-    item("38760", "Selecting Fundamental Fund research with commercial potential", "The Fundamental Fund selection activity"),
-    item("38759", "Welcoming an AI Smart Farming expert delegation from Taiwan", "The delegation from Taiwan in the meeting room"),
-    item("38758", "Retirement tribute ceremony for office staff, 2026", "The retirement tribute ceremony for office staff"),
-    item(
-      "38757",
-      "MoU signing with Silver Zilla (Thailand) Co., Ltd. to upgrade the passion-fruit industry",
-      "The memorandum of understanding signing ceremony",
-    ),
-    item(
-      "38756",
-      "Welcoming internal auditors and receiving recommendations on service and research projects",
-      "The internal audit meeting",
-    ),
-    item(
-      "38755",
-      "Joining the sign-unveiling of the integrated forest management station",
-      "The sign-unveiling of the integrated forest management station",
-    ),
-    item("38754", "Joining the Senate academic capacity-building and network project", "The Senate academic network project"),
-    item("38753", "Joining Maejo University's 2026 retirement tribute ceremony", "Maejo University's retirement tribute ceremony"),
-    item("38752", "Training on the ethics of animal use in science", "The animal-ethics training session"),
-    item("38751", "Welcoming a Senate delegation studying research and innovation", "The Senate delegation visiting the research centre"),
+    item("38764", "2026-10-06", "Welcoming students of the Faculty of Agricultural Production to learn organic plant standards and quality control"),
+    item("38763", "2026-10-06", "Executives and staff joined the flag-raising and national-anthem activity"),
+    item("38760", "2026-10-06", "Selecting Fundamental Fund research with commercial potential"),
+    item("38759", "2026-10-06", "Welcoming an AI Smart Farming expert delegation from Taiwan"),
+    item("38758", "2026-10-06", "Retirement tribute ceremony for office staff, 2026"),
+    item("38757", "2026-10-06", "MoU signing with Silver Zilla (Thailand) Co., Ltd. to upgrade the passion-fruit industry"),
+    item("38756", "2026-10-06", "Welcoming internal auditors and receiving recommendations on service and research projects"),
+    item("38755", "2026-10-06", "Joining the sign-unveiling of the integrated forest management station"),
+    item("38754", "2026-10-06", "Joining the Senate academic capacity-building and network project"),
+    item("38753", "2026-10-06", "Joining Maejo University's 2026 retirement tribute ceremony"),
+    item("38752", "2026-10-06", "Training on the ethics of animal use in science"),
+    item("38751", "2026-10-06", "Welcoming a Senate delegation studying research and innovation"),
+    item("38750", "2026-10-06", ""),
+    item("38749", "2026-10-06", ""),
+    item("38748", "2026-10-06", ""),
+    item("38747", "2026-10-06", ""),
+    item("38746", "2026-10-06", ""),
+    item("38745", "2026-10-06", ""),
+    item("38744", "2026-10-06", ""),
+    item("38743", "2026-10-06", ""),
+    item("38742", "2026-10-06", ""),
+    item("38741", "2026-10-06", ""),
+    item("38740", "2026-10-06", ""),
+    item("38736", "2026-10-06", ""),
+    item("38735", "2026-10-06", ""),
+    item("38733", "2026-10-06", ""),
+    item("38732", "2026-10-06", ""),
+    item("38731", "2026-10-06", ""),
+    item("38730", "2026-10-06", ""),
+    item("38729", "2026-10-06", ""),
+    item("38728", "2026-10-06", ""),
+    item("38727", "2026-10-06", ""),
+    item("38726", "2026-10-06", ""),
+    item("38587", "2026-09-21", ""),
+    item("38586", "2026-09-21", ""),
+    item("38585", "2026-09-21", ""),
+    item("38541", "2026-09-15", ""),
+    item("38207", "2026-08-17", ""),
+    item("38206", "2026-08-17", ""),
+    item("38205", "2026-08-17", ""),
+    item("38204", "2026-08-17", ""),
+    item("38203", "2026-08-17", ""),
+    item("38202", "2026-08-17", ""),
+    item("38201", "2026-08-17", ""),
+    item("38200", "2026-08-17", ""),
+    item("38199", "2026-08-17", ""),
+    item("38198", "2026-08-17", ""),
+    item("38197", "2026-08-17", ""),
+    item("38196", "2026-08-17", ""),
+    item("38195", "2026-08-17", ""),
+    item("37916", "2026-07-13", ""),
+    item("37915", "2026-07-13", ""),
+    item("37914", "2026-07-13", ""),
+    item("37913", "2026-07-13", ""),
+    item("37912", "2026-07-13", ""),
+    item("37911", "2026-07-13", ""),
+    item("37910", "2026-07-13", ""),
+    item("37909", "2026-07-13", ""),
   ],
 };
