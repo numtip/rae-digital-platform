@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CARD, PageHero, SourceLine } from "@/components/page-shell";
 import { getDocuments, isLocale } from "@/lib/i18n";
@@ -35,7 +36,11 @@ export default async function Documents({ params }: Props) {
         <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 md:grid-cols-3">
           {documents.groups.map((group) => (
             <div key={group.title} className={CARD}>
-              <h2 className="text-lg font-bold text-brand-600">{group.title}</h2>
+              <h2 className="text-lg font-bold text-brand-600">
+                <Link className="underline underline-offset-2 hover:text-brand-700" href={`/${locale}/documents/category/${group.slug}`}>
+                  {group.title}
+                </Link>
+              </h2>
               <ul className="mt-4 space-y-3">
                 {group.links.map((link) => (
                   <li key={link.url}>

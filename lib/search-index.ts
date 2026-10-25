@@ -66,6 +66,9 @@ export function buildSearchIndex(locale: Locale): SearchEntry[] {
 
   const documents = getDocuments(locale);
   page(`${base}/documents`, documents.hero.title, join(documents.hero.lead, documents.note));
+  documents.groups.forEach((group) =>
+    page(`${base}/documents/category/${group.slug}`, group.title, join(group.links.map((link) => link.label))),
+  );
   documents.groups.forEach((group) => {
     item(
       `${base}/documents`,
@@ -79,6 +82,12 @@ export function buildSearchIndex(locale: Locale): SearchEntry[] {
   const thaiNews = new Map(getNews("th").items.map((entry) => [entry.nid, entry.title]));
   news.items.forEach((entry) =>
     item(`${base}/news/${entry.nid}`, entry.title || thaiNews.get(entry.nid) || entry.nid, join(entry.date, entry.type, entry.body)),
+  );
+
+  page(
+    `${base}/contact`,
+    site.nav.contact,
+    join(about.contact.title, about.contact.addressLines, about.contact.phone, about.contact.emails),
   );
 
   return entries;

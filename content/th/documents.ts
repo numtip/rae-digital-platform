@@ -15,6 +15,7 @@ export const thDocuments = {
   groups: [
     {
       title: "บริหารจัดการ",
+      slug: "administration",
       links: [
         { label: "งานบริหารและธุรการ", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=1920" },
         { label: "งานคลังและพัสดุ", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=1921" },
@@ -24,6 +25,7 @@ export const thDocuments = {
     },
     {
       title: "งานวิจัย",
+      slug: "research",
       links: [
         {
           label: "ระเบียบ / ประกาศ / ทุนวิจัย / แบบฟอร์ม / มาตรฐานการวิจัย",
@@ -33,6 +35,7 @@ export const thDocuments = {
     },
     {
       title: "งานบริการวิชาการ",
+      slug: "academic-services",
       links: [
         { label: "คู่มือ", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=1925" },
         { label: "แบบฟอร์มศูนย์ความเป็นเลิศ", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=2605" },

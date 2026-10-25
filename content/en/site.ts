@@ -34,6 +34,7 @@ export const en: SiteContent = {
     services: "Academic services",
     documents: "Publications",
     news: "News & activities",
+    contact: "Contact",
   },
   hero: {
     title: "Creating knowledge, driving agricultural innovation",

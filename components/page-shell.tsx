@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 // Shared shell for the interior content pages, so five pages do not each carry
 // their own copy of the hero band, the card style and the source line.
 
@@ -26,6 +28,33 @@ export function SourceLine({ label, url, retrieved }: { label: string; url: stri
       </a>{" "}
       — {retrieved}
     </p>
+  );
+}
+
+// Home › section › this page. The last crumb is plain text because a link to the
+// page you are on is noise for both sighted and screen-reader users.
+export function Breadcrumb({ trail }: { trail: { label: string; href?: string }[] }) {
+  return (
+    <nav aria-label="breadcrumb" className="mb-6">
+      <ol className="flex flex-wrap items-center gap-2 text-sm text-neutral-600">
+        {trail.map((crumb, index) => (
+          <li key={`${crumb.label}-${index}`} className="flex items-center gap-2">
+            {crumb.href ? (
+              <>
+                <Link className="underline underline-offset-2 hover:text-brand-600" href={crumb.href}>
+                  {crumb.label}
+                </Link>
+                <span aria-hidden="true">›</span>
+              </>
+            ) : (
+              <span aria-current="page" className="font-semibold text-neutral-800">
+                {crumb.label}
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }
 
