@@ -36,6 +36,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       canonical: `/${locale}/`,
       languages: { th: "/th/", en: "/en/", "x-default": "/th/" },
     },
+    // Social previews use the same verified copy — no invented taglines.
+    openGraph: {
+      type: "website",
+      siteName: content.header.orgFull,
+      title: content.meta.title,
+      description: content.meta.description,
+      url: `/${locale}/`,
+      locale: locale === "th" ? "th_TH" : "en_US",
+      alternateLocale: locale === "th" ? ["en_US"] : ["th_TH"],
+    },
+    twitter: {
+      card: "summary",
+      title: content.meta.title,
+      description: content.meta.description,
+    },
   };
 }
 
@@ -47,12 +62,33 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound();
   const content = getContent(locale);
 
+  // Organisation facts only — name, parent organisation, site URL. Nothing else
+  // is asserted because nothing else is verified for this office.
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: content.header.orgFull,
+    alternateName: content.header.orgShort,
+    parentOrganization: { "@type": "CollegeOrUniversity", name: content.header.orgUniversity },
+    url: `${SITE_URL}/${locale}/`,
+  };
+
   return (
     <html lang={locale} className={sarabun.variable}>
       <body className="flex min-h-screen flex-col">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-brand-700 focus:px-4 focus:py-2 focus:text-white"
+        >
+          {content.a11y.skipToContent}
+        </a>
         <SiteHeader locale={locale} content={content} />
         <div className="flex-1">{children}</div>
         <SiteFooter content={content} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+        />
       </body>
     </html>
   );

@@ -9,6 +9,9 @@ export const en: SiteContent = {
     description:
       "Committed to research, academic promotion and agricultural services that advance economic, social and environmental sustainability.",
   },
+  a11y: {
+    skipToContent: "Skip to main content",
+  },
   header: {
     staffLogin: "Staff sign-in",
     orgShort: "RAE",
