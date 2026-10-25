@@ -75,8 +75,10 @@ export function buildSearchIndex(locale: Locale): SearchEntry[] {
   });
 
   const news = getNews(locale);
-  page(`${base}/news`, news.hero.title, join(news.hero.lead, news.snapshot.note, news.categories.items));
-  news.snapshot.items.forEach((headline) => item(`${base}/news`, headline, news.hero.title));
+  page(`${base}/news`, news.hero.title, join(news.hero.lead, news.snapshotNote, news.categories.items));
+  news.items.forEach((entry) =>
+    item(`${base}/news/${entry.nid}`, entry.title, join(entry.date, entry.type, entry.body)),
+  );
 
   return entries;
 }
