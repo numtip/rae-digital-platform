@@ -63,6 +63,7 @@ No M09, M24–M29 or M33 exist in any document — do not invent them.
 | Knowledge articles / FAQ | No approved copy exists. |
 | Event calendar | No approved event or holiday list. |
 | `/th/news` beyond 12 items | Page 1 of 125 was captured; further items need a fetch decision (snapshot vs sync). |
+| Facebook page posts | **Owner decision 2026-10-25**: keep the official-website (WTMS) news as the source for now, and add Facebook posts one at a time as the owner shares each permalink. Reason: a Facebook page's post list is behind a login wall for logged-out readers, so no complete, ordered harvest back to July 2569 is possible without a page token or an export. A single public permalink *is* readable and yields the full text plus up to 5 photos (verified), so per-link additions work. |
 | Production domain | Owner decision pending; preview hardcodes the GitHub Pages origin. |
 
 ## ADR constraints that bind the next slice
