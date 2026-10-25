@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { asset } from "@/lib/assets";
 import { LOCALE_LABEL, NAV, type Locale, type SiteContent } from "@/lib/i18n";
 
 // Destinations that do not exist yet are rendered as disabled text, never as an
@@ -95,15 +97,19 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: SiteC
       </div>
 
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3">
-        {/* TODO(issue #2): real RAE logo asset. The reference logo is a Google
-            hotlink; until RAE supplies the file this is the text mark only. */}
         <Link href={`/${locale}`} className={`flex items-center gap-3 ${FOCUS_RING}`}>
-          <div
-            aria-hidden="true"
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-white font-bold text-brand-500"
-          >
-            {content.header.orgShort}
-          </div>
+          {/* Decorative: the wordmark beside it already names the office, so the
+              emblem carries an empty alt instead of repeating the name twice. */}
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white p-1.5">
+            <Image
+              src={asset("/images/about/rae-logo.png")}
+              alt=""
+              width={96}
+              height={89}
+              className="h-9 w-auto"
+              priority
+            />
+          </span>
           <div>
             {/* The wordmark is not a heading: the page's h1 is its content headline. */}
             <p className="text-xl font-bold leading-tight">{content.header.orgShort}</p>
