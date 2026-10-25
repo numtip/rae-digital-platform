@@ -33,5 +33,7 @@ export const NAV: { key: keyof SiteContent["nav"]; href?: (locale: Locale) => st
 
 // shortcut: placeholder origin until the owner names the production domain;
 // canonical/hreflang/sitemap need an absolute base, so set NEXT_PUBLIC_SITE_URL
-// at deploy time.
+// at deploy time. The Pages preview workflow passes
+// https://numtip.github.io/rae-digital-platform for that reason.
+// TODO(owner): set the real domain here once approved — no other file may hardcode one.
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";

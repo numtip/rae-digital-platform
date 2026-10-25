@@ -5,16 +5,16 @@ import type { SiteContent } from "../th/site";
 
 export const en: SiteContent = {
   meta: {
-    title: "RAE, Maejo University",
+    title: "RAE – The Office of Research and Academic Services, Maejo University",
     description:
       "Committed to research, academic promotion and agricultural services that advance economic, social and environmental sustainability.",
   },
   header: {
     staffLogin: "Staff sign-in",
     orgShort: "RAE",
-    // TODO(translate): the English name of the re-named office is not in any
-    // approved RAE document yet, so it is not invented here.
-    orgFull: "TODO(translate)",
+    // Owner-supplied official English name (decision 2026-10-25). Never translate
+    // the office name freely; the old Stitch wording is not used.
+    orgFull: "The Office of Research and Academic Services",
     orgUniversity: "Maejo University",
     navLabel: "Main menu",
     navLabelMobile: "Main menu (mobile)",
