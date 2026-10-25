@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Sarabun } from "next/font/google";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 import { LOCALES, SITE_URL, getContent, isLocale } from "@/lib/i18n";
 import "../globals.css";
 
@@ -48,9 +49,10 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} className={sarabun.variable}>
-      <body>
+      <body className="flex min-h-screen flex-col">
         <SiteHeader locale={locale} content={content} />
-        {children}
+        <div className="flex-1">{children}</div>
+        <SiteFooter content={content} />
       </body>
     </html>
   );
