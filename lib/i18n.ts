@@ -8,7 +8,7 @@ import { enServices } from "@/content/en/services";
 import { th, type SiteContent } from "@/content/th/site";
 import { thAbout, type AboutContent } from "@/content/th/about";
 import { thDocuments, type DocumentsContent } from "@/content/th/documents";
-import { thNews, type NewsContent } from "@/content/th/news";
+import { thNews, type NewsContent, type NewsItem } from "@/content/th/news";
 import { thResearch, type ResearchContent } from "@/content/th/research";
 import { thSearch, type SearchContent } from "@/content/th/search";
 import { thServices, type ServicesContent } from "@/content/th/services";
@@ -22,7 +22,7 @@ export type { AboutContent } from "@/content/th/about";
 export type { ResearchContent } from "@/content/th/research";
 export type { ServicesContent } from "@/content/th/services";
 export type { DocumentsContent } from "@/content/th/documents";
-export type { NewsContent } from "@/content/th/news";
+export type { NewsContent, NewsItem } from "@/content/th/news";
 export type { SearchContent } from "@/content/th/search";
 
 const CONTENT: Record<Locale, SiteContent> = { th, en };
@@ -69,6 +69,19 @@ export function getNews(locale: Locale): NewsContent {
 
 export function getSearch(locale: Locale): SearchContent {
   return SEARCH[locale];
+}
+
+// One page of the news index. Every page is a real URL, so the whole thing stays a
+// static export: /news/ is page 1, /news/page/2/ onwards are generated routes.
+export const NEWS_PAGE_SIZE = 12;
+
+export function getNewsPages(locale: Locale): NewsItem[][] {
+  const items = getNews(locale).items;
+  const pages: NewsItem[][] = [];
+  for (let index = 0; index < items.length; index += NEWS_PAGE_SIZE) {
+    pages.push(items.slice(index, index + NEWS_PAGE_SIZE));
+  }
+  return pages;
 }
 
 // Each language named in that language — a switcher label readers recognise.
