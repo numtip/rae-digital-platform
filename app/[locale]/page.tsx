@@ -27,10 +27,10 @@ function SectionHead({
         </h2>
         {subtitle && <p className="mt-1 text-sm text-neutral-600">{subtitle}</p>}
       </div>
-      {/* TODO(issue #2): the target pages do not exist yet, so this is disabled
-          text — never a href="#" dead control. */}
+      {/* TODO(issue #2): the target pages do not exist yet, so this is plain
+          text, never a href="#" dead control. neutral-600 keeps it above AA. */}
       {more && (
-        <span aria-disabled="true" title={notAvailable} className="cursor-not-allowed text-sm text-neutral-500 opacity-60">
+        <span aria-disabled="true" title={notAvailable} className="cursor-not-allowed text-sm text-neutral-600">
           {more}
         </span>
       )}

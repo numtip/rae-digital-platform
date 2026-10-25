@@ -1,7 +1,13 @@
 import type { MetadataRoute } from "next";
 import { LOCALES, SITE_URL } from "@/lib/i18n";
 
-const languages = { th: `${SITE_URL}/th/`, en: `${SITE_URL}/en/` };
+// Same alternates as the page head, x-default included — the sitemap and the
+// <link rel="alternate"> block must not disagree.
+const languages = {
+  th: `${SITE_URL}/th/`,
+  en: `${SITE_URL}/en/`,
+  "x-default": `${SITE_URL}/th/`,
+};
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return LOCALES.map((locale) => ({

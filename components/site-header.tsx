@@ -61,20 +61,15 @@ function otherLocalePath(pathname: string, from: Locale, to: Locale): string {
 export function SiteHeader({ locale, content }: { locale: Locale; content: SiteContent }) {
   const pathname = usePathname();
   const other: Locale = locale === "th" ? "en" : "th";
-
-  // shortcut: the section hash is browser-only and is appended on click instead
-  // of held in state (a setState inside an effect cascades renders); keys that
-  // open a new tab lose it. Upgrade when the site has deep-linkable sections.
-  const keepHash = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    const { hash } = window.location;
-    if (hash) event.currentTarget.href += hash;
-  };
+  // usePathname() drops the trailing slash that trailingSlash puts on the URL,
+  // so the current-page test has to normalize before comparing.
+  const path = pathname.replace(/\/+$/, "");
 
   const navLinks = NAV.map(({ key, href }) => (
     <NavLink
       key={key}
       item={{ label: content.nav[key], href: href?.(locale) }}
-      current={href?.(locale) === pathname}
+      current={href?.(locale) === path}
       notAvailable={content.header.notAvailable}
     />
   ));
@@ -89,7 +84,6 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: SiteC
           <span className="text-neutral-400" aria-hidden="true">|</span>
           <Link
             href={otherLocalePath(pathname, locale, other)}
-            onClick={keepHash}
             hrefLang={other}
             lang={other}
             aria-label={`${content.header.languageLabel}: ${LOCALE_LABEL[other]}`}

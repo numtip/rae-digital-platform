@@ -112,11 +112,15 @@ export const en: SiteContent = {
       ],
     },
   },
+  notFound: {
+    title: "Page not found",
+    body: "The page you opened may have moved or been removed.",
+    back: "Back to home",
+  },
   footer: {
     contactLabel: "Contact us",
     address: "63 Moo 4, Nong Han, San Sai, Chiang Mai 50290, Thailand",
     phone: "+66 53 873 400",
-    phoneHref: "tel:+6653873400",
     email: "rae@mju.ac.th",
     rights: "All rights reserved",
   },

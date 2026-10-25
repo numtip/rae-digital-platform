@@ -3,6 +3,9 @@ import type { SiteContent } from "@/lib/i18n";
 // Contact details are the only real links in the footer: every footer menu item
 // in the reference points at a page that does not exist yet, so those columns
 // are left out rather than shipped as dead text (see the shift report).
+//
+// The dial link is derived from the displayed number (spaces dropped) so the
+// digits live in one place and the EN/TH forms each stay locally dialable.
 export function SiteFooter({ content }: { content: SiteContent }) {
   const { footer, header } = content;
 
@@ -18,7 +21,7 @@ export function SiteFooter({ content }: { content: SiteContent }) {
           <span className="font-medium text-white">{footer.contactLabel}</span>
           <span>{footer.address}</span>
           <a
-            href={footer.phoneHref}
+            href={`tel:${footer.phone.replace(/\s/g, "")}`}
             className="w-fit hover:text-gold-500 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold-500"
           >
             {footer.phone}
