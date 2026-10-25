@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { LOCALES, PAGES, SITE_URL } from "@/lib/i18n";
+import { LOCALES, PAGES, SITE_URL, getNews } from "@/lib/i18n";
 
 // Static export (GitHub Pages preview) needs an explicit static route.
 export const dynamic = "force-static";
@@ -32,5 +32,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   );
 
-  return [...home, ...pages];
+  // One entry per published news item, both locales, same alternates as the rest.
+  const newsItems = getNews("th").items.flatMap((item) =>
+    LOCALES.map((locale) => ({
+      url: `${SITE_URL}/${locale}/news/${item.nid}/`,
+      lastModified: item.dateIso,
+      changeFrequency: "yearly" as const,
+      priority: 0.4,
+      alternates: { languages: languagesFor(`news/${item.nid}`) },
+    })),
+  );
+
+  return [...home, ...pages, ...newsItems];
 }

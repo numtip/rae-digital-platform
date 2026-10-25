@@ -8,7 +8,8 @@
 | `images/about/office-building.webp` | หน้า about (อาคารที่ทำการ, 1200px) | ✅ ดึงจากเว็บทางการ, ย่อ + แปลง WebP |
 | `images/about/office-annex.webp` | หน้า about (อาคารอีกหลัง) | ✅ ดึงจากเว็บทางการ, แปลง WebP |
 | `logo.svg` | `components/site-header.tsx` (โลโก้ใน header) | ⏳ ยังไม่ใช้ — header ยังเป็นตัวอักษร `RAE` (รออนุมัติเปลี่ยนเป็นรูป) |
-| `hero.webp` | hero หน้าแรก (`app/[locale]/page.tsx`) | ⏳ รอรูป hero จากหน่วยงาน (ห้าม hotlink) |
+| `hero.webp` | hero หน้าแรก (`app/[locale]/page.tsx`) | ✅ ใช้ `images/about/office-building.webp` แทนแล้ว |
+| `images/news/<nid>.webp` | การ์ดข่าว + หน้า `/news/[nid]/` (12 ไฟล์) | ✅ ดึงจากหน้าข่าวทางการ 2026-10-25, ย่อ 1200px WebP |
 
 ## ที่มาของรูปใน `images/about/`
 
@@ -22,3 +23,9 @@
 เมื่อได้ไฟล์จริง: ใช้ `next/image` ในจุดที่กำกับ `TODO(issue #2)` ไว้ — ห้าม hotlink และต้องมี `alt` ที่สื่อความหมาย
 
 > ห้าม commit รูปที่ไม่มีสิทธิ์ใช้ หรือภาพบุคคลโดยไม่ได้รับอนุญาต
+
+## รูปข่าวใน `images/news/`
+
+- ต้นทาง: หน้าข่าวแต่ละรายการบน `rae.mju.ac.th/wtms_newsDetail.aspx?nID=<nid>` (nID 38751–38764) — ดึงเมื่อ 2026-10-25
+- ย่อเป็นกว้าง 1200px, WebP q82 → 12 ไฟล์รวม 1.9 MB (ต้นฉบับรวม 6.2 MB)
+- ภาพบุคคลในภาพข่าวเป็นภาพกิจกรรมที่หน่วยงานเผยแพร่ต่อสาธารณะแล้ว · **ชื่อบุคคลที่ไม่ใช่ผู้บริหาร (ผู้เกษียณอายุ) ถูกแทนที่ด้วยข้อความกำกับ** ใน `content/th/news.ts`

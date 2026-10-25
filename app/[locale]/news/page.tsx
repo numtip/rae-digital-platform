@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CARD, ExternalLink, PageHero, SourceLine } from "@/components/page-shell";
+import { asset } from "@/lib/assets";
 import { getNews, isLocale } from "@/lib/i18n";
 
-// Headlines come from content/<locale>/news.ts — a dated snapshot of the official
-// news list. The office site stays the live source, and the page says so.
+// Headlines, dates and lead images come from content/<locale>/news.ts — a dated
+// snapshot of the official news list. Each item opens its own page; the office
+// site stays the live source, and the page says so.
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -33,20 +37,35 @@ export default async function News({ params }: Props) {
 
       <section className="bg-surface-50 py-16">
         <div className="mx-auto w-full max-w-7xl px-4">
-          <div className={CARD}>
-            <h2 className="text-2xl font-bold text-neutral-800">{news.snapshot.title}</h2>
-            <p className="mt-2 text-sm text-neutral-600">{news.snapshot.note}</p>
-            <ul className="mt-6 space-y-3">
-              {news.snapshot.items.map((item) => (
-                <li key={item} className="flex gap-3 text-neutral-700">
-                  <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-gold-500" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <p className="mb-6 text-sm text-neutral-600">{news.snapshotNote}</p>
 
-          <div className={`${CARD} mt-6`}>
+          <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {news.items.map((item) => (
+              <li key={item.nid} className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
+                <Link className="group block" href={`/${locale}/news/${item.nid}`}>
+                  <Image
+                    alt={item.image.alt}
+                    className="h-44 w-full object-cover"
+                    height={800}
+                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                    src={asset(item.image.src)}
+                    width={1200}
+                  />
+                  <div className="p-5">
+                    <p className="text-xs font-semibold text-gold-600">{item.date}</p>
+                    <h2 className="mt-2 text-lg font-bold leading-snug text-neutral-800 group-hover:text-brand-600">
+                      {item.title}
+                    </h2>
+                    <p className="mt-3 text-sm font-semibold text-brand-600 underline underline-offset-2">
+                      {news.labels.read}
+                    </p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          <div className={`${CARD} mt-10`}>
             <h2 className="text-lg font-bold text-neutral-800">{news.categories.title}</h2>
             <ul className="mt-4 flex flex-wrap gap-2">
               {news.categories.items.map((category) => (
