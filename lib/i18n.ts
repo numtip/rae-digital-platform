@@ -3,12 +3,14 @@ import { enAbout } from "@/content/en/about";
 import { enDocuments } from "@/content/en/documents";
 import { enNews } from "@/content/en/news";
 import { enResearch } from "@/content/en/research";
+import { enSearch } from "@/content/en/search";
 import { enServices } from "@/content/en/services";
 import { th, type SiteContent } from "@/content/th/site";
 import { thAbout, type AboutContent } from "@/content/th/about";
 import { thDocuments, type DocumentsContent } from "@/content/th/documents";
 import { thNews, type NewsContent } from "@/content/th/news";
 import { thResearch, type ResearchContent } from "@/content/th/research";
+import { thSearch, type SearchContent } from "@/content/th/search";
 import { thServices, type ServicesContent } from "@/content/th/services";
 
 export const LOCALES = ["th", "en"] as const;
@@ -21,6 +23,7 @@ export type { ResearchContent } from "@/content/th/research";
 export type { ServicesContent } from "@/content/th/services";
 export type { DocumentsContent } from "@/content/th/documents";
 export type { NewsContent } from "@/content/th/news";
+export type { SearchContent } from "@/content/th/search";
 
 const CONTENT: Record<Locale, SiteContent> = { th, en };
 
@@ -31,6 +34,7 @@ const RESEARCH: Record<Locale, ResearchContent> = { th: thResearch, en: enResear
 const SERVICES: Record<Locale, ServicesContent> = { th: thServices, en: enServices };
 const DOCUMENTS: Record<Locale, DocumentsContent> = { th: thDocuments, en: enDocuments };
 const NEWS: Record<Locale, NewsContent> = { th: thNews, en: enNews };
+const SEARCH: Record<Locale, SearchContent> = { th: thSearch, en: enSearch };
 
 export function isLocale(value: string): value is Locale {
   return (LOCALES as readonly string[]).includes(value);
@@ -60,6 +64,10 @@ export function getNews(locale: Locale): NewsContent {
   return NEWS[locale];
 }
 
+export function getSearch(locale: Locale): SearchContent {
+  return SEARCH[locale];
+}
+
 // Each language named in that language — a switcher label readers recognise.
 export const LOCALE_LABEL: Record<Locale, string> = { th: "ไทย", en: "English" };
 
@@ -75,7 +83,7 @@ export const NAV: { key: keyof SiteContent["nav"]; href?: (locale: Locale) => st
 ];
 
 // Interior pages that exist in every locale, in the order the sitemap lists them.
-export const PAGES = ["about", "research", "services", "documents", "news"] as const;
+export const PAGES = ["about", "research", "services", "documents", "news", "search"] as const;
 
 // shortcut: placeholder origin until the owner names the production domain;
 // canonical/hreflang/sitemap need an absolute base, so set NEXT_PUBLIC_SITE_URL
