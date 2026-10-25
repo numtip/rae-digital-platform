@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { asset } from "@/lib/assets";
-import { LOCALE_LABEL, NAV, type Locale, type SiteContent } from "@/lib/i18n";
+import { LOCALE_LABEL, NAV, getSearch, type Locale, type SiteContent } from "@/lib/i18n";
 
 // Destinations that do not exist yet are rendered as disabled text, never as an
 // empty hash anchor — that is a dead control (issue #2 rule). Real routes are
@@ -84,6 +84,10 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: SiteC
             {content.header.staffLogin}
           </span>
           <span className="text-neutral-400" aria-hidden="true">|</span>
+          <Link className={`${FOCUS_RING} hover:text-gold-500`} href={`/${locale}/search`}>
+            {getSearch(locale).hero.title}
+          </Link>
+          <span className="text-neutral-400" aria-hidden="true">|</span>
           <Link
             href={otherLocalePath(pathname, locale, other)}
             hrefLang={other}
@@ -125,20 +129,20 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: SiteC
           {navLinks}
         </nav>
 
-        {/* TODO(issue #2): search page not built yet — the slot is kept, the
-            control is disabled so nothing looks clickable but does nothing. */}
-        <div className="relative hidden md:block">
+        {/* A plain GET form: the search page reads ?q= on the client, which is
+            the only option on a static export (no server to query). */}
+        <form action={asset(`/${locale}/search/`)} className="relative hidden md:block" method="get" role="search">
           <input
-            disabled
             type="search"
+            name="q"
             placeholder={content.header.searchPlaceholder}
             aria-label={content.header.searchLabel}
-            className="w-48 rounded-full border-none bg-white py-1.5 pl-4 pr-10 text-sm text-neutral-800 placeholder:text-neutral-500 disabled:cursor-not-allowed"
+            className="w-48 rounded-full border-none bg-white py-1.5 pl-4 pr-10 text-sm text-neutral-800 placeholder:text-neutral-500"
           />
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500">
             {SearchIcon}
           </span>
-        </div>
+        </form>
 
         <details className="lg:hidden">
           <summary className={`cursor-pointer list-none p-2 [&::-webkit-details-marker]:hidden ${FOCUS_RING}`}>
