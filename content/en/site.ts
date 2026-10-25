@@ -77,7 +77,7 @@ export const en: SiteContent = {
       title: "Outputs and statistics",
       // Sample figures from the Stitch V2 design reference — not verified
       // organisational KPIs. Never present them as official numbers.
-      subtitle: "(sample data from the prototype — pending office verification)",
+      subtitle: "(figures shown are from the design mock-up — the office website does not publish these statistics yet; pending confirmation)",
       more: "View all statistics",
       items: [
         { label: "Active research projects", value: "586", unit: "projects" },
