@@ -10,6 +10,13 @@ updates:
       npm-minor-and-patch:
         patterns: ["*"]
         update-types: ["minor", "patch"]
+    ignore:
+      # Types must describe the Node runtime we actually run, which .nvmrc pins
+      # to 22. A major bump (@types/node 26.x) documents APIs Node 22 does not
+      # have, so it is the one update we refuse. Patch/minor still flow in, and
+      # every other dependency keeps its normal update policy.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
