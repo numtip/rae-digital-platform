@@ -4,7 +4,13 @@
 // on purpose: ADR-0005 says a missing translation is explicit and never
 // machine-guessed, so those items show the Thai headline with a stated notice, and
 // article bodies are always the Thai text as published.
-import type { NewsContent } from "../th/news";
+import { thNews, type NewsContent } from "../th/news";
+
+// Whether a story has a photo is recorded once, in the Thai source of truth. Deriving
+// it here keeps the two locales from disagreeing — four items have no photo, and the
+// English pages used to point at files that were never downloaded.
+
+const HAS_PHOTO = new Set(thNews.items.filter((entry) => entry.image).map((entry) => entry.nid));
 
 const item = (nid: string, dateIso: string, title: string) => ({
   nid,
@@ -13,7 +19,7 @@ const item = (nid: string, dateIso: string, title: string) => ({
   dateIso,
   type: "Activities",
   body: [] as string[],
-  image: { src: `/images/news/${nid}.webp`, alt: "" },
+  image: HAS_PHOTO.has(nid) ? { src: `/images/news/${nid}.webp`, alt: "" } : null,
 });
 
 export const enNews: NewsContent = {

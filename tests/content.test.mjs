@@ -76,6 +76,16 @@ test("no unresolved translation markers in content VALUES", () => {
   assert.deepEqual(hits, [], "untranslated values:\n" + hits.join("\n"));
 });
 
+test("English news derives photo presence from the Thai source", () => {
+  // Four stories have no photo on the office's own page. The English file must not
+  // restate that: it derives the set, so the two locales cannot drift and the exported
+  // pages cannot point at files that were never downloaded. The behavioural proof is
+  // scripts/check-export.mjs; this guard stops someone hardcoding images again.
+  const en = read(join(CONTENT, "en/news.ts"));
+  assert.match(en, /HAS_PHOTO/, "English news no longer derives which items have a photo");
+  assert.match(en, /thNews\.items/, "English news no longer reads the Thai source of truth");
+});
+
 test("news items all carry a source date and a stable id", () => {
   const src = read(join(CONTENT, "th/news.ts"));
   const enSrc = read(join(CONTENT, "en/news.ts"));

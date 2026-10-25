@@ -88,6 +88,23 @@ jobs:
         if: steps.app.outputs.present == 'yes'
         run: npm run build
 
+      # Content gate: provenance, https-only URLs, sample-data label, news ordering,
+      # TH/EN parity. No dependencies, runs in about a second.
+      - name: Content gate (npm test)
+        if: steps.app.outputs.present == 'yes'
+        run: npm test
+
+      # Export + integrity: internal links resolve with the Pages basePath, no dead
+      # anchors, no plain-http assets, and every Thai route has an English twin.
+      # This is the check that caught the three 404ing about-page images.
+      - name: Export integrity (Pages preview build)
+        if: steps.app.outputs.present == 'yes'
+        env:
+          NEXT_PUBLIC_SITE_URL: https://numtip.github.io/rae-digital-platform
+        run: |
+          npm run build:export
+          npm run check:export
+
       - name: Docs-only (app build not required)
         if: steps.app.outputs.present == 'no'
         run: echo "docs-only ref - app steps skipped, required check satisfied"
