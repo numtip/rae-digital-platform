@@ -90,12 +90,30 @@ Verified on a combined local build of #34 + #36 (temporary branch, deleted after
 | Routes in sitemap | 138 | 138 (each with hreflang th/en/x-default) |
 | Breadcrumbs | 68/69 pages | same |
 
+## 4.5 Independent review (after the owner's 05:00 instruction)
+
+A separate reviewer agent audited #35 and #34 read-only and returned **#35 APPROVE_WITH_NITS** and **#34 REQUEST_CHANGES**. Verdicts, and the four real defects it found in #34, are fixed in `c5b836b`:
+
+| Severity | Defect | Fix |
+|---|---|---|
+| high | contact page emitted `tel:+66053873400` — undialable, and inconsistent with the footer's `tel:053873400` | `lib/phone.ts::telHref()` used by contact, about and footer |
+| medium | `aria-label="breadcrumb"` was hardcoded English on every Thai page | content key `breadcrumbLabel` + `locale` prop |
+| medium | contact page mixed three e-mail addresses and two address sources | meta and body both from `about.contact`; which address is monitored is an owner decision |
+| medium | `lib/content.ts` was dead code pointing at a non-existent script | `SourceLine` now takes a `Provenance`; comment points at `tests/content.test.mjs` |
+
+Docs and gate gaps it named (M04/M08 staleness, count-vs-name locale parity, first-block-only source check, Thai-only news test) were fixed in the same commit. The reviewer's most useful line: on #34's base the export has 8 broken refs, after merging #35 it is 0 of 4,513.
+
+Also this session: #36 and #37 were rebased onto the updated #34 / #36 (the pagination PR conflicted with the breadcrumb work in `app/[locale]/news/page.tsx`; resolved by moving the breadcrumb into the shared `components/news-index.tsx`). Both re-pushed; CI green again.
+
 ## 5. Outstanding defects
 
 1. **`/news` payload is large** — 58 cards, ~200 KB of HTML plus lazily loaded photos. Fine on desktop, heavy on a slow phone. A paginated or "load more" index is the fix; it changes the URL shape, so it needs an owner decision.
 2. **Four news items have no photo** — correctly render without one, but the cards look inconsistent next to the others.
 3. **Search is substring-only and client-side** — no ranking, no fuzzy match, no cross-language. Adequate for 140 pages; wrong at 1,000.
-4. **Warnings in `docs/research/tools/*.mjs`** (9 ESLint warnings) — research scripts from the Cursor handoff, out of scope but still noise.
+4. **#35 nit** — three section links share the accessible name "ดูทั้งหมด / View all"; WCAG 2.4.4 passes in context but a per-section label would be better. Its branch is checked out in another worktree (the nightly job), so this is a post-merge follow-up, not a concurrent write.
+5. **Duplicated rule** — #35 and #36 both fix the English photo set (in `lib/i18n.ts` and `content/en/news.ts`). #36's copy becomes redundant once #35 lands; remove it so the rule lives once.
+6. **Which contact e-mail is monitored** — the page now shows the three addresses the office publishes on its about page; the owner has to say which is authoritative before launch.
+7. **Warnings in `docs/research/tools/*.mjs`** (9 ESLint warnings) — research scripts from the Cursor handoff, out of scope but still noise.
 5. **Breadcrumb on the home page is absent by design** — noted so nobody "fixes" it later.
 
 ## 6. Deferred scope (blocked, not forgotten)
