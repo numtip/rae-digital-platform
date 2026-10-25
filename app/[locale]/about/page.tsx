@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { asset } from "@/lib/assets";
 import { SITE_URL, getAbout, isLocale } from "@/lib/i18n";
 
 // Nothing here is invented: every string comes from content/<locale>/about.ts,
@@ -40,7 +41,7 @@ export default async function About({ params }: Props) {
         <div className="mx-auto w-full max-w-7xl px-4">
           <div className="flex flex-wrap items-center gap-6">
             <Image
-              src="/images/about/rae-logo.png"
+              src={asset("/images/about/rae-logo.png")}
               alt={about.images.logo.alt}
               width={96}
               height={89}
@@ -101,7 +102,7 @@ export default async function About({ params }: Props) {
             {/* Two official photographs of the office buildings. Alt text is
                 translated, never left in one language. */}
             <Image
-              src="/images/about/office-building.webp"
+              src={asset("/images/about/office-building.webp")}
               alt={about.images.building.alt}
               width={1200}
               height={557}
@@ -109,7 +110,7 @@ export default async function About({ params }: Props) {
               className="w-full rounded-lg object-cover shadow-sm"
             />
             <Image
-              src="/images/about/office-annex.webp"
+              src={asset("/images/about/office-annex.webp")}
               alt={about.images.annex.alt}
               width={719}
               height={505}
