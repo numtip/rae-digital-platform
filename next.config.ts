@@ -8,6 +8,9 @@ const basePath = preview ? "/rae-digital-platform" : "";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // `/th/` and `/en/` are the canonical form (issue #17), so `/th` redirects to
+  // `/th/` and every internal href keeps one shape.
+  trailingSlash: true,
   ...(preview
     ? {
         output: "export" as const,
@@ -15,7 +18,17 @@ const nextConfig: NextConfig = {
         assetPrefix: basePath || undefined,
         images: { unoptimized: true },
       }
-    : {}),
+    : {
+        // Not supported with output: "export" — the preview build ships a static
+        // /index.html redirect instead (see the pages-preview workflow).
+        async redirects() {
+          return [
+            // 307, not 308: the default locale may still change before launch and
+            // browsers cache a permanent redirect hard.
+            { source: "/", destination: "/th/", permanent: false },
+          ];
+        },
+      }),
   env: { NEXT_PUBLIC_BASE_PATH: basePath },
 };
 
