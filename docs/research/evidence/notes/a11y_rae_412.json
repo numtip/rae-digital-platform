@@ -1,0 +1,136 @@
+{
+ "contrast": {
+  "checked": 1009,
+  "belowAA": 14,
+  "imageBgSkipped": 9,
+  "worst": [
+   {
+    "sel": "div",
+    "text": "จดหมายข่าววิจัยและบริการวิชาการ",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(255,152,0)",
+    "ratio": 2.16,
+    "need": 4.5,
+    "size": 16
+   },
+   {
+    "sel": "div",
+    "text": "Knowledge Newsletter",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(255,152,0)",
+    "ratio": 2.16,
+    "need": 4.5,
+    "size": 12.8
+   },
+   {
+    "sel": "div",
+    "text": "คณะกรรมการจริยธรรมการวิจัย",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(23,162,184)",
+    "ratio": 3.04,
+    "need": 4.5,
+    "size": 15.2
+   },
+   {
+    "sel": "div",
+    "text": "IRB",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(23,162,184)",
+    "ratio": 3.04,
+    "need": 4.5,
+    "size": 12.8
+   },
+   {
+    "sel": "div",
+    "text": "วารสารวิจัยฯ",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(33,150,243)",
+    "ratio": 3.12,
+    "need": 4.5,
+    "size": 16
+   },
+   {
+    "sel": "div",
+    "text": "Maejo University Journal",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(33,150,243)",
+    "ratio": 3.12,
+    "need": 4.5,
+    "size": 12.8
+   },
+   {
+    "sel": "div",
+    "text": "ศูนย์เกษตรอินทรีย์",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(40,167,69)",
+    "ratio": 3.13,
+    "need": 4.5,
+    "size": 15.2
+   },
+   {
+    "sel": "div",
+    "text": "Organic Agriculture Center",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(40,167,69)",
+    "ratio": 3.13,
+    "need": 4.5,
+    "size": 12.8
+   },
+   {
+    "sel": "strong",
+    "text": "สำนักวิจัยและส่งเสริมวิชาการการเกษตร มหา",
+    "color": "rgb(255, 204, 0)",
+    "bg": "rgb(1,127,63)",
+    "ratio": 3.38,
+    "need": 4.5,
+    "size": 14
+   },
+   {
+    "sel": "a",
+    "text": "One Stop Service",
+    "color": "rgb(24, 119, 242)",
+    "bg": "rgb(240,242,245)",
+    "ratio": 3.78,
+    "need": 4.5,
+    "size": 16
+   },
+   {
+    "sel": "div",
+    "text": "Maejo Vision",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(255,0,0)",
+    "ratio": 4,
+    "need": 4.5,
+    "size": 16
+   },
+   {
+    "sel": "div",
+    "text": "Video Channel",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(255,0,0)",
+    "ratio": 4,
+    "need": 4.5,
+    "size": 12.8
+   }
+  ]
+ },
+ "headingOrder": {
+  "count": 3,
+  "issues": [
+   "first-heading-is-h2"
+  ]
+ },
+ "tapTargets": {
+  "interactive": 75,
+  "under24": 4,
+  "sample": [
+   "a 20x223",
+   "a 21x324",
+   "a 21x133",
+   "a 21x84"
+  ]
+ },
+ "emptyLinks": 2,
+ "lang": null,
+ "title": "สำนักวิจัยและส่งเสริมวิชาการการเกษตร มหาวิทยาลัยแม่โจ้"
+}

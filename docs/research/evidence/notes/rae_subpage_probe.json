@@ -1,0 +1,246 @@
+[
+ {
+  "slug": "rae_news_list",
+  "url": "https://rae.mju.ac.th/wtms_news.aspx?lang=th-TH",
+  "status": 200,
+  "ms": 467,
+  "bytes": 166573,
+  "title": "ข่าวสารกิจกรรม",
+  "meta_desc": null,
+  "og": {},
+  "viewport": "width=device-width, initial-scale=1.0",
+  "lang": [
+   ""
+  ],
+  "headings": [
+   [
+    "h1",
+    " ข่าวสารกิจกรรม"
+   ]
+  ],
+  "tables": 6,
+  "forms": 1,
+  "breadcrumb_hits": 23,
+  "img": 4,
+  "img_no_alt": 4,
+  "has_jsonld": false,
+  "server": "Microsoft-IIS/10.0",
+  "powered": "ASP.NET",
+  "cache": "private",
+  "x_aspnet": "4.0.30319",
+  "set_cookie_count": 0,
+  "has_search_input": false,
+  "canonical": false,
+  "h1_count": 1
+ },
+ {
+  "slug": "rae_news_detail",
+  "url": "https://rae.mju.ac.th/wtms_newsDetail.aspx?nID=38764&lang=th-TH",
+  "status": 200,
+  "ms": 296,
+  "bytes": 86813,
+  "title": "ต้อนรับนักศึกษาคณะผลิตกรรมการเกษตร เรียนรู้มาตรฐานและการควบคุมคุณภาพพืชอินทรีย์",
+  "meta_desc": null,
+  "og": {
+   "og:title": "ต้อนรับนักศึกษาคณะผลิตกรรมการเกษตร เรียนรู้มาตรฐานและการควบคุมคุณภาพพืชอินทรีย์",
+   "og:image": "https://rae.mju.ac.th/goverment/20130325103535_2013_rae/news_38764_0_25691006110458_525579.jpg"
+  },
+  "viewport": "width=device-width, initial-scale=1.0",
+  "lang": [
+   ""
+  ],
+  "headings": [
+   [
+    "h1",
+    " ต้อนรับนักศึกษาคณะผลิตกรรมการเกษตร เรียนรู้มาตรฐานและการควบคุมคุณภาพพืชอินทรีย์"
+   ],
+   [
+    "h2",
+    "ข่าวล่าสุด"
+   ]
+  ],
+  "tables": 6,
+  "forms": 1,
+  "breadcrumb_hits": 6,
+  "img": 7,
+  "img_no_alt": 7,
+  "has_jsonld": false,
+  "server": "Microsoft-IIS/10.0",
+  "powered": "ASP.NET",
+  "cache": "private",
+  "x_aspnet": "4.0.30319",
+  "set_cookie_count": 0,
+  "has_search_input": false,
+  "canonical": false,
+  "h1_count": 1
+ },
+ {
+  "slug": "rae_about",
+  "url": "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=2022",
+  "status": 200,
+  "ms": 273,
+  "bytes": 64575,
+  "title": "",
+  "meta_desc": "",
+  "og": {},
+  "viewport": "width=device-width, initial-scale=1.0",
+  "lang": [
+   " xmlns=\"http://www.w3.org/1999/xhtml\""
+  ],
+  "headings": [
+   [
+    "h1",
+    " เกี่ยวกับหน่วยงาน"
+   ],
+   [
+    "h1",
+    "สำนักวิจัยและส่งเสริมวิชาการการเกษตร"
+   ],
+   [
+    "h3",
+    "มหาวิทยาลัยแม่โจ้"
+   ],
+   [
+    "h2",
+    "ปรัชญา วิสัยทัศน์ และพันธกิจ"
+   ],
+   [
+    "h2",
+    "ค่านิยม วัฒนธรรมองค์กร และสมรรถนะหลัก"
+   ],
+   [
+    "h2",
+    "ประวัติความเป็นมา"
+   ]
+  ],
+  "tables": 0,
+  "forms": 1,
+  "breadcrumb_hits": 6,
+  "img": 7,
+  "img_no_alt": 1,
+  "has_jsonld": false,
+  "server": "Microsoft-IIS/10.0",
+  "powered": "ASP.NET",
+  "cache": "private",
+  "x_aspnet": "4.0.30319",
+  "set_cookie_count": 3,
+  "has_search_input": true,
+  "canonical": false,
+  "h1_count": 2
+ },
+ {
+  "slug": "rae_org",
+  "url": "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=2387",
+  "status": 200,
+  "ms": 232,
+  "bytes": 32227,
+  "title": "",
+  "meta_desc": "",
+  "og": {},
+  "viewport": "width=device-width, initial-scale=1.0",
+  "lang": [
+   " xmlns=\"http://www.w3.org/1999/xhtml\""
+  ],
+  "headings": [
+   [
+    "h1",
+    " โครงสร้างองค์กร"
+   ],
+   [
+    "h3",
+    ""
+   ]
+  ],
+  "tables": 0,
+  "forms": 1,
+  "breadcrumb_hits": 6,
+  "img": 2,
+  "img_no_alt": 1,
+  "has_jsonld": false,
+  "server": "Microsoft-IIS/10.0",
+  "powered": "ASP.NET",
+  "cache": "private",
+  "x_aspnet": "4.0.30319",
+  "set_cookie_count": 3,
+  "has_search_input": true,
+  "canonical": false,
+  "h1_count": 1
+ },
+ {
+  "slug": "rae_contact",
+  "url": "https://rae.mju.ac.th/wtms_contact.aspx?lang=th-TH",
+  "status": 200,
+  "ms": 598,
+  "bytes": 48916,
+  "title": "ที่อยู่ติดต่อ",
+  "meta_desc": null,
+  "og": {},
+  "viewport": "width=device-width, initial-scale=1.0",
+  "lang": [
+   ""
+  ],
+  "headings": [
+   [
+    "h1",
+    " ที่อยู่ติดต่อ"
+   ],
+   [
+    "h2",
+    " ที่อยู่ติดต่อ"
+   ]
+  ],
+  "tables": 6,
+  "forms": 1,
+  "breadcrumb_hits": 6,
+  "img": 4,
+  "img_no_alt": 4,
+  "has_jsonld": false,
+  "server": "Microsoft-IIS/10.0",
+  "powered": "ASP.NET",
+  "cache": "private",
+  "x_aspnet": "4.0.30319",
+  "set_cookie_count": 0,
+  "has_search_input": false,
+  "canonical": false,
+  "h1_count": 1
+ },
+ {
+  "slug": "rae_person",
+  "url": "https://rae.mju.ac.th/wtms_personStructure.aspx?lang=th-TH",
+  "error": "HTTP Error 404: Not Found"
+ },
+ {
+  "slug": "rae_home_en",
+  "url": "https://rae.mju.ac.th/wtms_index.aspx?lang=en-US",
+  "status": 200,
+  "ms": 402,
+  "bytes": 70130,
+  "title": "สำนักวิจัยและส่งเสริมวิชาการการเกษตร มหาวิทยาลัยแม่โจ้",
+  "meta_desc": null,
+  "og": {},
+  "viewport": "width=device-width, initial-scale=1.0",
+  "lang": [
+   ""
+  ],
+  "headings": [
+   [
+    "h2",
+    "Press releases and events"
+   ]
+  ],
+  "tables": 8,
+  "forms": 1,
+  "breadcrumb_hits": 0,
+  "img": 4,
+  "img_no_alt": 4,
+  "has_jsonld": false,
+  "server": "Microsoft-IIS/10.0",
+  "powered": "ASP.NET",
+  "cache": "private",
+  "x_aspnet": "4.0.30319",
+  "set_cookie_count": 0,
+  "has_search_input": false,
+  "canonical": false,
+  "h1_count": 0
+ }
+]

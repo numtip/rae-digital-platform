@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+
+<html lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RAE - Office of Agricultural Research and Extension, Maejo University</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              primary: '#005C3B',
+              dark: '#003F2A',
+              forest: '#014D35',
+              gold: '#D8A01A',
+              goldhover: '#c79318',
+              ivory: '#F7F3EA',
+              light: '#f8f9fa'
+            }
+          },
+          fontFamily: {
+            sans: ['Sarabun', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-styles">
+    body {
+      font-family: 'Sarabun', sans-serif;
+    }
+    .shadow-soft {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    .card-hover {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased overflow-x-hidden">
+<!-- BEGIN: MainHeader -->
+<header class="bg-brand-dark text-white sticky top-0 z-50 shadow-md">
+<!-- Top Bar -->
+<div class="border-b border-brand-forest/50 py-1 text-xs">
+<div class="container mx-auto px-4 flex justify-end items-center gap-4">
+<a class="hover:text-brand-gold transition-colors" href="#">เข้าสู่ระบบสำหรับบุคลากร</a>
+<span class="text-gray-400">|</span>
+<a class="hover:text-brand-gold transition-colors" href="#">English</a>
+</div>
+</div>
+<!-- Main Nav -->
+<div class="container mx-auto px-4 py-3 flex flex-wrap items-center justify-between">
+<!-- Logo -->
+<a class="flex items-center gap-3" href="#">
+<div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-brand-primary font-bold overflow-hidden">
+<img alt="RAE Logo" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmu8L8XZjj8oTBvM2EItCeyoT5BJrTHJ5R4jcK8wcpyOAqlSrN3aH2-LUUsaDScQsIrxM2j-NIf7mRMrZzhnQZ4U5SBDKA5csRtRZ98EkCMPhYzGu89clBvGvUsZhHUpSzob2reErvgbWhtIweRFlG2lJu19OxHestphpNHPMSWGwEwEu6rxy6I4e9AKS-YM3_SUSrLPXHCpGaXD4fiAH4xs1HDlsVXFZeHprGH_KwRqLGkyDAvx1-M5MI5NHstFDe9jgWhzDw"/>
+</div>
+<div>
+<h1 class="text-xl font-bold leading-tight">RAE</h1>
+<p class="text-xs text-gray-300 leading-tight">สำนักงานวิจัยและส่งเสริมวิชาการการเกษตร<br/>มหาวิทยาลัยแม่โจ้</p>
+</div>
+</a>
+<!-- Navigation Links -->
+<nav class="hidden lg:flex items-center gap-6 font-medium text-sm">
+<a class="text-brand-gold" href="#">หน้าหลัก</a>
+<a class="hover:text-brand-gold transition-colors" href="#">เกี่ยวกับเรา</a>
+<a class="hover:text-brand-gold transition-colors" href="#">วิจัยและนวัตกรรม</a>
+<a class="hover:text-brand-gold transition-colors" href="#">บริการวิชาการ</a>
+<a class="hover:text-brand-gold transition-colors" href="#">เอกสารเผยแพร่</a>
+<a class="hover:text-brand-gold transition-colors" href="#">ข่าวสารและกิจกรรม</a>
+</nav>
+<!-- Search -->
+<div class="hidden md:block relative">
+<input class="w-48 rounded-full py-1.5 px-4 pr-10 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-gold border-none" placeholder="ค้นหา..." type="text"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+<!-- Mobile Menu Button -->
+<button class="lg:hidden p-2 text-white">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</header>
+<!-- END: MainHeader -->
+<!-- BEGIN: HeroSection -->
+<section class="relative h-[600px] flex items-center">
+<!-- Background Image -->
+<div class="absolute inset-0 w-full h-full">
+<img alt="Maejo Agricultural Landscape" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxhNseOtLuYXjksSU7EpbsCd78-xbwxg2GSzx_jlW0PSGd44qeOjdqcrCorvFCVHy_SRiRYsFuCVU41sRWvQ-lHNCnrjZXQ-0R930Oaa8g3WykGPPyASesUVrmUS_T6WFQMqAnqEmydXHAQJY7OLGYsEcYJ2lUOUO3L9Mvvd9edQ_-Ih8T0Tl22azNwQvL9M11ScXuN7aTQvG5lO494riCtCsj2ulpGIO6iw4IrmbZg1nVBMdJy5e4ql7H65ujhTeczQbi3RBo"/>
+<div class="absolute inset-0 bg-gradient-to-r from-brand-dark/90 via-brand-dark/60 to-transparent"></div>
+</div>
+<!-- Content -->
+<div class="relative z-10 container mx-auto px-4">
+<div class="max-w-2xl text-white">
+<h2 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4">
+          สร้างองค์ความรู้ สู่นวัตกรรมเกษตร<br/>
+<span class="text-brand-gold">เพื่อชุมชน และสังคมที่ยั่งยืน</span>
+</h2>
+<p class="text-lg md:text-xl mb-8 text-gray-200">
+          มุ่งมั่นด้านการวิจัย ส่งเสริมวิชาการ และบริการวิชาการด้านการเกษตร เพื่อพัฒนาเศรษฐกิจ สังคม และสิ่งแวดล้อมอย่างยั่งยืน
+        </p>
+<div class="flex flex-wrap gap-4">
+<a class="bg-brand-primary hover:bg-brand-forest text-white px-8 py-3 rounded-md font-medium transition-colors shadow-lg" href="#">เกี่ยวกับเรา</a>
+<a class="bg-brand-gold hover:bg-brand-goldhover text-white px-8 py-3 rounded-md font-medium transition-colors shadow-lg" href="#">บริการของเรา</a>
+</div>
+</div>
+</div>
+</section>
+<!-- END: HeroSection -->
+<!-- BEGIN: ServicesSection -->
+<section class="py-16 bg-brand-ivory relative z-20 -mt-10 mx-4 md:mx-auto md:max-w-7xl rounded-xl shadow-soft">
+<div class="px-6 md:px-10">
+<div class="flex flex-col md:flex-row justify-between items-end mb-8 border-b border-gray-200 pb-4">
+<div>
+<h3 class="text-2xl font-bold text-gray-800">บริการของเรา</h3>
+<p class="text-gray-500 mt-1">บริการวิชาการและการถ่ายทอดองค์ความรู้สู่สังคม</p>
+</div>
+<a class="text-brand-primary font-medium hover:underline flex items-center gap-1 mt-4 md:mt-0" href="#">
+          ดูทั้งหมด <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M17 8l4 4m0 0l-4 4m4-4H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+<!-- Service Card 1 -->
+<a class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 text-center card-hover flex flex-col items-center" href="#">
+<div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-brand-primary mb-4">
+<svg class="w-8 h-8" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
+</div>
+<h4 class="font-bold text-gray-800 mb-2">บริการตรวจวิเคราะห์</h4>
+<p class="text-sm text-gray-500">ห้องปฏิบัติการมาตรฐานรองรับการตรวจวิเคราะห์ทางการเกษตร</p>
+</a>
+<!-- Service Card 2 -->
+<a class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 text-center card-hover flex flex-col items-center" href="#">
+<div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-brand-primary mb-4">
+<svg class="w-8 h-8" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
+</div>
+<h4 class="font-bold text-gray-800 mb-2">บริการอบรมและถ่ายทอด</h4>
+<p class="text-sm text-gray-500">หลักสูตรอบรม สัมมนา และถ่ายทอดเทคโนโลยีด้านการเกษตร</p>
+</a>
+<!-- Service Card 3 -->
+<a class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 text-center card-hover flex flex-col items-center" href="#">
+<div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-brand-primary mb-4">
+<svg class="w-8 h-8" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
+</div>
+<h4 class="font-bold text-gray-800 mb-2">ให้คำปรึกษาและแนะนำ</h4>
+<p class="text-sm text-gray-500">ให้คำปรึกษาด้านการวิจัยและการพัฒนาการเกษตรแก่เกษตรกรและชุมชน</p>
+</a>
+<!-- Service Card 4 -->
+<a class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 text-center card-hover flex flex-col items-center" href="#">
+<div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-brand-primary mb-4">
+<svg class="w-8 h-8" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
+</div>
+<h4 class="font-bold text-gray-800 mb-2">บริการพื้นที่และเครื่องมือ</h4>
+<p class="text-sm text-gray-500">บริการพื้นที่วิจัย แปลงทดลอง และเครื่องมืออุปกรณ์เพื่อการวิจัย</p>
+</a>
+<!-- Service Card 5 -->
+<a class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 text-center card-hover flex flex-col items-center" href="#">
+<div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-brand-primary mb-4">
+<svg class="w-8 h-8" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
+</div>
+<h4 class="font-bold text-gray-800 mb-2">บริการรับรองมาตรฐาน</h4>
+<p class="text-sm text-gray-500">บริการตรวจรับรองมาตรฐานสินค้าเกษตรและผลิตภัณฑ์อย่างมืออาชีพ</p>
+</a>
+</div>
+</div>
+</section>
+<!-- END: ServicesSection -->
+<!-- BEGIN: StatsSection -->
+<section class="bg-brand-forest py-16 text-white mt-12">
+<div class="container mx-auto px-4">
+<div class="flex flex-col lg:flex-row items-center gap-8 lg:gap-0 divide-y lg:divide-y-0 lg:divide-x divide-green-800/50">
+<div class="w-full lg:w-1/4 px-6 mb-8 lg:mb-0">
+<h3 class="text-2xl font-bold mb-2">ผลงานและสถิติ</h3>
+<p class="text-green-200 text-sm mb-4">(ข้อมูลโดยสังเขป)</p>
+<a class="text-brand-gold font-medium hover:underline flex items-center gap-1" href="#">
+            ดูสถิติทั้งหมด <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M17 8l4 4m0 0l-4 4m4-4H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</a>
+</div>
+<div class="w-full lg:w-3/4 grid grid-cols-2 md:grid-cols-4 gap-6 px-6 pt-8 lg:pt-0">
+<div class="text-center md:text-left">
+<p class="text-green-200 text-sm mb-1 flex items-center justify-center md:justify-start gap-2">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg> 
+              งานวิจัยที่ดำเนินการ
+            </p>
+<div class="text-4xl font-bold text-brand-gold mb-1">586</div>
+<p class="text-sm">โครงการ</p>
+</div>
+<div class="text-center md:text-left">
+<p class="text-green-200 text-sm mb-1 flex items-center justify-center md:justify-start gap-2">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
+              ผลงานตีพิมพ์
+            </p>
+<div class="text-4xl font-bold text-brand-gold mb-1">1,248</div>
+<p class="text-sm">เรื่อง</p>
+</div>
+<div class="text-center md:text-left">
+<p class="text-green-200 text-sm mb-1 flex items-center justify-center md:justify-start gap-2">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
+              นักวิจัยและบุคลากร
+            </p>
+<div class="text-4xl font-bold text-brand-gold mb-1">124</div>
+<p class="text-sm">คน</p>
+</div>
+<div class="text-center md:text-left">
+<p class="text-green-200 text-sm mb-1 flex items-center justify-center md:justify-start gap-2">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path></svg>
+              ชุมชนที่ได้รับประโยชน์
+            </p>
+<div class="text-4xl font-bold text-brand-gold mb-1">8,732</div>
+<p class="text-sm">คน</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: StatsSection -->
+<!-- BEGIN: ContentSection -->
+<section class="py-16 container mx-auto px-4">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+<!-- Research List -->
+<div>
+<div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-2">
+<h3 class="text-2xl font-bold text-gray-800">งานวิจัยและนวัตกรรมเด่น</h3>
+<a class="text-brand-primary font-medium hover:underline flex items-center gap-1 text-sm" href="#">ดูทั้งหมด <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M17 8l4 4m0 0l-4 4m4-4H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Featured Large -->
+<div class="md:row-span-3">
+<img alt="Robotic arm in greenhouse" class="w-full h-full object-cover rounded-lg shadow-sm min-h-[300px]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqUpr-3Dnj5QKnxucTECDG1TTrBH2_5JoZvAeeqdIV8cbwn_7XIZhS__YfwvzcyC2Lt54WFnbCI4d52cb45L71duSXHF3XbUffCGRUfa6LTstDE-pZGCKGbEv1mu0yK1gDS3ZH6tMrLFGhzLuhVcimdeE8w63N83tvE6MRoy_DEkcfwEQVmmV2qAua76QPbAXS7fawE0PPt0R0EmgwwQihM_-9OQ5rICpyq2cb_7zP1oOR_PkTPr9XwkBYChqN7lbTV4gSs6nO"/>
+</div>
+<!-- Small Items -->
+<div class="flex gap-4 items-start bg-white p-3 rounded-lg border border-gray-100 hover:shadow-md transition-shadow">
+<img alt="Greenhouse" class="w-24 h-24 object-cover rounded-md flex-shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxxWipWPDjuDoObECvYsgzIxEhtoDJTZqNUAqI-bomDzirEPTGI91K1O7MQq0KNr0Y7ZyJqkBIngqPg0-TvBfh52XzaZjmrXQpTciwytXPIRQmwY1D-UAdXILTUA2BQvRuQieJNdRK88qJFn2KEhSwqgQNiMi-0V22_nWujl8bpkHV21aqK3PSqa9fMkvFmRcjf8RZVh_Qi4yd-4w7jNVQIt69rkBMDZU87z9AmhPcdtwLv2OIkigy4Bo73rV3jzatC5nihMzt"/>
+<div>
+<span class="text-xs text-brand-primary font-semibold mb-1 block">นวัตกรรม</span>
+<h4 class="font-bold text-gray-800 text-sm line-clamp-2 mb-1">ระบบปลูกพืชอัจฉริยะในโรงเรือนควบคุมอัตโนมัติ</h4>
+<p class="text-xs text-gray-500">นักวิจัย: รศ.ดร.สมชาย โชติ และคณะ</p>
+</div>
+</div>
+<div class="flex gap-4 items-start bg-white p-3 rounded-lg border border-gray-100 hover:shadow-md transition-shadow">
+<img alt="Rice field" class="w-24 h-24 object-cover rounded-md flex-shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIrH77V3ujvep21McOlrZoKzh-PobuMs4l4pTnAHqhzGdQ7XoxOMEc62jwqaG0yz-JI6ErjYLA-AsF12pf5mrgIT-y8-OdIwXpOTDa5viwufHsJJAOR8OivW6Zh0eW0_TUoGCMCsvQLJgkBqBBVx8zg3MvaprvR5rj_RqGTS3e_GFD_iA4wjwB88YzocvoeSJ_GhMBTRlNfqjl62bcRf4Ey7JYrif3thC6_pMhKH8GRGxHfF4i0mU54xeL2RzHIoIfbM_DCCP6"/>
+<div>
+<span class="text-xs text-brand-primary font-semibold mb-1 block">พืชและเทคโนโลยีการผลิต</span>
+<h4 class="font-bold text-gray-800 text-sm line-clamp-2 mb-1">การพัฒนาพันธุ์ข้าวหอมคุณภาพทนแล้ง</h4>
+<p class="text-xs text-gray-500">นักวิจัย: ผศ.ดร.นฤมล พรมจง และคณะ</p>
+</div>
+</div>
+<div class="flex gap-4 items-start bg-white p-3 rounded-lg border border-gray-100 hover:shadow-md transition-shadow">
+<img alt="Microscope" class="w-24 h-24 object-cover rounded-md flex-shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAImJSKQtf3ytg6tIf0K8uWd-J_Epttdume3Sxza7kVDX_oqheddjLMOe2KZkZ5DmUdf5On7gLEhlfF7xDlp7o4JE8kVPIP0JbEaJDw2-rfgxlT_J5z25ddCuVOfFlGhzOybqiIdjvoiJyyuXniSpLWsn1GhDKYLNiEds_N-0d3VXGbRd3vSvCxI-ArPgpFUCbG8azixR-f5vxbG6bCQAgudSWZOAGkxTkddaX3uyOC0qHYjH7COzU_LhnNrOJT7KjaJl6bLkt0"/>
+<div>
+<span class="text-xs text-brand-primary font-semibold mb-1 block">สัตว์และเทคโนโลยีชีวภาพ</span>
+<h4 class="font-bold text-gray-800 text-sm line-clamp-2 mb-1">โปรไบโอติกจากจุลินทรีย์ท้องถิ่นเพื่อสุขภาพสัตว์</h4>
+<p class="text-xs text-gray-500">นักวิจัย: ดร.วราภรณ์ ชัยเชษฐ์ และคณะ</p>
+</div>
+</div>
+</div>
+</div>
+<!-- News List -->
+<div>
+<div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-2">
+<h3 class="text-2xl font-bold text-gray-800">ข่าวสารและกิจกรรม</h3>
+<a class="text-brand-primary font-medium hover:underline flex items-center gap-1 text-sm" href="#">ดูทั้งหมด <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M17 8l4 4m0 0l-4 4m4-4H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></a>
+</div>
+<div class="flex flex-col gap-4">
+<!-- Featured News -->
+<div class="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<img alt="MOU Signing" class="w-full md:w-48 h-32 object-cover rounded-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTnynAXit3EolMzFwBP2hsAgqGM6C1quwCH5giQaSqbAJYUC_tm39EdpUnhSfjvLfbBMRv4gBZglOXKmHqiInINIxSSpEkyvcidVTeAe7xKxuvW6cAVJmZNFCEfGt02eIvBc2CzGWGPv87VzMhlu1Wl6zGcfKe-MkuknkOOsjXNQxgSMVUOJFVAXrbALaSEfyta3a2R9LhKjLme1Zx1o-ql6voib0-ua6_9IPa_VPICvf_hDDv8tWXDQEqnhggGnD7SpDv21vM"/>
+<div class="flex flex-col justify-center">
+<h4 class="font-bold text-lg text-gray-800 mb-2">พิธีลงนามบันทึกข้อตกลงความร่วมมือด้านวิจัยและนวัตกรรมกับหน่วยงานภาคเครือข่าย</h4>
+<p class="text-sm text-gray-500 flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg> 20 พฤษภาคม 2567</p>
+</div>
+</div>
+<!-- Small News -->
+<div class="flex gap-4 items-center bg-white p-3 rounded-lg border border-gray-100 hover:shadow-sm">
+<img alt="Training" class="w-24 h-20 object-cover rounded-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuATxgo3tGv8rVT5Mmn75tp5w9yh4Pm2Ksm9shwoAAkIjbgAOeFtukX4_soJDrm-1S63UkfJN1rNGWiFB5RA0SEPKMEy7g3ji40BDLJnEkiBmabkSsMDbS2CZ_eaHZvF80FEi6HWH8dfZEjZCb5kSCCT6gzufsmF43Y381ujc9gzwtmNYhZlHIi-747rg1Pbv-Fnr0GGX8m_7lkbq045idGoXwJD67qPssyVHyD1kG_Y_neo2FY5Rh-VJ688KxQFScJhWZKN54qu"/>
+<div>
+<h4 class="font-bold text-gray-800 text-sm mb-1 line-clamp-2">อบรมเชิงปฏิบัติการ "เทคโนโลยีการผลิตพืชปลอดภัย" สำหรับเกษตรกรยุคใหม่</h4>
+<p class="text-xs text-gray-500">15 พฤษภาคม 2567</p>
+</div>
+</div>
+<div class="flex gap-4 items-center bg-white p-3 rounded-lg border border-gray-100 hover:shadow-sm">
+<img alt="Conference" class="w-24 h-20 object-cover rounded-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCltYvWiMDoAIulCDqHFMbowsw8lPux_p-iVRBQZo0gmR37ZJw9eOdQ7uknkLIIrzQ4IAjcFsfFWRAwwE0o9tyZKB2jcAq9SoVGuTKOBkuqRQRoO8f8ZdrNyFQgyZmu30lvj1xFUsQ7cXzor2D5-81v_jsNdfMOJm1s8b093UixtCQLRdhXesTr61ItldvXYnmtJKmMVCFjoQMXgpJFU3EdlVmiVR2tfpKtiJZ2X_10xF9D722tVke-Lwr-78JiweBijlK0kgQp"/>
+<div>
+<h4 class="font-bold text-gray-800 text-sm mb-1 line-clamp-2">ประชุมวิชาการระดับชาติ มหาวิทยาลัยแม่โจ้ ครั้งที่ 10</h4>
+<p class="text-xs text-gray-500">10 พฤษภาคม 2567</p>
+</div>
+</div>
+<div class="flex gap-4 items-center bg-white p-3 rounded-lg border border-gray-100 hover:shadow-sm">
+<img alt="Field work" class="w-24 h-20 object-cover rounded-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCY9JiaekoaJicDct4nKe938rrCbghKuEpYDClHuLJxrW18Qhqqu_YhHgb93ocfvqFFKsCg4NkBwMJWpxNvnYVdeYw1RW1RdGH2hCOoeWXwxB_mlemV2rwJ_fnCsrgsI1PzeHBrFuq935EK71PE6-Zx-jb6eVCYXpMq_HILbGnRzjfYi3w_YG_RvxLmBTNQjrOL7vygdhUXZR3x-l88TSxSmzPwsxar7BXgwnX7kVsbzzuRhfD1bI9eXZkC-TW8Ivw8_YUmGJl4"/>
+<div>
+<h4 class="font-bold text-gray-800 text-sm mb-1 line-clamp-2">ลงพื้นที่ติดตามผลการดำเนินงานโครงการยกระดับคุณภาพชีวิตชุมชน</h4>
+<p class="text-xs text-gray-500">5 พฤษภาคม 2567</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: ContentSection -->
+<!-- BEGIN: ResourcesSection -->
+<section class="bg-gray-100 py-12 border-t border-gray-200">
+<div class="container mx-auto px-4">
+<div class="mb-8 flex items-end gap-4">
+<h3 class="text-2xl font-bold text-gray-800">แหล่งองค์ความรู้</h3>
+<p class="text-gray-500 text-sm pb-1">เข้าถึงองค์ความรู้และเอกสารเผยแพร่ด้านการเกษตร</p>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+<!-- Resource Card -->
+<a class="bg-white p-6 text-center rounded-lg border border-gray-200 hover:border-brand-primary hover:shadow-md transition-all group" href="#">
+<div class="w-12 h-12 mx-auto bg-gray-50 rounded-full flex items-center justify-center text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-colors mb-4">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<h4 class="font-bold text-gray-800 text-sm mb-1">ฐานข้อมูลงานวิจัย</h4>
+<p class="text-xs text-gray-500">ค้นหาและสืบค้นงานวิจัย</p>
+</a>
+<a class="bg-white p-6 text-center rounded-lg border border-gray-200 hover:border-brand-primary hover:shadow-md transition-all group" href="#">
+<div class="w-12 h-12 mx-auto bg-gray-50 rounded-full flex items-center justify-center text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-colors mb-4">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<h4 class="font-bold text-gray-800 text-sm mb-1">เอกสารเผยแพร่</h4>
+<p class="text-xs text-gray-500">รายงานวิจัย คู่มือ แนวทาง</p>
+</a>
+<a class="bg-white p-6 text-center rounded-lg border border-gray-200 hover:border-brand-primary hover:shadow-md transition-all group" href="#">
+<div class="w-12 h-12 mx-auto bg-gray-50 rounded-full flex items-center justify-center text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-colors mb-4">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<h4 class="font-bold text-gray-800 text-sm mb-1">คลังความรู้การเกษตร</h4>
+<p class="text-xs text-gray-500">องค์ความรู้ เทคโนโลยี</p>
+</a>
+<a class="bg-white p-6 text-center rounded-lg border border-gray-200 hover:border-brand-primary hover:shadow-md transition-all group" href="#">
+<div class="w-12 h-12 mx-auto bg-gray-50 rounded-full flex items-center justify-center text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-colors mb-4">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<h4 class="font-bold text-gray-800 text-sm mb-1">วารสารและสิ่งพิมพ์</h4>
+<p class="text-xs text-gray-500">วารสารวิชาการ ออนไลน์</p>
+</a>
+<a class="bg-white p-6 text-center rounded-lg border border-gray-200 hover:border-brand-primary hover:shadow-md transition-all group" href="#">
+<div class="w-12 h-12 mx-auto bg-gray-50 rounded-full flex items-center justify-center text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-colors mb-4">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<h4 class="font-bold text-gray-800 text-sm mb-1">สื่อและมัลติมีเดีย</h4>
+<p class="text-xs text-gray-500">วิดีโอ สื่อการสอน Infographic</p>
+</a>
+</div>
+</div>
+</section>
+<!-- END: ResourcesSection -->
+<!-- BEGIN: PartnersSection -->
+<section class="py-12 bg-white">
+<div class="container mx-auto px-4 text-center">
+<h3 class="text-xl font-bold text-gray-800 mb-8">หน่วยงานและเครือข่ายความร่วมมือ</h3>
+<div class="flex justify-center items-center gap-6 md:gap-12 flex-wrap opacity-70">
+<!-- Placeholder logos for partners -->
+<div class="w-16 h-16 bg-gray-200 rounded-full"></div>
+<div class="w-16 h-16 bg-gray-200 rounded-full"></div>
+<div class="w-16 h-16 bg-gray-200 rounded-full"></div>
+<div class="w-16 h-16 bg-gray-200 rounded-full"></div>
+<div class="w-16 h-16 bg-gray-200 rounded-full"></div>
+<div class="w-16 h-16 bg-gray-200 rounded-full"></div>
+<div class="w-24 h-12 bg-gray-200 rounded-md"></div>
+<div class="w-24 h-12 bg-gray-200 rounded-md"></div>
+</div>
+</div>
+</section>
+<!-- END: PartnersSection -->
+<!-- BEGIN: Footer -->
+<footer class="bg-brand-dark text-gray-300 py-12">
+<div class="container mx-auto px-4">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+<!-- Logo & Contact -->
+<div>
+<div class="flex items-center gap-3 mb-4 text-white">
+<div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-brand-primary font-bold overflow-hidden">
+<img alt="RAE Logo" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCp6VCpm4ZyCJ-KE6o5hMGiTDk_FI8dRN4GQwCao45EHpZAAObL2CBpe-j9W2v165oEAhXrgsdFqa8Kfwy45s5tF7y8D1nLCu4I_PWltGyOUwGvo-gKuzWC14IZIjGjfG-OC6WmZflYto9-0EsaFLhbuBoQzRwz6V656R1izc7770FGdjpH-HCypDASC_c0d4lCwBSdkwtpIj_UcKoNM99sJn5k9Zs74FNaiZWQulvOgpGnktfrIJPJm4x1tCcYcHKXqcRbZXaD"/>
+</div>
+<div>
+<h4 class="font-bold leading-tight">สำนักงานวิจัยและส่งเสริมวิชาการการเกษตร</h4>
+<p class="text-sm">มหาวิทยาลัยแม่โจ้</p>
+</div>
+</div>
+<address class="not-italic text-sm space-y-2">
+<p class="flex items-start gap-2">
+<svg class="w-5 h-5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+              63 หมู่ 4 ตำบลหนองหาร อำเภอสันทราย จังหวัดเชียงใหม่ 50290
+            </p>
+<p class="flex items-center gap-2">
+<svg class="w-5 h-5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+              0 5387 3400
+            </p>
+<p class="flex items-center gap-2">
+<svg class="w-5 h-5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+              rae@mju.ac.th
+            </p>
+</address>
+</div>
+<!-- Main Links -->
+<div>
+<h4 class="text-white font-bold mb-4">เมนูหลัก</h4>
+<ul class="space-y-2 text-sm">
+<li><a class="hover:text-brand-gold transition-colors" href="#">เกี่ยวกับเรา</a></li>
+<li><a class="hover:text-brand-gold transition-colors" href="#">วิจัยและนวัตกรรม</a></li>
+<li><a class="hover:text-brand-gold transition-colors" href="#">บริการวิชาการ</a></li>
+<li><a class="hover:text-brand-gold transition-colors" href="#">องค์ความรู้</a></li>
+<li><a class="hover:text-brand-gold transition-colors" href="#">เอกสารเผยแพร่</a></li>
+<li><a class="hover:text-brand-gold transition-colors" href="#">ข่าวสารและกิจกรรม</a></li>
+<li><a class="hover:text-brand-gold transition-colors" href="#">ติดต่อเรา</a></li>
+</ul>
+</div>
+<!-- Service Links -->
+<div>
+<h4 class="text-white font-bold mb-4">บริการยอดนิยม</h4>
+<ul class="space-y-2 text-sm">
+<li><a class="hover:text-brand-gold transition-colors" href="#">บริการตรวจวิเคราะห์</a></li>
+<li><a class="hover:text-brand-gold transition-colors" href="#">บริการอบรมและถ่ายทอด</a></li>
+<li><a class="hover:text-brand-gold transition-colors" href="#">ให้คำปรึกษาและแนะนำ</a></li>
+<li><a class="hover:text-brand-gold transition-colors" href="#">ฐานข้อมูลงานวิจัย</a></li>
+<li><a class="hover:text-brand-gold transition-colors" href="#">คลังความรู้การเกษตร</a></li>
+</ul>
+</div>
+<!-- Social & Newsletter -->
+<div>
+<h4 class="text-white font-bold mb-4">ติดตามเรา</h4>
+<div class="flex gap-2 mb-6">
+<a class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white hover:opacity-80 transition-opacity" href="#"><svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path></svg></a>
+<a class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white hover:opacity-80 transition-opacity" href="#"><svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24"><path d="M11.984 0A12 12 0 0 0 0 12a12 12 0 0 0 1.958 6.577L.42 24l5.657-1.48A11.963 11.963 0 0 0 11.984 24a12 12 0 0 0 12-12 12 12 0 0 0-12-12zM18.8 16.51c-.3.844-1.745 1.62-2.42 1.696-.61.07-1.393.204-4.043-.89-3.255-1.345-5.337-4.708-5.498-4.922-.16-.215-1.313-1.747-1.313-3.336 0-1.59.824-2.378 1.118-2.693.294-.315.64-.394.853-.394.213 0 .426.002.613.01.203.008.473-.078.736.55.278.663.957 2.336 1.042 2.505.085.17.142.37.035.584-.106.214-.16.347-.32.518-.16.17-.336.368-.48.502-.158.146-.324.31-.144.62.18.31 1.036 1.706 2.296 2.827 1.622 1.444 3.013 1.888 3.322 2.03.31.143.493.118.675-.084.182-.202.775-.905.98-1.215.204-.31.408-.258.694-.15.286.108 1.808.85 2.116 1.004.308.154.512.23.587.358.075.128.075.74-.225 1.584z"></path></svg></a>
+<a class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white hover:opacity-80 transition-opacity" href="#"><svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"></path></svg></a>
+</div>
+<h4 class="text-white font-bold mb-4">รับข่าวสารและกิจกรรม</h4>
+<form class="flex gap-2">
+<input class="w-full rounded-md px-3 py-2 text-sm text-gray-800 border-none focus:ring-2 focus:ring-brand-gold" placeholder="อีเมลของคุณ" type="email"/>
+<button class="bg-brand-gold text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-brand-goldhover transition-colors whitespace-nowrap" type="submit">สมัครรับข่าวสาร</button>
+</form>
+</div>
+</div>
+<div class="border-t border-brand-forest/50 pt-6 flex flex-col md:flex-row justify-between items-center text-xs">
+<p>© 2024 Office of Agricultural Research and Extension, Maejo University. All Rights Reserved.</p>
+<div class="flex gap-4 mt-4 md:mt-0">
+<a class="hover:text-white transition-colors" href="#">นโยบายความเป็นส่วนตัว</a>
+<span>|</span>
+<a class="hover:text-white transition-colors" href="#">เงื่อนไขการใช้งาน</a>
+<span>|</span>
+<a class="hover:text-white transition-colors" href="#">แผนผังเว็บไซต์</a>
+</div>
+</div>
+</div>
+</footer>
+<!-- END: Footer -->
+</body></html>

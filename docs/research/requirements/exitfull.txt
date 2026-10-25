@@ -1,0 +1,776 @@
+📍แจก Prompt ระบบสารสนเทศหน่วยงาน
+
+Prompt : 
+
+คุณเป็น Senior Full Stack Developer และ System Analyst
+
+ช่วยสร้าง ระบบสารสนเทศหน่วยงาน (Organization Information System) แบบครบวงจร รองรับการใช้งานจริงของหน่วยงานราชการ โรงเรียน มหาวิทยาลัย หรือองค์กรเอกชน
+
+Technology
+
+ใช้
+
+***** ให้ปรับปรุง Full Stack ใหม่
+* PHP 8.2 << ไม่ใช้ PHP
+* MySQL
+* HTML5
+* CSS3
+* Bootstrap 5
+* AdminLTE 3
+* JavaScript
+* jQuery
+* SweetAlert2
+* DataTables
+* Chart.js
+* Font Awesome
+* PHPMailer
+* mPDF
+* PhpSpreadsheet
+
+ออกแบบโค้ดแบบ MVC
+
+แบ่ง
+
+* Controller
+* Model
+* View
+
+โค้ดต้องเป็นมาตรฐาน
+
+มี Security
+
+* SQL Injection
+* XSS
+* CSRF
+* Password Hash
+* Session Login
+* Input Validation
+
+⸻
+
+Dashboard
+
+Dashboard สวยงาม Modern
+
+แสดง
+
+* จำนวนบุคลากร
+* จำนวนหน่วยงาน
+* จำนวนข่าวประชาสัมพันธ์
+* จำนวนเอกสาร
+* จำนวนครุภัณฑ์
+* จำนวนรถราชการ
+* จำนวนผู้ใช้งาน
+* จำนวนผู้เข้าชมเว็บไซต์
+
+แสดงกราฟ
+
+* บุคลากรแต่ละฝ่าย
+* ข่าวย้อนหลัง
+* งบประมาณ
+* การใช้งานระบบ
+* Login Report
+
+Chart.js
+
+⸻
+
+ระบบ Login
+
+รองรับ
+
+Admin
+
+Director
+
+Manager
+
+Officer
+
+Staff
+
+Guest
+
+Login
+
+Forgot Password
+
+Reset Password
+
+Remember Me
+
+Google Login (Optional)
+
+OTP Email
+
+2FA
+
+Log Login
+
+Logout
+
+⸻
+
+ระบบผู้ใช้งาน
+
+เพิ่ม
+
+แก้ไข
+
+ลบ
+
+ค้นหา
+
+กำหนดสิทธิ์
+
+Reset Password
+
+Upload รูป
+
+Export Excel
+
+Export PDF
+
+Print
+
+⸻
+
+ระบบบุคลากร
+
+ข้อมูล
+
+รหัส
+
+เลขบัตรประชาชน
+
+ชื่อ
+
+นามสกุล
+
+เพศ
+
+วันเกิด
+
+อายุ
+
+ตำแหน่ง
+
+วิทยฐานะ
+
+ระดับ
+
+กลุ่มงาน
+
+หน่วยงาน
+
+เบอร์โทร
+
+Email
+
+Line ID
+
+Facebook
+
+ที่อยู่
+
+วุฒิการศึกษา
+
+ประวัติการทำงาน
+
+ประวัติการอบรม
+
+รูปภาพ
+
+แนบไฟล์
+
+⸻
+
+ระบบหน่วยงาน
+
+เพิ่ม
+
+แก้ไข
+
+ลบ
+
+ค้นหา
+
+ลำดับ
+
+ชื่อหน่วยงาน
+
+หัวหน้าหน่วยงาน
+
+คำอธิบาย
+
+Logo
+
+สีประจำหน่วยงาน
+
+⸻
+
+ระบบข่าวประชาสัมพันธ์
+
+เพิ่ม
+
+แก้ไข
+
+ลบ
+
+หมวดหมู่
+
+Tag
+
+Banner
+
+Gallery
+
+Video
+
+PDF
+
+กำหนดวันเผยแพร่
+
+ปักหมุดข่าว
+
+SEO URL
+
+Share Facebook
+
+⸻
+
+ระบบเอกสาร
+
+รับหนังสือ
+
+ส่งหนังสือ
+
+เลขที่หนังสือ
+
+วันที่
+
+เรื่อง
+
+ผู้ส่ง
+
+ผู้รับ
+
+สถานะ
+
+ไฟล์ PDF
+
+ค้นหา
+
+Export
+
+QR Code
+
+Barcode
+
+⸻
+
+ระบบครุภัณฑ์
+
+เลขครุภัณฑ์
+
+ชื่อ
+
+ประเภท
+
+ยี่ห้อ
+
+รุ่น
+
+Serial
+
+ราคา
+
+ปีงบประมาณ
+
+ห้อง
+
+ผู้รับผิดชอบ
+
+รูปภาพ
+
+QR Code
+
+Barcode
+
+ยืมคืน
+
+แจ้งซ่อม
+
+ประวัติ
+
+⸻
+
+ระบบรถราชการ
+
+ทะเบียน
+
+รุ่น
+
+ยี่ห้อ
+
+สี
+
+ประเภทรถ
+
+ผู้รับผิดชอบ
+
+ประกัน
+
+ภาษี
+
+ตรวจสภาพ
+
+ประวัติซ่อม
+
+จองรถ
+
+อนุมัติ
+
+ปฏิทินการใช้งาน
+
+⸻
+
+ระบบห้องประชุม
+
+เพิ่มห้อง
+
+รูปภาพ
+
+จำนวนที่นั่ง
+
+อุปกรณ์
+
+จองห้อง
+
+อนุมัติ
+
+Calendar
+
+Google Calendar
+
+⸻
+
+ระบบปฏิทิน
+
+กิจกรรม
+
+ประชุม
+
+อบรม
+
+วันหยุด
+
+Google Calendar
+
+FullCalendar
+
+⸻
+
+ระบบดาวน์โหลดเอกสาร
+
+หมวดหมู่
+
+ไฟล์
+
+จำนวนดาวน์โหลด
+
+Version
+
+Upload
+
+Preview PDF
+
+⸻
+
+ระบบประกาศ
+
+Popup
+
+Banner
+
+Scrolling Text
+
+Notification
+
+⸻
+
+ระบบแบบฟอร์มออนไลน์
+
+สร้างแบบฟอร์มเองได้
+
+Text
+
+Textarea
+
+Date
+
+Time
+
+Number
+
+Dropdown
+
+Checkbox
+
+Radio
+
+Upload File
+
+Signature
+
+Export Excel
+
+PDF
+
+⸻
+
+ระบบร้องเรียน
+
+ส่งเรื่อง
+
+แนบไฟล์
+
+ติดตามสถานะ
+
+Admin ตอบกลับ
+
+Email แจ้งเตือน
+
+⸻
+
+ระบบติดต่อเรา
+
+Google Maps
+
+เบอร์โทร
+
+Email
+
+Social
+
+ฟอร์มติดต่อ
+
+Captcha
+
+⸻
+
+ระบบรายงาน
+
+รายงานทุกโมดูล
+
+Export
+
+PDF
+
+Excel
+
+CSV
+
+Word
+
+Print
+
+Dashboard
+
+⸻
+
+ระบบแจ้งเตือน
+
+Notification
+
+Bell
+
+Email
+
+Line Notify (Optional)
+
+Telegram (Optional)
+
+⸻
+
+ระบบเว็บไซต์
+
+หน้าแรก
+
+เกี่ยวกับเรา
+
+วิสัยทัศน์
+
+พันธกิจ
+
+โครงสร้างองค์กร
+
+ผู้บริหาร
+
+บุคลากร
+
+ข่าว
+
+กิจกรรม
+
+ดาวน์โหลด
+
+FAQ
+
+ติดต่อเรา
+
+Responsive
+
+SEO
+
+⸻
+
+ตั้งค่าระบบ
+
+Logo
+
+Favicon
+
+ชื่อระบบ
+
+ชื่อหน่วยงาน
+
+ที่อยู่
+
+โทรศัพท์
+
+Email
+
+SMTP
+
+Theme
+
+Dark Mode
+
+Light Mode
+
+ภาษา
+
+ปีงบประมาณ
+
+Backup Database
+
+Restore Database
+
+Maintenance Mode
+
+⸻
+
+ระบบ Log
+
+Log Login
+
+Log User
+
+Log Delete
+
+Log Edit
+
+Log Export
+
+Activity Log
+
+Audit Trail
+
+⸻
+
+Database
+
+ออกแบบ ER Diagram
+
+MySQL
+
+Primary Key
+
+Foreign Key
+
+Normalization
+
+สร้าง SQL พร้อมใช้งาน
+
+⸻
+
+UI
+
+Modern
+
+Professional
+
+Responsive
+
+Bootstrap 5
+
+AdminLTE 3
+
+Sidebar
+
+Mega Menu
+
+Card
+
+Modal
+
+Animation
+
+Loading
+
+Skeleton
+
+Dark Mode
+
+Mobile Friendly
+
+⸻
+
+Dashboard Widget
+
+Weather
+
+Calendar
+
+Clock
+
+Announcement
+
+Quick Menu
+
+Recent Activity
+
+Visitors
+
+Statistics
+
+Charts
+
+⸻
+
+Search
+
+Global Search
+
+Filter
+
+Advanced Search
+
+Auto Complete
+
+⸻
+
+API
+
+REST API
+
+JSON
+
+JWT Authentication
+
+Swagger Documentation
+
+⸻
+
+Security
+
+CSRF
+
+XSS
+
+SQL Injection
+
+Password Hash
+
+Role Permission
+
+Session Timeout
+
+reCAPTCHA
+
+HTTPS Ready
+
+⸻
+
+Backup
+
+Auto Backup
+
+Manual Backup
+
+Restore
+
+Download SQL
+
+⸻
+
+File Upload
+
+PDF
+
+DOCX
+
+XLSX
+
+ZIP
+
+PNG
+
+JPG
+
+WEBP
+
+MP4
+
+จำกัดขนาดไฟล์
+
+Rename File
+
+Preview
+
+⸻
+
+AI Features
+
+ค้นหาข้อมูลด้วย AI
+
+สรุปรายงานด้วย AI
+
+Chatbot ผู้ช่วยใช้งานระบบ
+
+AI ช่วยเขียนข่าว
+
+AI ช่วยตอบคำถาม
+
+AI วิเคราะห์ข้อมูล Dashboard
+
+⸻
+
+ผลลัพธ์ที่ต้องการ
+
+ให้สร้างระบบทั้งหมดแบบพร้อมใช้งานจริง
+
+ประกอบด้วย
+
+* โครงสร้างโฟลเดอร์ทั้งหมด
+* Database SQL
+* ER Diagram
+* Source Code ทุกไฟล์
+* Controller
+* Model
+* View
+* Config
+* Assets
+* Login
+* Dashboard
+* CRUD ทุกโมดูล
+* Export PDF
+* Export Excel
+* Responsive Design
+* API
+* คู่มือการติดตั้ง
+* คู่มือการใช้งาน
+* คู่มือผู้ดูแลระบบ
+
+ทุกหน้าต้องมี UI ระดับมืออาชีพ ใช้งานง่าย โหลดเร็ว รองรับมือถือ และสามารถนำไป Deploy บน Shared Hosting หรือ VPS ได้ทันที

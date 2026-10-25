@@ -1,0 +1,330 @@
+{
+  "url": "https://rae.mju.ac.th/wtms_index.aspx?&lang=th-TH",
+  "finalUrl": "https://rae.mju.ac.th/wtms_index.aspx?&lang=th-TH",
+  "port": 9444,
+  "viewport": {
+    "w": 412,
+    "h": 915
+  },
+  "loaded": true,
+  "capturedAt": "2026-10-24T14:56:53.762Z",
+  "probe": {
+    "title": "สำนักวิจัยและส่งเสริมวิชาการการเกษตร มหาวิทยาลัยแม่โจ้",
+    "meta": {
+      "description": null,
+      "keywords": null,
+      "viewport": "width=device-width, initial-scale=1.0",
+      "generator": null,
+      "ogSite": null,
+      "ogImage": null,
+      "ogTitle": null,
+      "robots": "index,follow",
+      "canonical": null,
+      "hreflang": [],
+      "charset": "UTF-8"
+    },
+    "h1": [],
+    "headings": [
+      {
+        "t": "H2",
+        "text": "ข่าวประชาสัมพันธ์และกิจกรรม",
+        "size": "48px"
+      },
+      {
+        "t": "H3",
+        "text": "ระบบสารสนเทศ",
+        "size": "28px"
+      },
+      {
+        "t": "H3",
+        "text": "ผศ.ดร.ณัฐพล เลาห์รอดพันธุ์",
+        "size": "28px"
+      }
+    ],
+    "navs": [],
+    "searchForms": 0,
+    "counts": {
+      "a": 163,
+      "img": 34,
+      "form": 1,
+      "iframe": 4,
+      "video": 0,
+      "section": 1,
+      "article": 3,
+      "table": 9,
+      "button": 2,
+      "svg": 0,
+      "picture": 0,
+      "elements": 381
+    },
+    "widgetMarkers": {
+      "carousel": [
+        ".carousel"
+      ],
+      "tabs": [
+        ".nav-tabs",
+        "[role=\"tablist\"]"
+      ],
+      "accordion": [],
+      "modal": [
+        ".modal"
+      ],
+      "cookieBanner": [],
+      "backToTop": [],
+      "langSwitch": [
+        "[id*=\"lang\" i]"
+      ]
+    },
+    "sticky": [],
+    "palette": {
+      "text": [
+        {
+          "k": "rgb(33, 37, 41)",
+          "v": 160
+        },
+        {
+          "k": "rgb(1, 127, 63)",
+          "v": 97
+        },
+        {
+          "k": "rgb(255, 255, 255)",
+          "v": 82
+        },
+        {
+          "k": "rgb(30, 64, 128)",
+          "v": 8
+        },
+        {
+          "k": "rgb(108, 117, 125)",
+          "v": 7
+        },
+        {
+          "k": "rgb(91, 104, 92)",
+          "v": 4
+        },
+        {
+          "k": "rgb(255, 255, 0)",
+          "v": 3
+        },
+        {
+          "k": "rgb(15, 81, 50)",
+          "v": 3
+        }
+      ],
+      "background": [
+        {
+          "k": "rgb(255, 255, 255)",
+          "v": 28
+        },
+        {
+          "k": "rgb(245, 245, 245)",
+          "v": 11
+        },
+        {
+          "k": "rgb(204, 204, 204)",
+          "v": 8
+        },
+        {
+          "k": "rgb(240, 248, 255)",
+          "v": 8
+        },
+        {
+          "k": "rgba(0, 0, 0, 0.2)",
+          "v": 3
+        },
+        {
+          "k": "rgb(240, 255, 244)",
+          "v": 3
+        },
+        {
+          "k": "rgb(1, 127, 63)",
+          "v": 2
+        },
+        {
+          "k": "rgb(34, 34, 33)",
+          "v": 1
+        }
+      ],
+      "fontFamily": [
+        {
+          "k": "myFont",
+          "v": 94
+        },
+        {
+          "k": "Sarabun",
+          "v": 26
+        }
+      ],
+      "fontSize": [
+        {
+          "k": "16px",
+          "v": 69
+        },
+        {
+          "k": "14px",
+          "v": 13
+        },
+        {
+          "k": "12.8px",
+          "v": 11
+        },
+        {
+          "k": "17.6px",
+          "v": 8
+        },
+        {
+          "k": "12px",
+          "v": 5
+        },
+        {
+          "k": "15.2px",
+          "v": 5
+        },
+        {
+          "k": "28px",
+          "v": 2
+        },
+        {
+          "k": "18px",
+          "v": 2
+        },
+        {
+          "k": "48px",
+          "v": 1
+        },
+        {
+          "k": "19.2px",
+          "v": 1
+        }
+      ]
+    },
+    "cssVars": null,
+    "css": {
+      "sheets": 7,
+      "sameOriginReadable": 7,
+      "mediaBreakpoints": [
+        "(prefers-reduced-motion: no-preference)",
+        "(min-width: 1200px)",
+        "(min-width: 576px)",
+        "(min-width: 768px)",
+        "(min-width: 992px)",
+        "(min-width: 1400px)",
+        "(max-width: 575.98px)",
+        "(max-width: 767.98px)",
+        "(max-width: 991.98px)",
+        "(max-width: 1199.98px)",
+        "(max-width: 1399.98px)",
+        "(prefers-reduced-motion: reduce)",
+        "(max-width: 575.98px) and (prefers-reduced-motion: reduce)",
+        "(max-width: 767.98px) and (prefers-reduced-motion: reduce)",
+        "(max-width: 991.98px) and (prefers-reduced-motion: reduce)",
+        "(max-width: 1199.98px) and (prefers-reduced-motion: reduce)",
+        "(max-width: 1399.98px) and (prefers-reduced-motion: reduce)",
+        "print",
+        "(max-width: 575px)"
+      ],
+      "topClasses": [
+        {
+          "k": "",
+          "v": 7541
+        },
+        {
+          "k": "#menuBlock",
+          "v": 8
+        }
+      ],
+      "fontFaces": [
+        "bootstrap-icons",
+        "myFont"
+      ]
+    },
+    "fontsLoaded": [
+      "bootstrap-icons normal loaded",
+      "myFont normal loaded"
+    ],
+    "tech": {
+      "jquery": "3.5.1",
+      "bootstrap": "js-present",
+      "react": false,
+      "vue": false,
+      "next": false,
+      "nuxt": false,
+      "angular": false,
+      "gtm": true,
+      "ga": true,
+      "fbq": false,
+      "recaptcha": false
+    },
+    "resources": {
+      "total": 51,
+      "byType": {
+        "link": 6,
+        "script": 4,
+        "img": 27,
+        "iframe": 4,
+        "css": 10
+      },
+      "bytes": 0,
+      "hosts": [
+        [
+          "rae.mju.ac.th",
+          43
+        ],
+        [
+          "www.youtube.com",
+          4
+        ],
+        [
+          "www.googletagmanager.com",
+          2
+        ],
+        [
+          "erp.mju.ac.th",
+          1
+        ],
+        [
+          "scdn.line-apps.com",
+          1
+        ]
+      ]
+    },
+    "perf": {
+      "ttfb": 1914,
+      "domContentLoaded": 1945,
+      "load": 4242,
+      "transferSize": 40585,
+      "decodedBodySize": 149939
+    },
+    "layout": {
+      "docWidth": 416,
+      "viewport": 416,
+      "horizontalOverflow": false,
+      "docHeight": 11953
+    },
+    "a11y": {
+      "lang": null,
+      "skipLink": false,
+      "landmarks": {
+        "header": 0,
+        "nav": 0,
+        "main": 0,
+        "footer": 1
+      },
+      "imgTotal": 34,
+      "imgWithAlt": 30,
+      "imgEmptyAlt": 0,
+      "imgNoAlt": 4,
+      "ariaLabelCount": 9,
+      "buttons": 2,
+      "inputsWithoutLabel": 0,
+      "smallFonts": 0
+    },
+    "cookies": [
+      "_ga",
+      "_ga_2WSQZQ08Y2"
+    ],
+    "bodyBg": "rgb(255, 255, 255)",
+    "bodyFont": "myFont",
+    "bodyFontSize": "16px"
+  }
+}

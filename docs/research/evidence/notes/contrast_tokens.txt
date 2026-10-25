@@ -1,0 +1,31 @@
+﻿white on brand green             #FFFFFF on #017F3F   5.11  AA-normal
+white on green-800               #FFFFFF on #076B35   6.64  AA-normal
+white on green-900               #FFFFFF on #043D1F  12.41  AA-normal
+white on green-600 (#0A8F45)     #FFFFFF on #0A8F45   4.18  AA-large/UI
+white on #0E9A50                 #FFFFFF on #0E9A50   3.65  AA-large/UI
+ink on white                     #111827 on #FFFFFF  17.74  AA-normal
+ink on green-50                  #111827 on #F3FAF6  16.74  AA-normal
+ink on green-100                 #111827 on #E6F4EC  15.64  AA-normal
+muted on white                   #5B6470 on #FFFFFF    6.0  AA-normal
+muted on green-50                #5B6470 on #F3FAF6   5.66  AA-normal
+green-700 link on white          #017F3F on #FFFFFF   5.11  AA-normal
+green-800 link on white          #076B35 on #FFFFFF   6.64  AA-normal
+green-700 on green-50            #017F3F on #F3FAF6   4.82  AA-normal
+amber text on white              #8A5A00 on #FFFFFF   5.93  AA-normal
+amber badge ink                  #3D2A00 on #FFE9A8  11.42  AA-normal
+ink on amber-100                 #111827 on #FFE9A8  14.76  AA-normal
+info blue on white               #1E5AA8 on #FFFFFF   6.81  AA-normal
+danger on white                  #A4232B on #FFFFFF   7.36  AA-normal
+white on danger                  #FFFFFF on #A4232B   7.36  AA-normal
+white on info blue               #FFFFFF on #1E5AA8   6.81  AA-normal
+line-strong #84978C vs white     #84978C on #FFFFFF   3.09  AA-large/UI
+line #DCEFE3 vs white (decorative) #DCEFE3 on #FFFFFF    1.2  FAIL
+footer text on green-900         #E6F4EC on #043D1F  10.94  AA-normal
+focus amber on green-900         #FFE9A8 on #043D1F  10.32  AA-normal
+
+Proposed neutral ramp contrast vs white:
+  #111827 17.74
+  #374151 10.31
+  #5B6470 6.0
+  #6B7280 4.83
+  #8A929E 3.14
