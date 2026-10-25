@@ -45,7 +45,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const { hero, sections, header } = content;
 
   return (
-    <main>
+    <main id="main-content" tabIndex={-1}>
       {/* TODO(issue #2): real RAE hero photo + the dark scrim that sits over it.
           The reference photo is a Google hotlink (forbidden), so the hero is the
           brand token until the owner supplies the asset. */}
