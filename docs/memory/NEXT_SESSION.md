@@ -1,7 +1,7 @@
 # Next session — after 2026-10-26 (night)
 
-`main` is `98d8af7`. Three PRs are open and green; nothing was merged tonight because each
-needs the owner's approving review. This file replaces the handoff merged in #55.
+`main` is `98d8af7`. Six PRs are open and green; nothing was merged because each needs the
+owner's approving review. This file replaces the handoff merged in #55.
 
 ## Open PRs (all `build` pass, none merged)
 
@@ -10,9 +10,13 @@ needs the owner's approving review. This file replaces the handoff merged in #55
 | [#57](https://github.com/numtip/rae-digital-platform/pull/57) | `feat/knowledge-events` | `main` | 18 files, +531/−22 | `/knowledge/` hub (M04) + `/news/events/` from published activities (M05); search moves to the utility bar; news-card dates pass AA |
 | [#58](https://github.com/numtip/rae-digital-platform/pull/58) | `fix/cms-workflow` | `main` | 10 files, +410/−25 | officer submits own draft, sessions idle 30 m / absolute 8 h, login throttle 5 / 15 m, reviewer returns with a reason |
 | [#59](https://github.com/numtip/rae-digital-platform/pull/59) | `feat/surfacing` | **`feat/knowledge-events`** | 4 files, +48/−17 | footer renders the NAV sections; homepage quick links reach the two new pages |
+| [#61](https://github.com/numtip/rae-digital-platform/pull/61) | `feat/about-structure` | `main` | 3 files, +46/−2 | `/about/` organisation structure (the three published division names); timeline year now passes AA |
+| [#62](https://github.com/numtip/rae-digital-platform/pull/62) | `feat/documents-counts` | `main` | 4 files, +21/−2 | Document Center categories state how many links they open |
+| [#63](https://github.com/numtip/rae-digital-platform/pull/63) | `feat/news-jsonld` | `main` | 1 file, +5/−0 | `NewsArticle` JSON-LD carries the article `url` + `mainEntityOfPage` per locale |
+| [#60](https://github.com/numtip/rae-digital-platform/pull/60) | `docs/handoff-2026-10-26-night` | `main` | this file | canonical handoff |
 
 **Merge order:** #57 (without `--delete-branch`) → retarget #59 to `main` and rebase → #59.
-#58 is independent of both. Branch protection on `main` is untouched: `reviews=1`,
+#58, #61, #62, #63 and #60 are independent of all of them. Branch protection on `main` is untouched: `reviews=1`,
 `checks=[build]`, strict, no force-push, no deletions.
 
 ## Live state
@@ -45,8 +49,10 @@ site 148/148 routes, 0 problems. The two new pages exist on #57's branch and in 
 
 ## Next, in order
 
-1. Owner reviews and merges #57, then #59, and #58 on its own.
-2. After that, the only Phase-1 website work left that needs no new content is polish on
-   existing pages; everything else waits on copy or on the database decision (gate A-1).
+1. Owner reviews and merges #57, then #59, and #58 / #61 / #62 / #63 / #60 on their own.
+2. After #57 merges, the one website feature ready to build is a category filter on `/news/`
+   derived from the type strings the office already publishes — it touches
+   `components/news-index.tsx` and `content/th/news.ts`, both of which #57 edits, so it waits
+   for that merge instead of fighting it. Everything else needs copy or the database decision.
 3. Still open for the owner: whether a publisher may publish an item they authored (today only
    pinned items need a second person).
