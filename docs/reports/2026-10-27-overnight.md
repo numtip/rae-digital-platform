@@ -15,9 +15,9 @@ branch, PR list and gates re-verified.
 
 | Job | ID | State | Next run |
 |---|---|---|---|
-| Overnight finalize (one-shot, created this session) | `c3ff9a76441c` | **active / scheduled** | 2026-10-26 05:30 +07 |
+| Overnight finalize (one-shot) | `c3ff9a76441c` | **fired 05:32 +07, one-shot consumed** (this report refresh) | — |
 | RAE nightly development (`0 1 * * *`) | `9ecc82d7adc4` | active — **already fired at 01:00 tonight**, produced PR #35 | 2026-10-27 01:00 +07 |
-| RAE nightly report (`0 7 * * *`) | `ad2117136b3b` | active | 2026-10-26 07:00 +07 |
+| RAE nightly report (`0 7 * * *`) | `ad2117136b3b` | active | 2026-10-26 07:00 +07 (fires independently of this session) |
 
 No duplicate development job was created: the recurring 01:00 job had already run in this
 window, so a second one would have raced it on the same branch. The one-shot only
@@ -25,7 +25,22 @@ finalizes at 05:30 (QA, report refresh, Telegram), and never merges.
 
 ## 2. Completed work
 
-Four draft PRs, all with green CI. Nothing was merged; protection was never lowered.
+Four draft PRs, all with green CI. Nothing was merged, no required review was reduced and
+branch protection was not touched at any point this session.
+
+**Per-PR evidence (numbers from each PR's own head, not inherited from its base):**
+
+| PR | Diff (GitHub) | CI | Own gates | Merge state |
+|---|---|---|---|---|
+| #35 | 2 files, +28/−13 | build SUCCESS | export parity verified by the reviewer: 8 broken refs → 0 after this PR | MERGEABLE / BLOCKED on review |
+| #34 | 24 files, +662/−26 | build SUCCESS | `npm test` 6/6, export OK | MERGEABLE / BLOCKED on review |
+| #36 | 5 files, +160/−3 | build SUCCESS | `npm test` 7/7, `check-export` OK (141 files) | CLEAN |
+| #37 | 9 files, +320/−83 | build SUCCESS | `npm test` 7/7, `check-export` OK (149 files) | CLEAN |
+
+**Conflict simulation of the accepted order** (`main` + #35 + #34 + #36 + #37, merged
+locally in one throwaway branch): **0 conflicts at every step**, then
+`npm test` 7/7 · typecheck clean · lint 0 errors · `check-export` OK (149 files, 148
+routes, 7,654 internal refs). The simulation branch was deleted afterwards.
 
 | PR | Branch | Scope |
 |---|---|---|
@@ -49,9 +64,17 @@ order · English news derives its photo set from the Thai source.
 
 Walks `out/` and fails on: internal links that do not resolve, missing asset or `srcset`
 candidates, `href="#"` / `href=""`, plain-http links, and any Thai route without an
-English twin. Current state: **141 HTML files, 140 routes, 7,254 internal refs, 730
-external links — OK**. Proven red by injecting one broken link (reported with file and
-URL) and green after reverting.
+English twin. Numbers depend on how much of the stack is applied, so they are stated per
+tree rather than as one figure:
+
+| tree | result |
+|---|---|
+| #34 + #36 (no pagination) | 141 HTML files, 140 routes, 7,254 internal refs — OK |
+| #34 + #36 + #37 (paginated) | **149 HTML files, 148 routes, 7,648 internal refs — OK** |
+| all four in the accepted order | **149 HTML files, 148 routes, 7,654 internal refs — OK** |
+
+Proven red by injecting one broken link (reported with file and URL) and green after
+reverting.
 
 ### 2.3 Real defect the new gate caught
 
