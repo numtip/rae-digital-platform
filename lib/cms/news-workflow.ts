@@ -75,8 +75,15 @@ export function publishNews(article: NewsRecord, actor: { id: string; role: Role
   requirePermission(actor.role, "news:publish");
   if (article.status !== "approved") throw new WorkflowError("only an approved item can be published");
   if (!article.reviewerId) throw new WorkflowError("approval is missing");
-  if (article.pinned && (actor.id === article.authorId || actor.id === article.reviewerId)) {
-    throw new WorkflowError("a pinned item needs a second person to publish");
+  // Approved publishing policy: an approval only counts when a different person gave it, so a
+  // publisher may release their own draft but never on their own say-so.
+  if (article.reviewerId === article.authorId) {
+    throw new WorkflowError("the approval must come from someone other than the author");
+  }
+  // A pinned item keeps three distinct participants: author, reviewer and publisher.
+  if (article.pinned) {
+    if (actor.id === article.authorId) throw new WorkflowError("a pinned item needs a publisher who is not the author");
+    if (actor.id === article.reviewerId) throw new WorkflowError("a pinned item needs a publisher who is not the reviewer");
   }
   return next(article, { status: "published", publisherId: actor.id });
 }
