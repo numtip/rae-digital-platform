@@ -50,6 +50,10 @@ export default async function Documents({ params }: Props) {
                   {group.title}
                 </Link>
               </h2>
+              {/* Count of the links this category opens, taken from the list itself. */}
+              <p className="mt-1 text-sm text-neutral-600">
+                {documents.linksTemplate.replace("{n}", String(group.links.length))}
+              </p>
               <ul className="mt-4 space-y-3">
                 {group.links.map((link) => (
                   <li key={link.url}>
