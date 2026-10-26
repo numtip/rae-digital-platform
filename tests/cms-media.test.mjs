@@ -1,5 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { request as httpRequest } from "node:http";
 import { addUser, createCmsServer, resetRuntime } from "../cms-runtime/server.mjs";
 import { MAX_ARTICLE_IMAGE_BYTES, assertArticleImage, extensionFor, MediaRejected } from "../lib/cms/media.ts";
 
@@ -28,6 +32,9 @@ test("only real images are accepted, with a size cap", () => {
 });
 
 async function withServer(run) {
+  // Tests must never write into the repository: an isolated directory per server, deleted after.
+  const media = mkdtempSync(join(tmpdir(), "rae-cms-media-test-"));
+  process.env.RAE_CMS_MEDIA_DIR = media;
   resetRuntime();
   addUser({ id: "author", role: "publisher", password: "author-password-12" });
   addUser({ id: "reviewer", role: "editor", password: "reviewer-password-12" });
@@ -39,6 +46,8 @@ async function withServer(run) {
   } finally {
     await new Promise((resolve) => server.close(resolve));
     resetRuntime();
+    delete process.env.RAE_CMS_MEDIA_DIR;
+    rmSync(media, { recursive: true, force: true });
   }
 }
 
@@ -158,5 +167,43 @@ test("media uploads are refused for a non-author, a locked article and bad bytes
       body: JSON.stringify({ dataBase64: PNG.toString("base64") }),
     });
     assert.equal(locked.status, 400, "images are added while the article is a draft");
+  });
+});
+
+test("ids and file names are validated, and an oversized upload is refused", async () => {
+  await withServer(async (base) => {
+    const author = await login(base, "author", "author-password-12");
+
+    const bad = await fetch(`${base}/v1/news`, {
+      method: "POST",
+      headers: auth(author),
+      body: JSON.stringify({ id: "../../etc/passwd", titleTh: "ก", titleEn: "a", source: "s" }),
+    });
+    assert.equal(bad.status, 400);
+    assert.equal((await bad.json()).error, "INVALID_ID");
+
+    const ok = await fetch(`${base}/v1/news`, {
+      method: "POST",
+      headers: auth(author),
+      body: JSON.stringify({ id: "safe-id-1", titleTh: "ก", titleEn: "a", source: "s" }),
+    });
+    assert.equal(ok.status, 201);
+
+    // A traversal id never reaches the filesystem: it is not a valid id, so there is nothing to serve.
+    assert.equal((await fetch(`${base}/v1/media/..%2f..%2fetc`, { headers: auth(author) })).status, 404);
+    // Neither does an upload whose file name is not the one the runtime generates.
+    assert.equal((await fetch(`${base}/v1/media/safe-id-1/../../../etc/passwd`, { headers: auth(author) })).status, 404);
+    assert.equal((await fetch(`${base}/v1/media/safe-id-1/passwd.jpg`, { headers: auth(author) })).status, 404);
+
+    // A declared body above the cap is refused before it is buffered.
+    const oversized = await new Promise((resolve, reject) => {
+      const request = httpRequest(`${base}/v1/news/safe-id-1/media`, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${author}`, "content-length": String(13 * 1024 * 1024) },
+      }, (response) => resolve(response.statusCode));
+      request.on("error", reject);
+      request.end();
+    });
+    assert.equal(oversized, 413);
   });
 });

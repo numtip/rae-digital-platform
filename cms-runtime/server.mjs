@@ -130,10 +130,32 @@ async function actorFrom(request, now, repository) {
   return repository.findUser(session.userId);
 }
 
+// One image may be 8 MB, which is ~11 MB once base64 encoded; 12 MB leaves room for the captions
+// and rejects anything larger before it is buffered.
+export const MAX_REQUEST_BYTES = 12 * 1024 * 1024;
+
+class PayloadTooLarge extends Error {
+  constructor() {
+    super("the request body is larger than 12 MB");
+    this.name = "PayloadTooLarge";
+    this.status = 413;
+  }
+}
+
 function readBody(request) {
   return new Promise((resolve, reject) => {
+    const declared = Number(request.headers["content-length"] ?? 0);
+    if (declared > MAX_REQUEST_BYTES) return reject(new PayloadTooLarge());
     const chunks = [];
-    request.on("data", (chunk) => chunks.push(chunk));
+    let received = 0;
+    request.on("data", (chunk) => {
+      received += chunk.length;
+      if (received > MAX_REQUEST_BYTES) {
+        request.destroy();
+        return reject(new PayloadTooLarge());
+      }
+      chunks.push(chunk);
+    });
     request.on("end", () => {
       const raw = Buffer.concat(chunks).toString("utf8");
       if (!raw) return resolve({});
@@ -167,8 +189,14 @@ function send(response, status, body, origin) {
   response.end(JSON.stringify(body));
 }
 
+// Ids become directory names under the media root, so they are validated rather than trusted.
+export const SAFE_ID = /^[a-z0-9][a-z0-9-]{1,63}$/;
+// Uploads are named by the runtime (`01-1a2b3c4d.jpg`); anything else is not ours to read.
+export const SAFE_MEDIA_FILE = /^\d{2}-[0-9a-f]{8}\.(png|jpg|webp)$/;
+
 function articleId(pathname) {
-  return pathname.split("/")[3] ?? "";
+  const candidate = pathname.split("/")[3] ?? "";
+  return SAFE_ID.test(candidate) ? candidate : "";
 }
 
 function mediaRoot(env = process.env) {
@@ -260,7 +288,7 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
       if (request.method === "GET" && url.pathname.startsWith("/v1/media/")) {
         const [, , , mediaArticleId, mediaFile] = url.pathname.split("/");
         const owner = mediaArticleId ? await repo.getArticle(mediaArticleId) : null;
-        if (!owner || !mediaFile || mediaFile.includes("..")) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        if (!owner || !mediaFile || !SAFE_MEDIA_FILE.test(mediaFile)) return send(response, 404, { error: "NOT_FOUND" }, origin);
         // A draft's images stay behind authentication; a published article's images are what the
         // preview page and, later, the static import need.
         if (owner.status !== "published" && !(await actorFrom(request, now(), repo))) {
@@ -300,6 +328,9 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
       if (request.method === "POST" && url.pathname === "/v1/news") {
         requirePermission(actor.role, "news:draft");
         const body = await readBody(request);
+        if (!SAFE_ID.test(String(body.id ?? ""))) {
+          return send(response, 400, { error: "INVALID_ID", message: "an id is 2-64 characters of a-z, 0-9 and -" }, origin);
+        }
         // Creating with an id that already exists would overwrite someone else's article and
         // reset its workflow state; a client that means to change one must PATCH it.
         if (await repo.getArticle(String(body.id))) {
@@ -405,6 +436,7 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
           }
           throw error;
         }
+        if (!SAFE_ID.test(id)) return send(response, 400, { error: "INVALID_ID" }, origin);
         const existing = await repo.listMedia(id);
         if (existing.length >= 10) {
           return send(response, 400, { error: "MediaRejected", message: "an article carries at most 10 images" }, origin);
@@ -459,7 +491,7 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
 
       return send(response, 404, { error: "NOT_FOUND" }, origin);
     } catch (error) {
-      const status = error?.status === 403 || error?.name === "PermissionDenied" ? 403 : 400;
+      const status = error?.status === 413 ? 413 : error?.status === 403 || error?.name === "PermissionDenied" ? 403 : 400;
       send(response, status, { error: error?.name ?? "ERROR", message: error?.message ?? "" }, request.headers.origin);
     }
   });
