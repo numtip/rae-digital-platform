@@ -74,7 +74,10 @@ export const enAbout: AboutContent = {
     phoneLabel: "Phone",
     phone: "(+66) 0 5387 3400",
     emailLabel: "E-mail",
-    emails: ["raemju@gmail.com", "researchmju@mju.ac.th"],
+    // Owner decision (2026-10-26): this is the official contact address. The office also
+    // publishes raemju@gmail.com (Facebook) and rae@mju.ac.th (older material); neither is
+    // the official contact, so the site shows one address rather than three.
+    emails: ["researchmju@mju.ac.th"],
   },
   images: {
     building: {
