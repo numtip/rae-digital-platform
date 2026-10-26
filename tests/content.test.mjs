@@ -151,7 +151,7 @@ test("every path in the repository is either Apache-licensed or named as exclude
   // NOTICE — the failure mode it prevents is a new asset directory landing in the repo and
   // silently reading as Apache-2.0 licensed.
   const LICENSED = [
-    "app", "components", "deploy", "lib", "prisma", "scripts", "tests",
+    "app", "cms-runtime", "components", "deploy", "lib", "prisma", "scripts", "tests",
     "package.json", "next.config.ts", "tsconfig.json", "postcss.config.mjs", "eslint.config.mjs",
     "Dockerfile.staging", "docker-compose.staging.yml",
   ];
