@@ -8,7 +8,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const CONTENT = join(process.cwd(), "content");
@@ -110,6 +110,32 @@ test("news items all carry a source date and a stable id", () => {
   for (const iso of isos) assert.match(iso, /^\d{4}-\d{2}-\d{2}$/, `bad dateIso ${iso}`);
   const sorted = [...isos].sort().reverse();
   assert.deepEqual(isos, sorted, "news items must be ordered newest first");
+});
+
+test("the typeface is self-hosted from committed, identifiable files", () => {
+  // The build used to fetch Sarabun from fonts.googleapis.com through next/font/google, so a
+  // network blip failed the build (and would fail CI). The fix is only real if the files stay
+  // in the repo and the layout keeps reading them from disk — hence this gate.
+  const dir = join(process.cwd(), "assets", "fonts", "sarabun");
+  const weights = ["Light", "Regular", "Medium", "SemiBold", "Bold"];
+  for (const weight of weights) {
+    const file = `Sarabun-${weight}.ttf`;
+    const buf = readFileSync(join(dir, file));
+    // TrueType magic 00 01 00 00 — a truncated download or an HTML error page fails here.
+    assert.deepEqual([...buf.subarray(0, 4)], [0, 1, 0, 0], `${file} is not a TrueType font`);
+    assert.ok(buf.includes(Buffer.from("Sarabun")), `${file} does not name Sarabun in its own tables`);
+  }
+  const licence = readFileSync(join(dir, "OFL.txt"), "utf8");
+  assert.match(licence, /SIL Open Font License/, "OFL.txt is missing the licence text");
+
+  const layouts = ["app/[locale]/layout.tsx", "app/layout.tsx"].filter((p) => existsSync(join(process.cwd(), p)));
+  for (const layout of layouts) {
+    const src = readFileSync(join(process.cwd(), layout), "utf8");
+    assert.ok(!src.includes('from "next/font/google"'), `${layout} still fetches fonts from Google`);
+    if (src.includes("localFont")) {
+      assert.ok(src.includes("assets/fonts/sarabun/"), `${layout} does not point at the committed files`);
+    }
+  }
 });
 
 test("every path in the repository is either Apache-licensed or named as excluded", () => {

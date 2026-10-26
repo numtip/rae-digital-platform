@@ -80,6 +80,14 @@ B4. Third-party licences in the installed tree: 443 packages — MIT 348,
     No GPL and no AGPL anywhere. The only copyleft is prebuilt libvips binaries
     behind sharp, which are not shipped in the static export.
 
+B4a. The site's typeface is Sarabun (Sarabun Project Authors, Cadson Demak),
+    licensed under the SIL Open Font License 1.1 — NOT under Apache-2.0. The five
+    weights in use are committed under assets/fonts/sarabun together with the
+    OFL licence text; SOURCE.md beside them records the source URLs and the
+    sha256 of every file. Verified 2026-10-27: all five files are TrueType data
+    whose own name tables report family "Sarabun" at weights 300/400/500/600/700,
+    and OFL.txt carries the Sarabun copyright line and the full OFL 1.1 text.
+
 B5. No contributor licence agreement, copyright assignment, employment-IP clause
     or Maejo University IP regulation exists in this repository.
 
