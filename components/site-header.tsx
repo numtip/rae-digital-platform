@@ -103,17 +103,17 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: SiteC
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3">
         <Link href={`/${locale}`} className={`flex items-center gap-3 ${FOCUS_RING}`}>
           {/* Decorative: the wordmark beside it already names the office, so the
-              emblem carries an empty alt instead of repeating the name twice. */}
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white p-1.5">
-            <Image
-              src={asset("/images/about/rae-logo.png")}
-              alt=""
-              width={96}
-              height={89}
-              className="h-9 w-auto"
-              priority
-            />
-          </span>
+              emblem carries an empty alt instead of repeating the name twice. The file is
+              transparent PNG with the surrounding text masked out, so it sits straight on
+              the dark header without a white disc. */}
+          <Image
+            src={asset("/images/brand/mju-emblem-192.png")}
+            alt=""
+            width={192}
+            height={192}
+            className="h-11 w-11 shrink-0"
+            priority
+          />
           <div>
             {/* The wordmark is not a heading: the page's h1 is its content headline. */}
             <p className="text-xl font-bold leading-tight">{content.header.orgShort}</p>

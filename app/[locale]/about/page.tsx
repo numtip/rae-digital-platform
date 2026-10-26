@@ -43,11 +43,11 @@ export default async function About({ params }: Props) {
         <div className="mx-auto w-full max-w-7xl px-4">
           <div className="flex flex-wrap items-center gap-6">
             <Image
-              src={asset("/images/about/rae-logo.png")}
+              src={asset("/images/brand/mju-emblem-192.png")}
               alt={about.images.logo.alt}
-              width={96}
-              height={89}
-              className="h-16 w-auto rounded bg-white/10 p-2"
+              width={192}
+              height={192}
+              className="h-20 w-20 shrink-0"
               priority
             />
             <div>

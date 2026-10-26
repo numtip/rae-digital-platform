@@ -84,7 +84,9 @@ export const enAbout: AboutContent = {
       alt: "Second office building of The Office of Research and Academic Services",
     },
     logo: {
-      alt: "Emblem of The Office of Research and Academic Services",
+      // Maejo University's seal as the office uses it — not a bespoke office mark, so the
+      // alternative text names what the image actually is.
+      alt: "Seal of Maejo University",
     },
   },
   source: {
