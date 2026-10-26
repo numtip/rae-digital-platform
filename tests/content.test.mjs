@@ -55,14 +55,24 @@ test("every source block names when it was retrieved", () => {
   assert.deepEqual(missing, [], `source block without retrieved:\n${missing.join("\n")}`);
 });
 
-test("unverified statistics stay labelled as sample data", () => {
-  const th = read(join(CONTENT, "th/site.ts"));
-  const en = read(join(CONTENT, "en/site.ts"));
-  // The four homepage figures are not published by the office, so the page must keep
-  // saying so. If real figures are ever approved, replace this test with a check for
-  // `source` + `as_of` on each value (ADR-0002).
-  assert.match(th.slice(th.indexOf("stats: {")), /ตัวอย่าง/, "Thai statistics lost the sample-data label");
-  assert.match(en.slice(en.indexOf("stats: {")), /mock-up/, "English statistics lost the sample-data label");
+test("the homepage carries no unsourced statistics", () => {
+  // The four figures on the old homepage came from the design reference, not from an office
+  // publication, and a visitor reads a big number as a fact. Two checks: no statistics-shaped
+  // key survives, and no digit appears in the homepage sections at all — a figure reintroduced
+  // under a different key, or pasted into a title, is caught by the second one. If real
+  // figures are ever approved, replace this with a check that each value carries `source` and
+  // `as_of` (ADR-0002).
+  for (const [locale, file] of [["Thai", "th"], ["English", "en"]]) {
+    const src = read(join(CONTENT, file, "site.ts"));
+    assert.ok(!/(stats|figures|numbers|counter)s*:\s*\{/.test(src), `${locale} site.ts still declares a statistics block`);
+    const from = src.indexOf("  sections: {");
+    const to = src.indexOf("  notFound: {");
+    assert.ok(from > 0 && to > from, `${locale} site.ts has no sections block to check`);
+    // comments are documentation, not data
+    const sections = src.slice(from, to).split("\n").filter((line) => !line.trim().startsWith("//")).join("\n");
+    const digits = sections.match(/[^\n]*\d[^\n]*/g) ?? [];
+    assert.deepEqual(digits, [], `${locale} homepage sections contain digits (a statistic?):\n${digits.join("\n")}`);
+  }
 });
 
 test("no unresolved translation markers in content VALUES", () => {

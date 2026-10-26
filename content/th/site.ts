@@ -42,77 +42,82 @@ export const th = {
     secondaryCta: "บริการของเรา",
   },
   sections: {
+    // Every item below is real and links to the page that explains it. The previous
+    // version of this file carried mock copy from the Stitch reference (invented
+    // service names, invented research project titles, invented news and four
+    // sample statistics); those were removed on 2026-10-26 because a public site
+    // must not present them as the office's own.
     services: {
-      title: "บริการของเรา",
-      subtitle: "บริการวิชาการและการถ่ายทอดองค์ความรู้สู่สังคม",
-      more: "ดูทั้งหมด",
+      // The four names are the office's own "ส่วนงานภายใน" (internal sub-units), not a
+      // catalogue of services a visitor can request — the heading has to say so, or the
+      // cards read as four services on offer.
+      title: "ส่วนงานด้านบริการวิชาการ",
+      subtitle: "หน่วยงานย่อยที่รับผิดชอบงานบริการวิชาการของสำนักฯ",
+      more: "ดูหน้าบริการวิชาการ",
       items: [
-        {
-          title: "บริการตรวจวิเคราะห์",
-          description: "ห้องปฏิบัติการมาตรฐานรองรับการตรวจวิเคราะห์ทางการเกษตร",
-        },
-        {
-          title: "บริการอบรมและถ่ายทอด",
-          description: "หลักสูตรอบรม สัมมนา และถ่ายทอดเทคโนโลยีด้านการเกษตร",
-        },
-        {
-          title: "ให้คำปรึกษาและแนะนำ",
-          description: "ให้คำปรึกษาด้านการวิจัยและการพัฒนาการเกษตรแก่เกษตรกรและชุมชน",
-        },
-        {
-          title: "บริการพื้นที่และเครื่องมือ",
-          description: "บริการพื้นที่วิจัย แปลงทดลอง และเครื่องมืออุปกรณ์เพื่อการวิจัย",
-        },
-        {
-          title: "บริการรับรองมาตรฐาน",
-          description: "บริการตรวจรับรองมาตรฐานสินค้าเกษตรและผลิตภัณฑ์อย่างมืออาชีพ",
-        },
-      ],
-    },
-    // TODO(owner): these four figures are copied from the Stitch reference, not
-    // from an RAE report. Confirm they are current before the site goes public —
-    // the reference labels them "(ข้อมูลโดยสังเขป)".
-    stats: {
-      title: "ผลงานและสถิติ",
-      // ตัวเลขชุดนี้คัดจาก design reference (Stitch V2) ซึ่งเป็น "ข้อมูลตัวอย่าง"
-      // ยังไม่ผ่านการยืนยันจากหน่วยงาน — ห้ามนำเสนอเป็น KPI จริงขององค์กร
-      subtitle: "(ตัวเลขตัวอย่างจากแบบร่างการออกแบบ — เว็บของหน่วยงานยังไม่เผยแพร่สถิติชุดนี้ รอการยืนยัน)",
-      more: "ดูสถิติทั้งหมด",
-      items: [
-        { label: "งานวิจัยที่ดำเนินการ", value: "586", unit: "โครงการ" },
-        { label: "ผลงานตีพิมพ์", value: "1,248", unit: "เรื่อง" },
-        { label: "นักวิจัยและบุคลากร", value: "124", unit: "คน" },
-        { label: "ชุมชนที่ได้รับประโยชน์", value: "8,732", unit: "คน" },
+        { title: "งานบริหารและประสานงานโครงการบริการวิชาการ" },
+        { title: "งานปรับปรุงและขยายพันธุ์พืชและสัตว์" },
+        { title: "งานสารสนเทศและเผยแพร่งานบริการวิชาการ" },
+        { title: "งานสนับสนุนโครงการตามพระราชดำริและพัฒนาเชิงพื้นที่" },
       ],
     },
     research: {
-      title: "งานวิจัยและนวัตกรรมเด่น",
-      more: "ดูทั้งหมด",
+      title: "งานวิจัยของสำนักฯ",
+      subtitle: "หน่วยงานภายในที่ดูแลงานวิจัยของสำนักฯ",
+      more: "ดูหน้าด้านการวิจัย",
       items: [
-        { tag: "นวัตกรรม", title: "ระบบปลูกพืชอัจฉริยะในโรงเรือนควบคุมอัตโนมัติ" },
-        { tag: "พืชและเทคโนโลยีการผลิต", title: "การพัฒนาพันธุ์ข้าวหอมคุณภาพทนแล้ง" },
-        { tag: "สัตว์และเทคโนโลยีชีวภาพ", title: "โปรไบโอติกจากจุลินทรีย์ท้องถิ่นเพื่อสุขภาพสัตว์" },
+        {
+          title: "งานบริหารและส่งเสริมการวิจัย",
+          description: "จัดทำและทบทวนยุทธศาสตร์ข้อบังคับ ระเบียบ ประกาศด้านการวิจัยของมหาวิทยาลัย",
+        },
+        {
+          title: "งานบริหารเงินทุนวิจัย",
+          description: "ประสานงานการจัดสรรงบประมาณโครงการที่สนองยุทธศาสตร์ด้านการวิจัยของมหาวิทยาลัย",
+        },
+        {
+          title: "งานสารสนเทศและเผยแพร่งานวิจัย",
+          description: "จัดทำและดูแลระบบฐานข้อมูลด้านการวิจัยของมหาวิทยาลัย",
+        },
       ],
     },
+    // Headlines for this band are taken from the real news archive at render time,
+    // so they can never drift from /news/ again.
     news: {
       title: "ข่าวสารและกิจกรรม",
-      more: "ดูทั้งหมด",
-      items: [
-        { date: "20 พฤษภาคม 2567", title: "พิธีลงนามบันทึกข้อตกลงความร่วมมือด้านวิจัยและนวัตกรรมกับหน่วยงานภาคเครือข่าย" },
-        { date: "15 พฤษภาคม 2567", title: "อบรมเชิงปฏิบัติการ \"เทคโนโลยีการผลิตพืชปลอดภัย\" สำหรับเกษตรกรยุคใหม่" },
-        { date: "10 พฤษภาคม 2567", title: "ประชุมวิชาการระดับชาติ มหาวิทยาลัยแม่โจ้ ครั้งที่ 10" },
-        { date: "5 พฤษภาคม 2567", title: "ลงพื้นที่ติดตามผลการดำเนินงานโครงการยกระดับคุณภาพชีวิตชุมชน" },
-      ],
+      subtitle: "ข่าวล่าสุดจากสำนักวิจัยและบริการวิชาการ",
+      more: "ดูข่าวทั้งหมด",
+      readLabel: "อ่านรายละเอียด",
     },
-    knowledge: {
-      title: "แหล่งองค์ความรู้",
-      subtitle: "เข้าถึงองค์ความรู้และเอกสารเผยแพร่ด้านการเกษตร",
+    resources: {
+      title: "แหล่งข้อมูลและลิงก์ที่ใช้บ่อย",
+      subtitle: "บริการและข้อมูลที่ผู้มาติดต่อถามหาบ่อย",
       items: [
-        { title: "ฐานข้อมูลงานวิจัย", description: "ค้นหาและสืบค้นงานวิจัย" },
-        { title: "เอกสารเผยแพร่", description: "รายงานวิจัย คู่มือ แนวทาง" },
-        { title: "คลังความรู้การเกษตร", description: "องค์ความรู้ เทคโนโลยี" },
-        { title: "วารสารและสิ่งพิมพ์", description: "วารสารวิชาการ ออนไลน์" },
-        { title: "สื่อและมัลติมีเดีย", description: "วิดีโอ สื่อการสอน Infographic" },
+        {
+          title: "ฐานข้อมูลงานวิจัย",
+          description: "สืบค้นงานวิจัยของมหาวิทยาลัยผ่านระบบ ERP",
+          href: "https://erp.mju.ac.th/researchIndex.aspx",
+          external: true,
+        },
+        {
+          title: "เอกสารและแบบฟอร์ม",
+          description: "ระเบียบ ประกาศ แบบฟอร์ม และคู่มือ แยกตามหมวดงาน",
+          href: "/documents",
+        },
+        {
+          title: "ข่าวสารและกิจกรรม",
+          description: "ข่าวกิจกรรมและข่าวประชาสัมพันธ์ย้อนหลัง",
+          href: "/news",
+        },
+        {
+          title: "ค้นหาในเว็บไซต์",
+          description: "ค้นข้อความในทุกหน้าของเว็บนี้",
+          href: "/search",
+        },
+        {
+          title: "ติดต่อสำนักฯ",
+          description: "ที่อยู่ โทรศัพท์ และอีเมลทางการ",
+          href: "/contact",
+        },
       ],
     },
   },
