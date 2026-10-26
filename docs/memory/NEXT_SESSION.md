@@ -1,58 +1,75 @@
-# Next session — after 2026-10-26 (night)
+# Next session — after 2026-10-27 (VPS CMS run)
 
-`main` is `98d8af7`. Six PRs are open and green; nothing was merged because each needs the
-owner's approving review. This file replaces the handoff merged in #55.
+`main` is `9cb8c91`. PRs #57, #58 and #59 are merged and live on Pages. Three website PRs
+(#61–#63) and the CMS alignment PR (#64) are open, green, and wait only on a review.
 
-## Open PRs (all `build` pass, none merged)
+## Merged
 
-| PR | Branch | Base | Size | What it does |
-|---|---|---|---|---|
-| [#57](https://github.com/numtip/rae-digital-platform/pull/57) | `feat/knowledge-events` | `main` | 18 files, +531/−22 | `/knowledge/` hub (M04) + `/news/events/` from published activities (M05); search moves to the utility bar; news-card dates pass AA |
-| [#58](https://github.com/numtip/rae-digital-platform/pull/58) | `fix/cms-workflow` | `main` | 10 files, +410/−25 | officer submits own draft, sessions idle 30 m / absolute 8 h, login throttle 5 / 15 m, reviewer returns with a reason |
-| [#59](https://github.com/numtip/rae-digital-platform/pull/59) | `feat/surfacing` | **`feat/knowledge-events`** | 4 files, +48/−17 | footer renders the NAV sections; homepage quick links reach the two new pages |
-| [#61](https://github.com/numtip/rae-digital-platform/pull/61) | `feat/about-structure` | `main` | 3 files, +46/−2 | `/about/` organisation structure (the three published division names); timeline year now passes AA |
-| [#62](https://github.com/numtip/rae-digital-platform/pull/62) | `feat/documents-counts` | `main` | 4 files, +21/−2 | Document Center categories state how many links they open |
-| [#63](https://github.com/numtip/rae-digital-platform/pull/63) | `feat/news-jsonld` | `main` | 1 file, +5/−0 | `NewsArticle` JSON-LD carries the article `url` + `mainEntityOfPage` per locale |
-| [#60](https://github.com/numtip/rae-digital-platform/pull/60) | `docs/handoff-2026-10-26-night` | `main` | this file | canonical handoff |
+| PR | Merge commit | What landed |
+|---|---|---|
+| [#57](https://github.com/numtip/rae-digital-platform/pull/57) | `3d25a54` | `/knowledge/` hub (M04) + `/news/events/` (M05), search in the utility bar, AA fix on news dates |
+| [#58](https://github.com/numtip/rae-digital-platform/pull/58) | `7298c47` | CMS workflow: officer submits own draft, sessions 30 m idle / 8 h absolute, login throttle 5/15 m, return-for-revision |
+| [#59](https://github.com/numtip/rae-digital-platform/pull/59) | `9cb8c91` | footer renders all 8 NAV sections; homepage quick links to both new pages |
 
-**Merge order:** #57 (without `--delete-branch`) → retarget #59 to `main` and rebase → #59.
-#58, #61, #62, #63 and #60 are independent of all of them. Branch protection on `main` is untouched: `reviews=1`,
-`checks=[build]`, strict, no force-push, no deletions.
+`--admin` was used for the missing review only, on the owner's one-time authorisation for
+#57–#60. Branch protection was never changed (`reviews=1`, `checks=[build]`, strict, no
+force-push, no deletions).
 
-## Live state
+## Open, green, needs a review (no admin authorised)
 
-Live preview is still `98d8af7` (PRs #55/#56 merged earlier on 2026-10-26): sweep of the live
-site 148/148 routes, 0 problems. The two new pages exist on #57's branch and in its export
-(156 routes); they reach the live preview only after #57 merges.
+| PR | Files | What it adds |
+|---|---|---|
+| [#61](https://github.com/numtip/rae-digital-platform/pull/61) | about page + 2 content files | `/about/` organisation structure: the three division names the office publishes |
+| [#62](https://github.com/numtip/rae-digital-platform/pull/62) | documents pages + 2 content files | Document Center categories state how many links they open (4 / 1 / 5) |
+| [#63](https://github.com/numtip/rae-digital-platform/pull/63) | news detail page | `NewsArticle` JSON-LD carries `url` + `mainEntityOfPage` per locale |
+| [#64](https://github.com/numtip/rae-digital-platform/pull/64) | 2 new files | 002 schema alignment + `cms-runtime/.env.example` (names only, no secrets) |
+
+No two of them touch the same file, so they can merge in any order.
+
+## CMS database on VPS 190 (provisioned)
+
+- Container `rae-cms-db` (mariadb **10.6.24**), own network `rae-cms-net`, own volume
+  `rae-cms-db-data`, **no published ports**, restart unless-stopped, labels
+  `rae.project=rae-digital-platform`, `rae.purpose=cms-content-store`.
+- Database `rae_cms`: four tables from `001_init.sql` plus `002_runtime_alignment.sql`.
+- Account `rae_cms_app`: `SELECT, INSERT, UPDATE, DELETE` on `rae_cms` only. Isolation proven
+  by the errors it gets: cannot create a database, cannot read `mysql.*`, cannot DDL its own
+  tables, cannot read `learning_center.*`.
+- CRUD + workflow round trip with disposable rows (draft → review → approved → published →
+  returned with reason), the published-only query returned exactly the published row, then
+  every test row was deleted. The database is empty: 4 tables, ~80 KB.
+- Credentials: `~/.config/rae-cms/db-env` on 237 (0600) and `~/rae-cms-secrets/db-env` on 190
+  (0600). Never in Git; `.env.example` carries names only.
+- Pre/post health identical: attendance 200, RAE V2 200, learning-center 200, static staging
+  200, raenew2026 301 (by design), rae-landing 403 (pre-existing), 27 → 28 containers, the
+  only unhealthy container is the pre-existing `nginx`.
 
 ## Verified facts worth keeping
 
-- Sweep of #57's export: 152/152 sitemap routes, `<html lang>` / canonical / hreflang / single
-  `<h1>` / `#main-content` 152/152, `href="#"` 0, 380 images, 0 problems.
-- #59's export: same checks plus 9,106 internal refs all resolving (the footer added 1,220).
-- `npm test` 32/32 on #58, 28/28 elsewhere; typecheck clean; lint 0 errors / 9 pre-existing
-  warnings; `check-export` OK on every branch.
-- The five knowledge destinations answer 200 today: `kb.mju.ac.th`,
+- Live sweep after the merges: 152/152 sitemap routes, `<html lang>` / canonical / hreflang /
+  single `<h1>` / `#main-content` 152/152, `href="#"` 0, 380 images, 0 problems.
+- `npm test` 32/32 on the CMS branch, 24–28/28 on the website branches; typecheck clean; lint
+  0 errors / 9 pre-existing warnings; `check-export` OK everywhere.
+- The five knowledge destinations answer 200: `kb.mju.ac.th`,
   `researchex.mju.ac.th/dbplant/`, `maejovision.mju.ac.th`, the ThaiJO journal, the newsletter.
 - 54 published activities carry a `ข่าวกิจกรรม…` type and none has a future date, so the events
   page's upcoming section correctly does not render.
 - CMS chain #51/#52/#54 was merged with **0 recorded approvals**; `reviewDecision` reads
-  `REVIEW_REQUIRED` even on merged PRs, so it does not prove a review happened.
+  `REVIEW_REQUIRED` even on merged PRs, so it never proves a review happened.
 
 ## Do not do yet
 
-- Do not merge without the owner's approval, do not lower the review requirement, no `--admin`.
-- Do not provision a database, start or deploy the CMS runtime, or touch VPS 190 / DNS /
-  Cloudflare / Nginx / SSO.
+- Do not merge #61–#64 without a review, do not lower the review requirement, no `--admin`
+  beyond the owner's one-time authorisation for #57–#60.
+- Do not start or deploy the CMS runtime, and do not touch DNS, Cloudflare, Nginx or SSO.
 - Do not invent copy: the remaining gaps (homepage statistics, FAQ, PDPA and accessibility
-  policy text, per-article knowledge copy, an events schedule) have no approved source.
+  policy text, per-article knowledge copy, a forward event schedule) have no approved source.
 
-## Next, in order
+## Next tasks, in order
 
-1. Owner reviews and merges #57, then #59, and #58 / #61 / #62 / #63 / #60 on their own.
-2. After #57 merges, the one website feature ready to build is a category filter on `/news/`
-   derived from the type strings the office already publishes — it touches
-   `components/news-index.tsx` and `content/th/news.ts`, both of which #57 edits, so it waits
-   for that merge instead of fighting it. Everything else needs copy or the database decision.
-3. Still open for the owner: whether a publisher may publish an item they authored (today only
+1. Review/merge #61, #62, #63, #64 (any order).
+2. News category filter on `/news/`, derived from the type strings the office already
+   publishes — buildable now that #57 is in.
+3. Repository layer so the CMS writes to `rae_cms`, ending the in-memory desk.
+4. Still open for the owner: whether a publisher may publish an item they authored (today only
    pinned items need a second person).
