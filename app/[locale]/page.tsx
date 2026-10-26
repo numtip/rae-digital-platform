@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { NewsImage } from "@/components/news-image";
 import { asset } from "@/lib/assets";
-import { getContent, getNews, isLocale, type Locale } from "@/lib/i18n";
+import { getContent, getNews, isLocale } from "@/lib/i18n";
 
 // Every string comes from content/<locale>/site.ts, and the news headlines are read
 // from the real news archive at render time. The page carries no sample statistics
@@ -59,7 +59,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const thaiTitles = new Map(getNews("th").items.map((entry) => [entry.nid, entry.title]));
   const headlines = news.items.slice(0, 3);
 
-  const href = (Locale: Locale, path: string) => `/${locale}${path}`;
+  const href = (path: string) => `/${locale}${path}`;
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -85,14 +85,14 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             <p className="mb-8 max-w-2xl text-base text-neutral-100 sm:text-lg md:text-xl">{hero.description}</p>
             <div className="flex flex-wrap gap-4">
               <Link
-                className={`rounded-md bg-brand-500 px-6 py-3 font-medium text-white shadow-lg hover:bg-brand-600 focus-visible:outline-gold-500 sm:px-8 ${FOCUS}`}
-                href={href(locale, "/about")}
+                className={`rounded-md bg-brand-500 px-6 py-3 font-medium text-white shadow-lg hover:bg-brand-600 sm:px-8 ${FOCUS}`}
+                href={href("/about")}
               >
                 {hero.primaryCta}
               </Link>
               <Link
-                className={`rounded-md bg-gold-500 px-6 py-3 font-medium text-brand-700 shadow-lg hover:bg-gold-600 focus-visible:outline-brand-500 sm:px-8 ${FOCUS}`}
-                href={href(locale, "/services")}
+                className={`rounded-md bg-gold-500 px-6 py-3 font-medium text-brand-700 shadow-lg hover:bg-gold-600 sm:px-8 ${FOCUS}`}
+                href={href("/services")}
               >
                 {hero.secondaryCta}
               </Link>
@@ -105,18 +105,15 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           that explains them. */}
       <section aria-labelledby="services" className="bg-surface-50 py-16">
         <div className="mx-auto max-w-7xl px-4">
-          <SectionHead id="services" {...sections.services} moreHref={href(locale, "/services")} />
+          <SectionHead id="services" {...sections.services} moreHref={href("/services")} />
           <ul className="grid gap-6 sm:grid-cols-2">
             {sections.services.items.map((item) => (
               <li key={item.title}>
                 <Link
                   className={`${CARD} flex h-full items-start justify-between gap-4 transition-colors hover:border-brand-500 ${FOCUS}`}
-                  href={href(locale, "/services")}
+                  href={href("/services")}
                 >
                   <h3 className="text-lg font-bold leading-snug text-neutral-800">{item.title}</h3>
-                  <span aria-hidden="true" className="mt-1 text-brand-600">
-                    →
-                  </span>
                 </Link>
               </li>
             ))}
@@ -128,13 +125,13 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           links, newest first. */}
       <section aria-labelledby="news" className="bg-white py-16">
         <div className="mx-auto max-w-7xl px-4">
-          <SectionHead id="news" {...sections.news} moreHref={href(locale, "/news")} />
+          <SectionHead id="news" {...sections.news} moreHref={href("/news")} />
           <ul className="grid gap-6 md:grid-cols-3">
             {headlines.map((item) => {
               const title = item.title || thaiTitles.get(item.nid) || item.nid;
               return (
                 <li key={item.nid} className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
-                  <Link className={`group block ${FOCUS}`} href={href(locale, `/news/${item.nid}`)}>
+                  <Link className={`group block ${FOCUS}`} href={href(`/news/${item.nid}`)}>
                     {item.image ? (
                       <NewsImage
                         alt={item.image.alt || title}
@@ -146,7 +143,8 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                       <div aria-hidden="true" className="h-2 bg-brand-600/20" />
                     )}
                     <div className="p-5">
-                      <p className="text-xs font-semibold text-gold-600">{item.date}</p>
+                      {/* brand-600, not gold: gold-600 on white is 2.76:1 and gold-500 is 2.34:1 — both fail AA for 12px text. */}
+                      <p className="text-xs font-semibold text-brand-600">{item.date}</p>
                       <h3 className="mt-2 text-base font-bold leading-snug text-neutral-800 group-hover:text-brand-600">
                         {title}
                       </h3>
@@ -166,13 +164,13 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           each, linking to the research page. */}
       <section aria-labelledby="research" className="bg-surface-50 py-16">
         <div className="mx-auto max-w-7xl px-4">
-          <SectionHead id="research" {...sections.research} moreHref={href(locale, "/research")} />
+          <SectionHead id="research" {...sections.research} moreHref={href("/research")} />
           <ul className="grid gap-6 md:grid-cols-3">
             {sections.research.items.map((item) => (
               <li key={item.title}>
                 <Link
                   className={`${CARD} flex h-full flex-col transition-colors hover:border-brand-500 ${FOCUS}`}
-                  href={href(locale, "/research")}
+                  href={href("/research")}
                 >
                   <h3 className="text-lg font-bold leading-snug text-neutral-800">{item.title}</h3>
                   <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-600">{item.description}</p>
@@ -216,7 +214,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                   ) : (
                     <Link
                       className={`${CARD} flex h-full flex-col transition-colors hover:border-brand-500 ${FOCUS}`}
-                      href={href(locale, item.href)}
+                      href={href(item.href)}
                     >
                       {body}
                     </Link>

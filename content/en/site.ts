@@ -48,10 +48,11 @@ export const en: SiteContent = {
   sections: {
     // Real, linked content only. The mock copy from the Stitch reference (invented
     // services, research projects, news and four sample statistics) was removed on
-    // 2026-10-27.
+    // 2026-10-26.
     services: {
-      title: "Our services",
-      subtitle: "The units that carry out the office's academic services",
+      // Internal sub-units, not a catalogue of services a visitor can request.
+      title: "Academic-services units",
+      subtitle: "The office's sub-units that carry out academic-services work",
       more: "See the academic services page",
       items: [
         { title: "Academic-service project administration and coordination" },
@@ -62,7 +63,7 @@ export const en: SiteContent = {
     },
     research: {
       title: "Research at the office",
-      subtitle: "The internal units responsible for research, plus the university research database",
+      subtitle: "The office's internal units for research",
       more: "See the research page",
       items: [
         {
@@ -87,7 +88,7 @@ export const en: SiteContent = {
     },
     resources: {
       title: "Resources and quick links",
-      subtitle: "Services and information that visitors ask for most",
+      subtitle: "Information and links visitors ask for most",
       items: [
         {
           title: "Research database",

@@ -45,11 +45,14 @@ export const th = {
     // Every item below is real and links to the page that explains it. The previous
     // version of this file carried mock copy from the Stitch reference (invented
     // service names, invented research project titles, invented news and four
-    // sample statistics); those were removed on 2026-10-27 because a public site
+    // sample statistics); those were removed on 2026-10-26 because a public site
     // must not present them as the office's own.
     services: {
-      title: "บริการของเรา",
-      subtitle: "ส่วนงานที่รับผิดชอบงานบริการวิชาการของสำนักฯ",
+      // The four names are the office's own "ส่วนงานภายใน" (internal sub-units), not a
+      // catalogue of services a visitor can request — the heading has to say so, or the
+      // cards read as four services on offer.
+      title: "ส่วนงานด้านบริการวิชาการ",
+      subtitle: "หน่วยงานย่อยที่รับผิดชอบงานบริการวิชาการของสำนักฯ",
       more: "ดูหน้าบริการวิชาการ",
       items: [
         { title: "งานบริหารและประสานงานโครงการบริการวิชาการ" },
@@ -60,7 +63,7 @@ export const th = {
     },
     research: {
       title: "งานวิจัยของสำนักฯ",
-      subtitle: "หน่วยงานภายในที่ดูแลงานวิจัย และลิงก์ไปยังฐานข้อมูลงานวิจัยของมหาวิทยาลัย",
+      subtitle: "หน่วยงานภายในที่ดูแลงานวิจัยของสำนักฯ",
       more: "ดูหน้าด้านการวิจัย",
       items: [
         {
@@ -86,8 +89,8 @@ export const th = {
       readLabel: "อ่านรายละเอียด",
     },
     resources: {
-      title: "แหล่งข้อมูลและบริการด่วน",
-      subtitle: "บริการและแหล่งข้อมูลที่ผู้มาติดต่อใช้บ่อย",
+      title: "แหล่งข้อมูลและลิงก์ที่ใช้บ่อย",
+      subtitle: "บริการและข้อมูลที่ผู้มาติดต่อถามหาบ่อย",
       items: [
         {
           title: "ฐานข้อมูลงานวิจัย",
