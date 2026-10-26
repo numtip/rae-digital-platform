@@ -8,6 +8,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
@@ -112,26 +113,32 @@ test("news items all carry a source date and a stable id", () => {
   assert.deepEqual(isos, sorted, "news items must be ordered newest first");
 });
 
-test("the typeface is self-hosted from committed, identifiable files", () => {
+test("the typeface is self-hosted, complete WOFF2 and stays out of Google", () => {
   // The build used to fetch Sarabun from fonts.googleapis.com through next/font/google, so a
-  // network blip failed the build (and would fail CI). The fix is only real if the files stay
-  // in the repo and the layout keeps reading them from disk — hence this gate.
+  // network blip failed the build. Keeping the files in the repo is only half the fix: they
+  // must stay complete files (a truncated download would still "exist") and no layout may go
+  // back to Google. Each guarantee below was checked against a deliberately broken copy.
   const dir = join(process.cwd(), "assets", "fonts", "sarabun");
-  const weights = ["Light", "Regular", "Medium", "SemiBold", "Bold"];
-  for (const weight of weights) {
-    const file = `Sarabun-${weight}.ttf`;
-    const buf = readFileSync(join(dir, file));
-    // TrueType magic 00 01 00 00 — a truncated download or an HTML error page fails here.
-    assert.deepEqual([...buf.subarray(0, 4)], [0, 1, 0, 0], `${file} is not a TrueType font`);
-    assert.ok(buf.includes(Buffer.from("Sarabun")), `${file} does not name Sarabun in its own tables`);
-  }
-  const licence = readFileSync(join(dir, "OFL.txt"), "utf8");
-  assert.match(licence, /SIL Open Font License/, "OFL.txt is missing the licence text");
+  const so = readFileSync(join(dir, "SOURCE.md"), "utf8");
+  const weights = { Regular: "400", Medium: "500", SemiBold: "600", Bold: "700" };
 
-  const layouts = ["app/[locale]/layout.tsx", "app/layout.tsx"].filter((p) => existsSync(join(process.cwd(), p)));
-  for (const layout of layouts) {
+  for (const [name, weight] of Object.entries(weights)) {
+    const file = `Sarabun-${name}.woff2`;
+    const buf = readFileSync(join(dir, file));
+    // WOFF2 magic is "wOF2"; the WOFF2 header carries the exact byte length it expects, so a
+    // truncated file is caught here rather than silently shipped.
+    assert.equal(buf.subarray(0, 4).toString("latin1"), "wOF2", `${file} is not a WOFF2 file`);
+    assert.equal(buf.readUInt32BE(8), buf.length, `${file} length field disagrees with the file size (truncated or padded)`);
+    const sha = createHash("sha256").update(buf).digest("hex");
+    assert.ok(so.includes(sha), `${file} sha256 ${sha} is not recorded in SOURCE.md`);
+    assert.ok(so.includes(`(\`${weight}\`)`) || so.includes(`${weight}`), `SOURCE.md does not record weight ${weight} for ${file}`);
+  }
+  assert.match(readFileSync(join(dir, "OFL.txt"), "utf8"), /SIL Open Font License/);
+
+  // Both quote styles, because a formatter switch should not silently reintroduce the fetch.
+  for (const layout of ["app/[locale]/layout.tsx", "app/layout.tsx"].filter((p) => existsSync(join(process.cwd(), p)))) {
     const src = readFileSync(join(process.cwd(), layout), "utf8");
-    assert.ok(!src.includes('from "next/font/google"'), `${layout} still fetches fonts from Google`);
+    assert.ok(!/from\s+["']next\/font\/google["']/.test(src), `${layout} still fetches fonts from Google`);
     if (src.includes("localFont")) {
       assert.ok(src.includes("assets/fonts/sarabun/"), `${layout} does not point at the committed files`);
     }

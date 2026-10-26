@@ -6,16 +6,16 @@ import { SiteFooter } from "@/components/site-footer";
 import { LOCALES, SITE_URL, getContent, isLocale } from "@/lib/i18n";
 import "../globals.css";
 
-// The font files are committed under assets/fonts/sarabun (SIL OFL 1.1, provenance and
-// checksums in SOURCE.md next to them). Loading them from disk instead of next/font/google
-// keeps the build — and CI — working when fonts.googleapis.com cannot be reached.
+// WOFF2 files committed under assets/fonts/sarabun (SIL OFL 1.1; provenance, conversion
+// command and per-file sha256 in SOURCE.md beside them). Loading from disk instead of
+// next/font/google keeps the build — and CI — working when Google cannot be reached, and the
+// four weights are the ones the site actually renders (no unused 300 face to download).
 const sarabun = localFont({
   src: [
-    { path: "../../assets/fonts/sarabun/Sarabun-Light.ttf", weight: "300", style: "normal" },
-    { path: "../../assets/fonts/sarabun/Sarabun-Regular.ttf", weight: "400", style: "normal" },
-    { path: "../../assets/fonts/sarabun/Sarabun-Medium.ttf", weight: "500", style: "normal" },
-    { path: "../../assets/fonts/sarabun/Sarabun-SemiBold.ttf", weight: "600", style: "normal" },
-    { path: "../../assets/fonts/sarabun/Sarabun-Bold.ttf", weight: "700", style: "normal" },
+    { path: "../../assets/fonts/sarabun/Sarabun-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../../assets/fonts/sarabun/Sarabun-Medium.woff2", weight: "500", style: "normal" },
+    { path: "../../assets/fonts/sarabun/Sarabun-SemiBold.woff2", weight: "600", style: "normal" },
+    { path: "../../assets/fonts/sarabun/Sarabun-Bold.woff2", weight: "700", style: "normal" },
   ],
   variable: "--font-sarabun",
   display: "swap",
