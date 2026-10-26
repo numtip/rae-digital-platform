@@ -283,14 +283,18 @@ export async function startRuntime(env = process.env) {
   }
   const repository = await repositoryFromEnv(env);
   const port = Number(env.RAE_CMS_API_PORT ?? 3317);
+  // Loopback by default. Inside a container the listener has to cover the container's own
+  // interface, because a published port is forwarded to that address — the port is still
+  // published on 127.0.0.1 only, so nothing is reachable from outside the host.
+  const bind = env.RAE_CMS_API_BIND ?? "127.0.0.1";
   const server = createCmsServer({ repository });
-  await new Promise((resolve) => server.listen(port, "127.0.0.1", resolve));
-  return { server, repository, port };
+  await new Promise((resolve) => server.listen(port, bind, resolve));
+  return { server, repository, port, bind };
 }
 
 if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
-  const { port } = await startRuntime();
-  console.log(`cms-runtime listening on http://127.0.0.1:${port} (mysql)`);
+  const { port, bind } = await startRuntime();
+  console.log(`cms-runtime listening on http://${bind}:${port} (mysql)`);
 }
 
 export { submitForReview, approveNews, returnForRevision };

@@ -327,3 +327,13 @@ test("the service refuses to start without a database", async () => {
   assert.ok(server.address().port > 0);
   await new Promise((resolve) => server.close(resolve));
 });
+
+test("the listener is loopback unless the environment says otherwise", async () => {
+  const server = createCmsServer();
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  assert.equal(server.address().address, "127.0.0.1");
+  await new Promise((resolve) => server.close(resolve));
+  // startRuntime() without a database never reaches the listener, so this is the guarantee the
+  // container relies on: the published port, not the bind address, keeps it private.
+  await assert.rejects(() => startRuntime({ RAE_CMS_API_BIND: "0.0.0.0" }), /RAE_CMS_DB_HOST is required/);
+});
