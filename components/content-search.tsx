@@ -22,18 +22,24 @@ export function ContentSearch({ entries, labels }: { entries: SearchEntry[]; lab
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [section, setSection] = useState<SearchSection | "all">("all");
 
-  // Counts come from the same index the results come from, so a chip cannot advertise
-  // a number the list is unable to produce.
-  const counts = new Map<SearchSection, number>();
-  for (const entry of entries) {
-    const key = sectionOf(entry.href);
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-  }
-
   const needle = query.trim().toLowerCase();
   const matched = needle
     ? entries.filter((entry) => `${entry.title} ${entry.text}`.toLowerCase().includes(needle))
     : [];
+
+  // Counts come from the same list the results come from — the matched set once a word
+  // is typed, not the whole index — so a chip cannot advertise a number the list is
+  // unable to produce ("ข่าวสาร (60)" while the word matches 53 of them).
+  const counted = needle ? matched : entries;
+  const counts = new Map<SearchSection, number>();
+  for (const entry of counted) {
+    const key = sectionOf(entry.href);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  // Before a word is typed the list is deliberately empty, so a number next to a chip
+  // would promise results the page cannot show. No word, no number.
+  const countLabel = (n: number) => (needle ? ` (${n})` : "");
   const results = section === "all" ? matched : matched.filter((entry) => sectionOf(entry.href) === section);
   const hiddenByFilter = matched.length - results.length;
 
@@ -66,10 +72,13 @@ export function ContentSearch({ entries, labels }: { entries: SearchEntry[]; lab
             onClick={() => setSection("all")}
             type="button"
           >
-            {labels.categories.all} ({entries.length})
+            {labels.categories.all}
+            {countLabel(counted.length)}
           </button>
           {(Object.keys(labels.categories) as (keyof Categories)[])
-            .filter((key) => key !== "all" && (counts.get(key as SearchSection) ?? 0) > 0)
+            // the pressed chip stays visible even when the word matched nothing in it,
+            // otherwise the filter looks like it turned itself off
+            .filter((key) => key !== "all" && ((counts.get(key as SearchSection) ?? 0) > 0 || section === key))
             .map((key) => (
               <button
                 aria-pressed={section === key}
@@ -78,7 +87,8 @@ export function ContentSearch({ entries, labels }: { entries: SearchEntry[]; lab
                 onClick={() => setSection(key as SearchSection)}
                 type="button"
               >
-                {labels.categories[key]} ({counts.get(key as SearchSection)})
+                {labels.categories[key]}
+                {countLabel(counts.get(key as SearchSection) ?? 0)}
               </button>
             ))}
         </div>
