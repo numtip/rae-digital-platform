@@ -39,6 +39,12 @@ export const thNews = {
     headlineThaiOnly: "",
     imageAlt: "ภาพประกอบข่าว",
   },
+  pagination: {
+    label: "การแบ่งหน้า",
+    previous: "ก่อนหน้า",
+    next: "ถัดไป",
+    page: (page: number, total: number) => `หน้า ${page} จาก ${total}`,
+  },
   categories: {
     title: "หมวดข่าวบนเว็บของหน่วยงาน",
     items: ["ข่าวกิจกรรม", "ข่าวประชาสัมพันธ์", "ข่าวประกาศ", "ข่าวงานวิจัย", "ข่าวผู้บริหาร", "ข่าวสมัครงาน"],

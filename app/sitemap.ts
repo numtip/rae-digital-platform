@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { LOCALES, PAGES, SITE_URL, getDocuments, getNews } from "@/lib/i18n";
+import { LOCALES, PAGES, SITE_URL, getDocuments, getNews, getNewsPages } from "@/lib/i18n";
 
 // Static export (GitHub Pages preview) needs an explicit static route.
 export const dynamic = "force-static";
@@ -53,5 +53,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   );
 
-  return [...home, ...pages, ...newsItems, ...docCategories];
+  // News index pages 2..N; page 1 is already in PAGES as /news/.
+  const newsPageCount = getNewsPages("th").length;
+  const newsIndexPages = Array.from({ length: Math.max(0, newsPageCount - 1) }, (_, index) => index + 2)
+    .flatMap((page) =>
+      LOCALES.map((locale) => ({
+        url: `${SITE_URL}/${locale}/news/page/${page}/`,
+        changeFrequency: "weekly" as const,
+        priority: 0.3,
+        alternates: { languages: languagesFor(`news/page/${page}`) },
+      })),
+    );
+
+  return [...home, ...pages, ...newsItems, ...docCategories, ...newsIndexPages];
 }

@@ -42,6 +42,12 @@ export const enNews: NewsContent = {
     headlineThaiOnly: "Headline shown in Thai — an English translation is not available yet.",
     imageAlt: "Photo from the news story",
   },
+  pagination: {
+    label: "Pagination",
+    previous: "Previous",
+    next: "Next",
+    page: (page: number, total: number) => `Page ${page} of ${total}`,
+  },
   categories: {
     title: "News categories on the office website",
     items: ["Activities", "Press releases", "Announcements", "Research news", "Executive news", "Job vacancies"],
