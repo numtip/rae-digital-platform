@@ -123,6 +123,7 @@ export const en: SiteContent = {
     title: "Page not found",
     body: "The page you opened may have moved or been removed.",
     back: "Back to home",
+    search: "Search the site",
   },
   footer: {
     contactLabel: "Contact us",

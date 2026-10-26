@@ -73,6 +73,25 @@ export default async function LocaleLayout({
     url: `${SITE_URL}/${locale}/`,
   };
 
+  // The site has a working search page, so the WebSite entry can advertise it. The
+  // target must be the real query-string URL the page reads (?q=), and {search_term_string}
+  // is the placeholder schema.org requires.
+  const siteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: content.header.orgFull,
+    url: `${SITE_URL}/${locale}/`,
+    inLanguage: locale,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE_URL}/${locale}/search/?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
     <html lang={locale} className={sarabun.variable}>
       <body className="flex min-h-screen flex-col">
@@ -88,6 +107,10 @@ export default async function LocaleLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
         />
       </body>
     </html>
