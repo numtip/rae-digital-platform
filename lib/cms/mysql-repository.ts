@@ -61,7 +61,15 @@ type ArticleRow = {
   source: string;
   revision_reason: string | null;
   returned_by: string | null;
+  body_th: string | null;
+  body_en: string | null;
 };
+
+const paragraphs = (value: string | null) =>
+  (value ?? "")
+    .split("\n\n")
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
 
 const toRecord = (row: ArticleRow): NewsRecord => ({
   id: row.id,
@@ -75,6 +83,8 @@ const toRecord = (row: ArticleRow): NewsRecord => ({
   source: row.source,
   revisionReason: row.revision_reason ?? undefined,
   returnedBy: row.returned_by ?? undefined,
+  bodyTh: paragraphs(row.body_th),
+  bodyEn: paragraphs(row.body_en),
 });
 
 export type MysqlConfig = {
@@ -155,12 +165,13 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
     async saveArticle(article) {
       await pool.query(
         `INSERT INTO news_articles
-           (id, status, pinned, author_id, reviewer_id, publisher_id, title_th, title_en, source, revision_reason, returned_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           (id, status, pinned, author_id, reviewer_id, publisher_id, title_th, title_en, source, revision_reason, returned_by, body_th, body_en)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            status = VALUES(status), pinned = VALUES(pinned), reviewer_id = VALUES(reviewer_id),
            publisher_id = VALUES(publisher_id), title_th = VALUES(title_th), title_en = VALUES(title_en),
-           source = VALUES(source), revision_reason = VALUES(revision_reason), returned_by = VALUES(returned_by)`,
+           source = VALUES(source), revision_reason = VALUES(revision_reason), returned_by = VALUES(returned_by),
+           body_th = VALUES(body_th), body_en = VALUES(body_en)`,
         [
           article.id,
           article.status,
@@ -173,6 +184,8 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
           article.source,
           article.revisionReason ?? null,
           article.returnedBy ?? null,
+          (article.bodyTh ?? []).join("\n\n"),
+          (article.bodyEn ?? []).join("\n\n"),
         ],
       );
     },

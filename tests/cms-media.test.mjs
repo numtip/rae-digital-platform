@@ -61,7 +61,14 @@ test("five images keep their order, reach the export and drive the preview page"
     const created = await fetch(`${base}/v1/news`, {
       method: "POST",
       headers: auth(author),
-      body: JSON.stringify({ id: "media-1", titleTh: "ทดสอบภาพ", titleEn: "Image test", source: "https://rae.mju.ac.th/m" }),
+      body: JSON.stringify({
+        id: "media-1",
+        titleTh: "ทดสอบภาพ",
+        titleEn: "Image test",
+        source: "https://rae.mju.ac.th/m",
+        bodyTh: ["ย่อหน้าภาษาไทยหนึ่ง", "ย่อหน้าภาษาไทยสอง"],
+        bodyEn: ["First English paragraph", "Second English paragraph"],
+      }),
     });
     assert.equal(created.status, 201);
 
@@ -114,6 +121,8 @@ test("five images keep their order, reach the export and drive the preview page"
     assert.match(html, /ทดสอบภาพ/);
     const english = await (await fetch(`${base}/preview/media-1?lang=en`)).text();
     assert.match(english, /Image test/);
+    assert.match(html, /ย่อหน้าภาษาไทยหนึ่ง/);
+    assert.match(english, /First English paragraph/);
   });
 });
 

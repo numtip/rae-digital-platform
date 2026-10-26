@@ -146,6 +146,17 @@ function readBody(request) {
   });
 }
 
+// A body arrives as an array of paragraphs or as text separated by blank lines; either way the
+// stored shape is one paragraph per element.
+function toParagraphs(value) {
+  if (value === undefined || value === null) return undefined;
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+  return String(value)
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+}
+
 function send(response, status, body, origin) {
   const headers = { "content-type": "application/json; charset=utf-8" };
   if (origin && /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(origin)) {
@@ -170,7 +181,7 @@ function mediaRoot(env = process.env) {
 function renderPreview(article, mediaList, locale) {
   const thai = locale !== "en";
   const title = thai ? article.titleTh : article.titleEn || article.titleTh;
-  const body = article.body ?? [];
+  const body = (thai ? article.bodyTh : article.bodyEn) ?? article.bodyTh ?? article.bodyEn ?? [];
   const figure = mediaList
     .map(
       (item) => `<figure>
@@ -302,6 +313,8 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
           titleTh: String(body.titleTh ?? ""),
           titleEn: String(body.titleEn ?? ""),
           source: String(body.source ?? ""),
+          bodyTh: toParagraphs(body.bodyTh),
+          bodyEn: toParagraphs(body.bodyEn),
         };
         await repo.saveArticle(article);
         await repo.appendAudit({ actorId: actor.id, action: "news.draft", entityType: "news", entityId: article.id });
@@ -325,6 +338,8 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
           titleEn: String(body.titleEn ?? current.titleEn),
           source: String(body.source ?? current.source),
           pinned: body.pinned === undefined ? current.pinned : Boolean(body.pinned),
+          bodyTh: body.bodyTh === undefined ? current.bodyTh : toParagraphs(body.bodyTh),
+          bodyEn: body.bodyEn === undefined ? current.bodyEn : toParagraphs(body.bodyEn),
         };
         await repo.saveArticle(next);
         await repo.appendAudit({ actorId: actor.id, action: "news.edit", entityType: "news", entityId: id });
@@ -428,6 +443,8 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
           const files = await repo.listMedia(article.id);
           withMedia.push({
             ...article,
+            bodyTh: article.bodyTh ?? [],
+            bodyEn: article.bodyEn ?? [],
             media: files.map((item) => ({
               url: `/v1/media/${article.id}/${item.filename}`,
               captionTh: item.captionTh,
