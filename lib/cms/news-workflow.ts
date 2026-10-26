@@ -1,4 +1,5 @@
 import { requirePermission, type RoleName } from "./permissions.ts";
+import { assertBilingual } from "./validation.ts";
 
 export type NewsStatus = "draft" | "review" | "approved" | "published";
 
@@ -28,8 +29,10 @@ function next(article: NewsRecord, patch: Partial<NewsRecord>): NewsRecord {
 export function submitForReview(article: NewsRecord, actor: { id: string; role: RoleName }): NewsRecord {
   requirePermission(actor.role, "news:review");
   if (article.status !== "draft") throw new WorkflowError("only a draft can be submitted");
-  if (!article.titleTh.trim() || !article.titleEn.trim() || !article.source.trim()) {
-    throw new WorkflowError("bilingual title and a source are required");
+  try {
+    assertBilingual(article);
+  } catch {
+    throw new WorkflowError("bilingual title and an https source are required");
   }
   return next(article, { status: "review" });
 }

@@ -7,15 +7,20 @@ import { isLocale } from "@/lib/i18n";
 type Props = { params: Promise<{ locale: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  if (process.env.NEXT_PAGES_PREVIEW === "1") {
+    return { title: "Not found", robots: { index: false, follow: false } };
+  }
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   return {
     title: adminCopy[locale].title,
     robots: { index: false, follow: false },
+    alternates: { canonical: `/${locale}/cms-admin/` },
   };
 }
 
 export default async function CmsAdmin({ params }: Props) {
+  if (process.env.NEXT_PAGES_PREVIEW === "1") notFound();
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const copy = adminCopy[locale];

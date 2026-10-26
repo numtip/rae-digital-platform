@@ -1,10 +1,11 @@
 import type { NewsRecord } from "./news-workflow.ts";
+import { assertBilingual } from "./validation.ts";
 
 export function publishedArticlesForExport(articles: NewsRecord[]) {
   return articles
     .filter((article) => article.status === "published")
     .map((article) => {
-      if (!article.source) throw new Error(`published item ${article.id} has no source`);
+      assertBilingual(article);
       return {
         id: article.id,
         titleTh: article.titleTh,

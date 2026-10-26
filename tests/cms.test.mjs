@@ -41,6 +41,12 @@ test("pinned news needs three different people", () => {
   assert.equal(published.status, "published");
 });
 
+test("a non-https source cannot be submitted or exported", () => {
+  const bad = { ...draft(), source: "javascript:alert(1)" };
+  assert.throws(() => submitForReview(bad, author), WorkflowError);
+  assert.throws(() => publishedArticlesForExport([{ ...draft(), status: "published", source: "http://example.com/a" }]));
+});
+
 test("drafts never enter the public export", () => {
   const reviewed = submitForReview(draft(), author);
   assert.deepEqual(publishedArticlesForExport([reviewed]), []);

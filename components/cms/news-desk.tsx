@@ -31,15 +31,15 @@ export function NewsDesk({ locale }: { locale: "th" | "en" }) {
     <form className="grid gap-4" onSubmit={onSubmit}>
       <label className="grid gap-1 text-sm font-medium text-neutral-800" htmlFor="titleTh">
         {copy.titleTh}
-        <input className={`min-h-11 rounded-md border border-neutral-300 px-3 ${FOCUS}`} id="titleTh" name="titleTh" />
+        <input autoComplete="off" className={`min-h-11 rounded-md border border-neutral-300 px-3 ${FOCUS}`} id="titleTh" name="titleTh" />
       </label>
       <label className="grid gap-1 text-sm font-medium text-neutral-800" htmlFor="titleEn">
         {copy.titleEn}
-        <input className={`min-h-11 rounded-md border border-neutral-300 px-3 ${FOCUS}`} id="titleEn" name="titleEn" />
+        <input autoComplete="off" className={`min-h-11 rounded-md border border-neutral-300 px-3 ${FOCUS}`} id="titleEn" name="titleEn" />
       </label>
       <label className="grid gap-1 text-sm font-medium text-neutral-800" htmlFor="source">
         {copy.source}
-        <input className={`min-h-11 rounded-md border border-neutral-300 px-3 ${FOCUS}`} id="source" name="source" type="url" />
+        <input autoComplete="off" className={`min-h-11 rounded-md border border-neutral-300 px-3 ${FOCUS}`} id="source" name="source" type="url" />
       </label>
       <button className={`min-h-11 rounded-md bg-brand-600 px-4 text-sm font-medium text-white ${FOCUS}`} type="submit">
         {copy.check}
