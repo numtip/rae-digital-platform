@@ -46,6 +46,7 @@ export const enDocuments: DocumentsContent = {
     },
   ],
   backToIndex: "Back to all documents",
+  linksTemplate: "{n} links",
   note: "The document files live on the university's systems (rae.mju.ac.th / erp.mju.ac.th / researchex.mju.ac.th). This page links straight to the source and does not keep copies.",
   source: {
     label: "Source",

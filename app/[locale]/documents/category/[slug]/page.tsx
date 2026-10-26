@@ -56,6 +56,9 @@ export default async function DocumentCategory({ params }: Props) {
             ]}
           />
 
+          <p className="mb-4 text-sm text-neutral-600">
+            {documents.linksTemplate.replace("{n}", String(group.links.length))}
+          </p>
           <div className={CARD}>
             <ul className="space-y-4">
               {group.links.map((link) => (

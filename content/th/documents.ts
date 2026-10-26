@@ -46,6 +46,9 @@ export const thDocuments = {
     },
   ],
   backToIndex: "กลับไปหน้ารวมเอกสาร",
+  // A template, not a function: copy that crosses into a client component has to be
+  // serialisable. The page substitutes {n} from the list it is already rendering.
+  linksTemplate: "{n} ลิงก์",
   note: "ไฟล์เอกสารอยู่บนระบบของมหาวิทยาลัย (rae.mju.ac.th / erp.mju.ac.th / researchex.mju.ac.th) — หน้านี้ลิงก์ไปที่ต้นทางโดยตรง ไม่ได้สำเนาไฟล์มาเก็บ",
   source: {
     label: "ที่มาของข้อมูล",
