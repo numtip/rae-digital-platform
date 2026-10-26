@@ -101,3 +101,45 @@ test("news items all carry a source date and a stable id", () => {
   const sorted = [...isos].sort().reverse();
   assert.deepEqual(isos, sorted, "news items must be ordered newest first");
 });
+
+test("every path in the repository is either Apache-licensed or named as excluded", () => {
+  // Policy A2 licenses the app source; A1/A4 exclude the institutional material. This gate
+  // walks the repository root and fails if a path is neither licensed nor explicitly named in
+  // NOTICE — the failure mode it prevents is a new asset directory landing in the repo and
+  // silently reading as Apache-2.0 licensed.
+  const LICENSED = [
+    "app", "components", "lib", "scripts", "tests",
+    "package.json", "next.config.ts", "tsconfig.json", "postcss.config.mjs", "eslint.config.mjs",
+  ];
+  // Generated or non-creative files: Next writes next-env.d.ts and the tsbuildinfo cache,
+  // .gitignore/.nvmrc/package-lock.json describe the repo rather than express anything, and
+  // public/ is judged by its own excluded sub-trees (asserted below).
+  const META = [
+    "LICENSE", "NOTICE", "README.md", "package-lock.json", ".gitignore", ".nvmrc",
+    "node_modules", "out", ".next", ".git", ".github", "public",
+    "next-env.d.ts", "tsconfig.tsbuildinfo",
+  ];
+  const notice = readFileSync(join(process.cwd(), "NOTICE"), "utf8");
+
+  const present = readdirSync(process.cwd()).filter((name) => !META.includes(name) && !name.startsWith("."));
+  const unexplained = present.filter(
+    (name) => !LICENSED.includes(name) && !notice.includes(`${name}/`) && !notice.includes(name),
+  );
+  assert.deepEqual(unexplained, [], `paths neither licensed nor named in NOTICE:\n${unexplained.join("\n")}`);
+
+  // the excluded trees the policy names must actually be named in NOTICE
+  for (const excluded of ["content/", "public/images/news/", "public/images/about/", "public/images/brand/", "design/stitch/", "docs/"]) {
+    assert.ok(notice.includes(excluded), `NOTICE does not name the excluded tree ${excluded}`);
+  }
+});
+
+test("NOTICE separates declared policy from verified facts from open questions", () => {
+  // The owner asked for owner-declared rights, independently verified ownership and unresolved
+  // authority to be distinguishable at a glance, so the three parts must exist by name.
+  const notice = readFileSync(join(process.cwd(), "NOTICE"), "utf8");
+  for (const heading of ["PART A — OWNER-DECLARED RIGHTS POLICY", "PART B — INDEPENDENTLY VERIFIED FACTS", "PART C — UNRESOLVED AUTHORITY"]) {
+    assert.ok(notice.includes(heading), `NOTICE is missing ${heading}`);
+  }
+  assert.match(notice, /Apache License, Version 2\.0/);
+  assert.match(notice, /Copyright \d{4} Prinya/);
+});

@@ -1,68 +1,126 @@
-rae-digital-platform
-Copyright 2026 Prinya (GitHub: numtip)
+rae-digital-platform — copyright and licence notice
+Office of Research and Academic Services, Maejo University
 
-This product includes software developed for the RAE Digital Platform,
-the public website of the Office of Research and Academic Services,
-Maejo University.
-
-=====================================================================
-SCOPE OF THE LICENCE — READ THIS BEFORE REUSING ANYTHING
-=====================================================================
-
-The Apache License, Version 2.0 (the LICENSE file in this directory)
-applies ONLY to the original source code of this project, meaning the
-files under:
-
-    app/  components/  lib/  scripts/  tests/
-
-It does NOT apply to the material listed below. That material remains
-under the rights of Maejo University, the Office of Research and
-Academic Services, or other rights holders, and is NOT licensed for
-reuse, redistribution or derivative work:
-
-    content/               Thai copy transcribed from rae.mju.ac.th, and
-                           its English translations (translations are
-                           adaptations of the Thai text)
-    public/images/news/    lead photographs published on the office's
-                           news pages
-    public/images/about/   the office's emblem and building photographs
-    public/images/brand/   Maejo University's official seal, also used as
-    app/icon.png           the site favicon (a university insignia — no
-                           trademark or insignia right is granted here)
-    design/stitch/         Google Stitch design reference used as a
-                           design baseline
-    docs/                  project documentation (a separate decision is
-                           pending; not covered by this NOTICE)
-
-Third-party dependencies keep their own licences, recorded in
-package-lock.json. Nothing in this repository relicenses a dependency.
+Copyright 2026 Prinya (GitHub: numtip) — for the original application source code
+only, as described in part A below.
 
 =====================================================================
-UNRESOLVED AUTHORITY (recorded 2026-10-26)
+PART A — OWNER-DECLARED RIGHTS POLICY (declared 2026-10-26)
 =====================================================================
 
-The copyright in the source code is held by its individual author(s),
-whose contributions are recorded in this repository's git history.
+This part records the decision of the repository owner. It is a statement of
+policy, not a legal finding. Part B records what is independently verifiable
+from this repository, and part C lists what remains unresolved.
 
-Under the Copyright Act B.E. 2537 (1994) section 9, copyright in a work
-created in the course of employment vests in the author unless otherwise
-agreed in writing, while the employer acquires the right to communicate
-the work to the public for the purpose of the employment. No assignment,
-employment-IP clause or Maejo University IP regulation is present in this
-repository.
+A1. Maejo University materials — NOT licensed here.
+    University emblems and insignia, institutional branding, official documents,
+    news items, photographs, institutional content and media remain under the
+    copyright of Maejo University or of their respective rights holders. They are
+    excluded from the Apache License 2.0.
 
-Whether Maejo University holds rights in this code through such an
-agreement is UNVERIFIED. Until the university settles that in writing,
-this NOTICE must not be read as a statement that Maejo University
-sponsors, endorses or has authorised the Apache License 2.0 being applied
-to this code, and no one should treat the licence as covering the
-institutional material listed above.
+A2. Original application source code — licensed under Apache-2.0.
+    Newly developed code written for this project and owned by its developer
+    (Prinya / GitHub: numtip) is licensed under the Apache License, Version 2.0,
+    subject to any applicable ownership agreement and to Maejo University's
+    intellectual-property regulations. The licensed paths are:
+
+        app/  components/  lib/  scripts/  tests/
+
+    together with the original build and configuration files at the repository
+    root: package.json, next.config.ts, tsconfig.json, postcss.config.mjs,
+    eslint.config.mjs. Data files that describe dependencies
+    (package-lock.json) and repository metadata (.gitignore, .nvmrc) carry no
+    creative content and are not the subject of the grant either way.
+
+A3. Third-party components — unchanged.
+    Every dependency and CI action keeps its own copyright notice and licence,
+    as recorded in package-lock.json and in each package's own files. Nothing in
+    this repository relicenses a third-party component.
+
+A4. Documentation and design material — NOT licensed here.
+    docs/, research references, blueprints, translations and design assets stay
+    outside the Apache-2.0 grant unless separately authorised in writing.
 
 =====================================================================
-HOW TO COMPLY IF YOU REUSE THE CODE
+PART B — INDEPENDENTLY VERIFIED FACTS (checked 2026-10-26)
 =====================================================================
 
-Include a copy of the LICENSE file and this NOTICE, keep the attribution
-line at the top of this file, and state clearly in your own NOTICE that
-the content, images and insignia listed above are NOT covered and must be
-obtained separately from the office that owns them.
+B1. The Apache License 2.0 text in LICENSE is byte-identical to
+    https://www.apache.org/licenses/LICENSE-2.0.txt — 11,358 bytes,
+    sha256 cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30.
+    It is unmodified, including its appendix boilerplate.
+
+B2. Authorship of the source code is traceable in this repository's history:
+
+        git log --format='%an <%ae>' | sort | uniq -c
+             23  Prinya <raemju@gmail.com>
+              1  numtip <raemju@gmail.com>
+              6  dependabot[bot]
+
+    Two spellings of one person and an automated dependency bot; no other human
+    contributor appears.
+
+B3. Material that is not original code, and where it came from, is registered
+    per asset in docs/governance/ASSET_RIGHTS.md. The following are NOT covered
+    by the Apache-2.0 grant, matching policy A1 and A4:
+
+        content/               Thai copy transcribed from rae.mju.ac.th, and its
+                               English translations (translations are adaptations
+                               of the Thai text)
+        public/images/news/    lead photographs published on the office's news pages
+        public/images/about/   the office's emblem and building photographs
+        public/images/brand/   Maejo University's official seal, also used as the
+        app/icon.png           site favicon (university insignia — no trademark or
+                               insignia right is granted, Apache-2.0 section 6)
+        design/stitch/         Google Stitch design reference used as a design baseline
+        docs/                  project documentation, research and blueprints
+
+B4. Third-party licences in the installed tree: 443 packages — MIT 348,
+    Apache-2.0 34, ISC 18, MPL-2.0 13, LGPL-3.0-or-later 10, BSD 9, others 5.
+    No GPL and no AGPL anywhere. The only copyleft is prebuilt libvips binaries
+    behind sharp, which are not shipped in the static export.
+
+B5. No contributor licence agreement, copyright assignment, employment-IP clause
+    or Maejo University IP regulation exists in this repository.
+
+=====================================================================
+PART C — UNRESOLVED AUTHORITY (must not be assumed)
+=====================================================================
+
+C1. Who holds copyright in the source code.
+    Under the Copyright Act B.E. 2537 (1994) section 9, copyright in a work
+    created in the course of employment vests in the AUTHOR unless otherwise
+    agreed in writing, while the employer obtains the right to communicate the
+    work to the public for the purpose of the employment. Section 10 places
+    commissioned works with the hirer.
+
+    The owner's policy in A2 asserts developer ownership. Whether that position
+    is correct — or whether an employment agreement, a commissioned-work
+    arrangement or a Maejo University IP regulation transfers or shares those
+    rights — is NOT verifiable from this repository (see B5).
+
+C2. Permission for the institutional material.
+    No written permission from the office or the university to redistribute the
+    photographs, news text or translations is present in this repository. Their
+    publication on the office's own website does not grant reuse rights.
+
+C3. University insignia.
+    No insignia or trademark clearance for Maejo University's seal is documented.
+    Apache-2.0 section 6 grants no trademark right.
+
+C4. What this NOTICE does and does not mean.
+    It DOES mean: the code paths in A2 are offered under Apache-2.0 by the
+    developer named above, and everything else in this repository is excluded.
+    It DOES NOT mean: that Maejo University sponsors, endorses or has authorised
+    that licence, or that the institutional material may be reused.
+
+    Until C1–C3 are settled in writing, the safe reading is that this repository
+    is licensed for its code only.
+
+=====================================================================
+REUSE CHECKLIST
+=====================================================================
+
+If you reuse the code: keep LICENSE and this NOTICE, keep the attribution above,
+state in your own NOTICE that the material listed in B3 is not covered, and
+obtain that material separately from the office that owns it.

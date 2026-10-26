@@ -162,17 +162,26 @@ Draft PR → รายงานเช้า ห้าม merge/deploy เอง 
 
 ยังไม่มีไฟล์ `LICENSE` — repo เป็น public แต่เจ้าของยังไม่ได้เลือกสัญญาอนุญาต
 ดูประเด็นและตัวเลือกใน `docs/PROVENANCE.md §5` (ต้องตัดสินก่อนเปิดให้ภายนอกมีส่วนร่วม)
-
 ## Licence
 
-The **original source code** of this project is released under the
-[Apache License 2.0](LICENSE). The copyright in that code sits with its individual authors as
-recorded in the git history; whether Maejo University holds rights through an employment or IP
-agreement is **unresolved** and stated in [NOTICE](NOTICE).
+**Owner-declared policy (2026-10-26).** Recorded in full in [NOTICE](NOTICE):
 
-The licence does **not** cover the institutional material: the Thai copy transcribed from
-`rae.mju.ac.th` and its translations, the news and building photographs, the office emblem, or
-Maejo University's official seal used as the site emblem and favicon. Those remain under the
-rights of the office and the university — see [docs/governance/ASSET_RIGHTS.md](docs/governance/ASSET_RIGHTS.md)
-for the per-asset register and [docs/governance/LICENSE_RECOMMENDATION.md](docs/governance/LICENSE_RECOMMENDATION.md)
-for the reasoning.
+| Material | Status |
+|---|---|
+| Original application source code — `app/ components/ lib/ scripts/ tests/` and the root build/config files | **Apache-2.0** ([LICENSE](LICENSE), the unmodified Apache text), licensed by the developer Prinya (GitHub: numtip), subject to any ownership agreement and to Maejo University's IP regulations |
+| University emblems and insignia, institutional branding, official documents, news, photographs, institutional content and media | **Excluded** — remain under Maejo University's or their rights holders' copyright |
+| Third-party components (443 packages, CI actions) | **Unchanged** — their own notices and licences apply; nothing here relicenses them |
+| `docs/`, research references, blueprints, translations, design assets | **Excluded** unless separately authorised in writing |
+
+**Declared vs verified.** [NOTICE](NOTICE) is deliberately split into three parts: **A** the
+owner's declared policy, **B** facts independently checked against this repository (the
+Apache text is byte-identical to apache.org; authorship is traceable to one person plus a
+dependency bot; 443 third-party packages with no GPL/AGPL), and **C** authority that is
+**unresolved** — under the Copyright Act B.E. 2537 s.9 the statutory default holder of
+employment work is the author, and no assignment, commissioned-work agreement or university
+IP regulation exists in this repository. The notice must not be read as university
+endorsement or authorisation, and the institutional material is not licensed for reuse.
+
+Per-asset origin, permission and licence status: [docs/governance/ASSET_RIGHTS.md](docs/governance/ASSET_RIGHTS.md).
+The reasoning behind the choice of Apache-2.0 over MIT, and the full option comparison:
+[docs/governance/LICENSE_RECOMMENDATION.md](docs/governance/LICENSE_RECOMMENDATION.md).

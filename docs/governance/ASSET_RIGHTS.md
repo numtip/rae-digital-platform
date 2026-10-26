@@ -12,6 +12,22 @@ reading the files and their own provenance comments — not from memory.
 | `PENDING` | needs a written decision or permission before it can be treated as reusable |
 | `CLEARED-BY-DEPENDENCY` | third-party material already licensed by its owner; its own terms apply |
 
+**Policy mapping** — each row below implements one clause of the owner's policy of 2026-10-26 as
+written in `NOTICE` part A:
+
+| clause | policy | rows |
+|---|---|---|
+| A1 | Maejo University materials and institutional media excluded | 1–6 |
+| A2 | original application source code licensed under Apache-2.0 | (not listed here: it is the licensed code, see `NOTICE` A2) |
+| A3 | third-party components keep their own notices and licences | 9, 11, 12 |
+| A4 | documentation, research, blueprints, translations, design assets excluded | 2, 7, 8, 10 |
+
+**Declared vs verified.** The status column is an implementation of the owner's *declared*
+policy. What is *independently verified* is the origin of each item (the source URL or file
+recorded in "Origin"), and what is *unresolved* is whether permission exists — stated per row
+under "Permission held". `NOTICE` part C records the legal position that no assignment or
+university IP regulation exists in this repository.
+
 | # | Path / class | What it is | Origin (evidence) | Permission held | Licence status |
 |---|---|---|---|---|---|
 | 1 | `content/th/**` | all Thai copy on the site | transcribed verbatim from `rae.mju.ac.th` — stated in the header comment of each file (`about.ts`, `news.ts`, `site.ts`, `documents.ts`, `research.ts`, `services.ts`) | office publishes it on its own public site; **no written reuse permission in the repo** | `EXCLUDED` / `PENDING` |

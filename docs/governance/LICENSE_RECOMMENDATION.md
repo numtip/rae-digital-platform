@@ -1,7 +1,10 @@
 # License recommendation — rae-digital-platform
 
 > **Decision taken 2026-10-26 (owner).** Apache-2.0 is approved for the **original source code
-> only**, with institutional assets excluded until separately authorised. It is implemented in
+> only**, with institutional assets excluded until separately authorised. The policy was restated
+> in four clauses (A1–A4) and is implemented in [NOTICE](../../NOTICE) parts A/B/C, which separate
+> the owner's declaration from independently verified facts and from the authority that remains
+> unresolved. It is implemented in
 > [LICENSE](../../LICENSE) (Apache-2.0, verbatim from apache.org), [NOTICE](../../NOTICE) (scope,
 > exclusions, unresolved-authority statement) and the per-asset register in
 > [ASSET_RIGHTS.md](ASSET_RIGHTS.md).
