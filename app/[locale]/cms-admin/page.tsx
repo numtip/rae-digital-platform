@@ -36,7 +36,7 @@ export default async function CmsAdmin({ params }: Props) {
           <h2 className="mb-4 text-xl font-bold" id="news-desk">
             {copy.news}
           </h2>
-          <NewsDesk locale={locale} />
+          <NewsDesk apiBase={process.env.NEXT_PUBLIC_CMS_API ?? "http://127.0.0.1:3317"} locale={locale} />
         </section>
       </div>
     </main>
