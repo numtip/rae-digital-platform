@@ -56,6 +56,21 @@ export default async function NewsItemPage({ params }: Props) {
   const title = item.title || thai?.title || nid;
   const showThaiOnlyNotice = item.body.length === 0 && body.length > 0;
 
+  // A reader who finishes an article should be able to keep reading without going back
+  // to the list. The archive is ordered newest-first, so the entry before this one is
+  // newer and the entry after it is older.
+  const ordered = getNews("th").items;
+  const index = ordered.findIndex((entry) => entry.nid === nid);
+  const localisedTitles = new Map(news.items.map((entry) => [entry.nid, entry.title]));
+  const neighbour = (offset: number) =>
+    index >= 0 && index + offset >= 0 && index + offset < ordered.length
+      ? ordered[index + offset]
+      : null;
+  const newer = neighbour(-1);
+  const older = neighbour(1);
+  const neighbourTitle = (entry: { nid: string; title: string }) =>
+    localisedTitles.get(entry.nid) || entry.title;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -115,6 +130,39 @@ export default async function NewsItemPage({ params }: Props) {
               ))}
             </div>
           </div>
+
+          <nav aria-label={`${news.labels.prevNewer} / ${news.labels.nextOlder}`} className="mt-8 grid gap-4 border-t border-neutral-200 pt-6 sm:grid-cols-2">
+            {newer ? (
+              <Link
+                className="rounded-md border border-neutral-200 bg-white p-4 hover:border-brand-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
+                href={`/${locale}/news/${newer.nid}`}
+              >
+                <span className="block text-xs font-semibold text-brand-600">← {news.labels.prevNewer}</span>
+                <span className="mt-1 block text-sm font-medium leading-snug text-neutral-800">
+                  {neighbourTitle(newer)}
+                </span>
+              </Link>
+            ) : (
+              <span className="rounded-md border border-dashed border-neutral-200 p-4 text-sm text-neutral-500">
+                {news.labels.noNewer}
+              </span>
+            )}
+            {older ? (
+              <Link
+                className="rounded-md border border-neutral-200 bg-white p-4 text-right hover:border-brand-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 sm:col-start-2"
+                href={`/${locale}/news/${older.nid}`}
+              >
+                <span className="block text-xs font-semibold text-brand-600">{news.labels.nextOlder} →</span>
+                <span className="mt-1 block text-sm font-medium leading-snug text-neutral-800">
+                  {neighbourTitle(older)}
+                </span>
+              </Link>
+            ) : (
+              <span className="rounded-md border border-dashed border-neutral-200 p-4 text-sm text-neutral-500 sm:col-start-2 sm:text-right">
+                {news.labels.noOlder}
+              </span>
+            )}
+          </nav>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Link

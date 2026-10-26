@@ -38,6 +38,10 @@ export const thNews = {
     thaiOnly: "",
     headlineThaiOnly: "",
     imageAlt: "ภาพประกอบข่าว",
+    prevNewer: "ข่าวใหม่กว่า",
+    nextOlder: "ข่าวเก่ากว่า",
+    noOlder: "ไม่มีข่าวเก่ากว่านี้แล้ว",
+    noNewer: "นี่คือข่าวล่าสุดแล้ว",
   },
   pagination: {
     label: "การแบ่งหน้า",
