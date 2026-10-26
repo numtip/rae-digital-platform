@@ -61,13 +61,10 @@ export function getDocuments(locale: Locale): DocumentsContent {
 }
 
 export function getNews(locale: Locale): NewsContent {
-  const news = NEWS[locale];
-  if (locale === "th") return news;
-  // A story has a photo or it does not — the Thai source of truth records which.
-  // The English file cannot know, and a blanket image path pointed four stories
-  // (procurement/audit notices) at files that were never published.
-  const withPhoto = new Set(thNews.items.filter((item) => item.image).map((item) => item.nid));
-  return { ...news, items: news.items.map((item) => ({ ...item, image: withPhoto.has(item.nid) ? item.image : null })) };
+  // Whether a story has a photo is decided once, in content/en/news.ts, from the Thai
+  // source of truth (HAS_PHOTO). It used to be repaired here as well after the same bug
+  // was fixed twice; the duplication was removed so the rule lives in one layer.
+  return NEWS[locale];
 }
 
 export function getSearch(locale: Locale): SearchContent {
