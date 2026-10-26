@@ -30,6 +30,7 @@ export const th = {
     research: "วิจัยและนวัตกรรม",
     services: "บริการวิชาการ",
     documents: "เอกสารเผยแพร่",
+    knowledge: "องค์ความรู้",
     news: "ข่าวสารและกิจกรรม",
     systems: "ระบบสารสนเทศ",
     contact: "ติดต่อเรา",

@@ -34,6 +34,7 @@ export const en: SiteContent = {
     research: "Research & innovation",
     services: "Academic services",
     documents: "Publications",
+    knowledge: "Knowledge",
     news: "News & activities",
     systems: "Information systems",
     contact: "Contact",

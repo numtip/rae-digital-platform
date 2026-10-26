@@ -36,6 +36,14 @@ export function NewsIndex({
             ]}
           />
           <p className="mb-6 text-sm text-neutral-600">{news.snapshotNote}</p>
+          <p className="mb-6">
+            <Link
+              className="text-sm font-medium text-brand-600 underline underline-offset-2"
+              href={`/${locale}/news/events`}
+            >
+              {news.labels.eventsLink}
+            </Link>
+          </p>
 
           <NewsGrid items={items} labels={news.labels} locale={locale} thaiTitles={thaiTitles} />
 
