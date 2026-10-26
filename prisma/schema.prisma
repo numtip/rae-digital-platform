@@ -24,6 +24,7 @@ model Session {
   userId     String
   tokenHash  String   @unique
   createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
   expiresAt  DateTime
 }
 
@@ -46,9 +47,11 @@ model NewsArticle {
   authorId    String
   reviewerId  String?
   publisherId String?
-  titleTh     String
-  titleEn     String
-  source      String
+  titleTh        String
+  titleEn        String
+  source         String
+  revisionReason String? @db.Text
+  returnedBy     String?
 }
 
 model DocumentLink {
