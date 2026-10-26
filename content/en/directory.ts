@@ -20,7 +20,7 @@ export const enDirectory: DirectoryContent = {
   },
   media: {
     title: "Electronic media",
-    subtitle: "Journal, video and newsletters that are online",
+    subtitle: "Online journal and newsletters that are live",
   },
   director: {
     title: "Director's direct line",
