@@ -141,6 +141,22 @@ Docs and gate gaps it named (M04/M08 staleness, count-vs-name locale parity, fir
 
 Also this session: #36 and #37 were rebased onto the updated #34 / #36 (the pagination PR conflicted with the breadcrumb work in `app/[locale]/news/page.tsx`; resolved by moving the breadcrumb into the shared `components/news-index.tsx`). Both re-pushed; CI green again.
 
+## 4.6 Post-merge runbook (queued, not executed — merges are owner-only)
+
+The owner's instruction forbids reducing required reviews, self-approval, auto-merge and
+force-merge. So nothing below has been run: each step waits for the owner's own merge of
+the PR before it. The steps are written down now so the sequence is auditable.
+
+| After the owner merges | I will run | Proves |
+|---|---|---|
+| **#35** | `git checkout main && git pull`, verify the hero links in a real export, then `gh pr edit 36 --base main` (its base #34 is not merged yet, so only the base move is possible) | the fix is on main, not just on a branch |
+| **#34** | `git checkout main && git pull`, `gh pr edit 37 --base main` once #36 lands | bases follow the merged history instead of dangling feature branches |
+| **#36** | rebase #37 onto main, **delete the duplicate photo rule** in `content/en/news.ts` (`HAS_PHOTO`), point its comment at `getNews`, rerun every gate | the rule lives in exactly one layer instead of two |
+| **#37** | rerun `npm test` + `build:export` + `check-export` on main, then confirm the Pages preview deploys | pagination works on the deployed site, not only in a branch build |
+
+Two things I cannot do and will not attempt: approve a PR (GitHub does not let the author
+approve their own) and merge without the owner's action or explicit instruction.
+
 ## 5. Outstanding defects
 
 1. **`/news` payload is large** — 58 cards, ~200 KB of HTML plus lazily loaded photos. Fine on desktop, heavy on a slow phone. A paginated or "load more" index is the fix; it changes the URL shape, so it needs an owner decision.
