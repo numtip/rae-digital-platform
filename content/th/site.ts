@@ -10,6 +10,7 @@ export const th = {
   a11y: {
     skipToContent: "ข้ามไปยังเนื้อหาหลัก",
   },
+  breadcrumbLabel: "เส้นทางนำทาง",
   header: {
     staffLogin: "เข้าสู่ระบบสำหรับบุคลากร",
     orgShort: "RAE",
@@ -30,6 +31,7 @@ export const th = {
     services: "บริการวิชาการ",
     documents: "เอกสารเผยแพร่",
     news: "ข่าวสารและกิจกรรม",
+    contact: "ติดต่อเรา",
   },
   hero: {
     title: "สร้างองค์ความรู้ สู่นวัตกรรมเกษตร",

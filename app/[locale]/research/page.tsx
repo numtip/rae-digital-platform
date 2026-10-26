@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CARD, ExternalLink, PageHero, SourceLine } from "@/components/page-shell";
-import { getResearch, isLocale } from "@/lib/i18n";
+import { Breadcrumb, CARD, ExternalLink, PageHero, SourceLine } from "@/components/page-shell";
+import { getContent, getResearch, isLocale } from "@/lib/i18n";
 
 // All copy comes from content/<locale>/research.ts, transcribed from the official
 // "กองบริหารงานวิจัย" page. No claims beyond that page.
@@ -33,6 +33,13 @@ export default async function Research({ params }: Props) {
 
       <section className="bg-surface-50 py-16">
         <div className="mx-auto w-full max-w-7xl px-4">
+          <Breadcrumb
+            locale={locale}
+            trail={[
+              { label: getContent(locale).nav.home, href: `/${locale}` },
+              { label: research.hero.title },
+            ]}
+          />
           <div className={CARD}>
             <h2 className="text-2xl font-bold text-neutral-800">{research.intro.title}</h2>
             <p className="mt-3 max-w-4xl text-neutral-700">{research.intro.text}</p>

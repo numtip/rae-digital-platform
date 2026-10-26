@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { asset } from "@/lib/assets";
-import { SITE_URL, getAbout, isLocale } from "@/lib/i18n";
+import { Breadcrumb } from "@/components/page-shell";
+import { SITE_URL, getAbout, getContent, isLocale } from "@/lib/i18n";
+import { telHref } from "@/lib/phone";
 
 // Nothing here is invented: every string comes from content/<locale>/about.ts,
 // transcribed from the official office page (see the source line in the file).
@@ -57,6 +59,15 @@ export default async function About({ params }: Props) {
       </section>
 
       <section className="bg-surface-50 py-16">
+        <div className="mx-auto w-full max-w-7xl px-4">
+          <Breadcrumb
+            locale={locale}
+            trail={[
+              { label: getContent(locale).nav.home, href: `/${locale}` },
+              { label: about.hero.title },
+            ]}
+          />
+        </div>
         <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 md:grid-cols-3">
           <div className={CARD}>
             <h2 className="text-xl font-bold text-brand-600">{about.philosophy.title}</h2>
@@ -134,7 +145,7 @@ export default async function About({ params }: Props) {
               <div>
                 <dt className="font-semibold">{about.contact.phoneLabel}</dt>
                 <dd className="mt-1">
-                  <a className="text-brand-600 underline" href={`tel:${about.contact.phone.replace(/[^\d+]/g, "")}`}>
+                  <a className="text-brand-600 underline" href={`tel:${telHref(about.contact.phone)}`}>
                     {about.contact.phone}
                   </a>
                 </dd>

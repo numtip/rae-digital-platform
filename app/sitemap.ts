@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { LOCALES, PAGES, SITE_URL, getNews } from "@/lib/i18n";
+import { LOCALES, PAGES, SITE_URL, getDocuments, getNews } from "@/lib/i18n";
 
 // Static export (GitHub Pages preview) needs an explicit static route.
 export const dynamic = "force-static";
@@ -43,5 +43,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   );
 
-  return [...home, ...pages, ...newsItems];
+  // Document categories: a stable slug per category, both locales.
+  const docCategories = getDocuments("th").groups.flatMap((group) =>
+    LOCALES.map((locale) => ({
+      url: `${SITE_URL}/${locale}/documents/category/${group.slug}/`,
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+      alternates: { languages: languagesFor(`documents/category/${group.slug}`) },
+    })),
+  );
+
+  return [...home, ...pages, ...newsItems, ...docCategories];
 }

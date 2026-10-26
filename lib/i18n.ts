@@ -86,10 +86,11 @@ export const NAV: { key: keyof SiteContent["nav"]; href?: (locale: Locale) => st
   { key: "services", href: (locale) => `/${locale}/services` },
   { key: "documents", href: (locale) => `/${locale}/documents` },
   { key: "news", href: (locale) => `/${locale}/news` },
+  { key: "contact", href: (locale) => `/${locale}/contact` },
 ];
 
 // Interior pages that exist in every locale, in the order the sitemap lists them.
-export const PAGES = ["about", "research", "services", "documents", "news", "search"] as const;
+export const PAGES = ["about", "research", "services", "documents", "news", "contact", "search"] as const;
 
 // shortcut: placeholder origin until the owner names the production domain;
 // canonical/hreflang/sitemap need an absolute base, so set NEXT_PUBLIC_SITE_URL

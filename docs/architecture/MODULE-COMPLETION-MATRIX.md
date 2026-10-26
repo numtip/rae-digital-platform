@@ -16,14 +16,14 @@ Legend — **Status**: ✅ implemented · 🟡 partial · ⬜ not started · ⛔
 
 | ID | Module | Class | Depends on | Status | Evidence | In PR |
 |---|---|---|---|---|---|---|
-| M01 | Public shell, routing, i18n, design system | BUILD | M15, M20 | 🟡 | `app/[locale]/layout.tsx`, `lib/i18n.ts` (NAV 6 links + search), `components/site-header.tsx`; `/contact` and `/knowledge` do not exist yet | #29 (search entry) |
+| M01 | Public shell, routing, i18n, design system | BUILD | M15, M20 | 🟡 | `app/[locale]/layout.tsx`, `lib/i18n.ts` (NAV 7 links + search), `components/site-header.tsx`; `/knowledge` still absent | #29, #34 |
 | M02 | Homepage & content sections | BUILD | M14, M18 | 🟡 | `app/[locale]/page.tsx`: hero photo, real CTAs, section links; statistics still labelled sample data | — |
-| M03 | Document Center (public library) | BUILD | M15 | 🟡 | `app/[locale]/documents/page.tsx` + `content/{th,en}/documents.ts`: 3 groups / 10 outbound links; no record ids, versions or counts | — |
-| M04 | Knowledge & static pages | BUILD | M14 | 🟡 | `/about`, `/research`, `/services`, `/documents`, `/news`, `/search` exist; no FAQ/knowledge articles, no breadcrumb | — |
+| M03 | Document Center (public library) | BUILD | M15 | 🟡 | `/documents` + `/documents/category/<slug>` for 3 categories (10 outbound links), breadcrumb + `BreadcrumbList`; no record ids, versions or counts | #34 |
+| M04 | Knowledge & static pages | BUILD | M14 | 🟡 | `/about`, `/research`, `/services`, `/documents`, `/news`, `/contact`, `/search` exist and carry a breadcrumb + `BreadcrumbList`; no FAQ/knowledge articles | #34 |
 | M05 | Events & calendar | BUILD | M14 | ⬜ | no event route, no event data | — |
-| M06 | Global search | BUILD | M03, M04, M12, M14 | 🟡 | `app/[locale]/search/` + `lib/search-index.ts` + `components/content-search.tsx`, header form; covers published site content only (no personnel, M12 absent) | #29 |
-| M07 | Contact & FAQ | BUILD | M15, M20 | ⬜ | no `/contact`; address/phone/email already verified in `content/{th,en}/site.ts` `footer` | — |
-| M08 | SEO, analytics, accessibility | BUILD | M01 | 🟡 | `app/sitemap.ts` (38 URLs), `app/robots.ts`, Organization JSON-LD, per-page canonical/hreflang, `NewsArticle` JSON-LD on news pages; no analytics, no automated axe/contrast gate | #30 |
+| M06 | Global search | BUILD | M03, M04, M12, M14 | 🟡 | `/search` + `lib/search-index.ts` + `components/content-search.tsx`, header form, now indexes document categories and contact too; still no personnel (M12 absent) | #29, #34 |
+| M07 | Contact & FAQ | BUILD | M15, M20 | 🟡 | `/contact` renders the verified address/phone/email from `content/*/about.ts` + `site.ts`; **no form** (needs SMTP + PDPA basis) and no FAQ copy | #34 |
+| M08 | SEO, analytics, accessibility | BUILD | M01 | 🟡 | `app/sitemap.ts` (146 URLs incl. paginated news and document categories), `app/robots.ts`, Organization JSON-LD, per-page canonical/hreflang, `NewsArticle` JSON-LD on news pages; no analytics, no automated axe/contrast gate | #30 |
 | M14 | News (data shape + detail pages) | BUILD | M15, M10 | 🟡 | full news items (title, date, type, body, image) in `content/th/news.ts`; `/news/[nid]` for 12 items × 2 locales; no authoring workflow, no revisions (that needs M10/M15) | #30 |
 
 ## Deferred / blocked modules
@@ -72,6 +72,15 @@ No M09, M24–M29 or M33 exist in any document — do not invent them.
 - **ADR-0002 (Approved)** — single colour authority (no raw hex outside the token file), no `href="#"` in nav/CTA data, statistics require `source` + `as_of`.
 - **ADR-0004 (Accepted)** — master files stay in SharePoint; the platform stores metadata + `storage_url` only; no Microsoft Graph runtime in v1. The Document Center may link, never mirror.
 - **ADR-0005 (Implemented)** — `/th/` primary, `/` → `/th/` with 307, copy outside components (`SiteContent = typeof th`), missing translation explicit, per-locale reciprocal SEO, prototype statistics are sample data, **no new dependency without owner approval**.
+
+## Content gate (shipped)
+
+`tests/content.test.mjs` + `npm test` (node:test, no dependencies) enforce, on every run:
+both locales have the same number of content files, every `url:` in content is https,
+every `source: {` block carries `retrieved:`, the homepage statistics keep their
+sample-data label, no content value is left as the literal `TODO(translate)`, and news
+items all have a unique `nid`, an ISO date and are ordered newest first.
+Verified red: changing one URL to `http://` fails the suite; reverting makes it pass.
 
 ## Next three batches (unblocked, functional first)
 

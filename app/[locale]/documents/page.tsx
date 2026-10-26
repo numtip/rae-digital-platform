@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CARD, PageHero, SourceLine } from "@/components/page-shell";
-import { getDocuments, isLocale } from "@/lib/i18n";
+import { Breadcrumb, CARD, PageHero, SourceLine } from "@/components/page-shell";
+import { getContent, getDocuments, isLocale } from "@/lib/i18n";
 
 // Categories and link labels come from content/<locale>/documents.ts, transcribed
 // from the official download page. Files are linked at source, never mirrored.
@@ -32,10 +33,23 @@ export default async function Documents({ params }: Props) {
       <PageHero title={documents.hero.title} lead={documents.hero.lead} />
 
       <section className="bg-surface-50 py-16">
+        <div className="mx-auto w-full max-w-7xl px-4">
+          <Breadcrumb
+            locale={locale}
+            trail={[
+              { label: getContent(locale).nav.home, href: `/${locale}` },
+              { label: documents.hero.title },
+            ]}
+          />
+        </div>
         <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 md:grid-cols-3">
           {documents.groups.map((group) => (
             <div key={group.title} className={CARD}>
-              <h2 className="text-lg font-bold text-brand-600">{group.title}</h2>
+              <h2 className="text-lg font-bold text-brand-600">
+                <Link className="underline underline-offset-2 hover:text-brand-700" href={`/${locale}/documents/category/${group.slug}`}>
+                  {group.title}
+                </Link>
+              </h2>
               <ul className="mt-4 space-y-3">
                 {group.links.map((link) => (
                   <li key={link.url}>

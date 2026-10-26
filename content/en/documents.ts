@@ -15,6 +15,7 @@ export const enDocuments: DocumentsContent = {
   groups: [
     {
       title: "Administration",
+      slug: "administration",
       links: [
         { label: "Administration and general affairs", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=1920" },
         { label: "Finance and supplies", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=1921" },
@@ -24,6 +25,7 @@ export const enDocuments: DocumentsContent = {
     },
     {
       title: "Research",
+      slug: "research",
       links: [
         {
           label: "Regulations / announcements / research grants / forms / research standards",
@@ -33,6 +35,7 @@ export const enDocuments: DocumentsContent = {
     },
     {
       title: "Academic services",
+      slug: "academic-services",
       links: [
         { label: "Manuals", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=1925" },
         { label: "Centre of excellence forms", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=2605" },
@@ -42,6 +45,7 @@ export const enDocuments: DocumentsContent = {
       ],
     },
   ],
+  backToIndex: "Back to all documents",
   note: "The document files live on the university's systems (rae.mju.ac.th / erp.mju.ac.th / researchex.mju.ac.th). This page links straight to the source and does not keep copies.",
   source: {
     label: "Source",

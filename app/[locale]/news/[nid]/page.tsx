@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { NewsImage } from "@/components/news-image";
-import { CARD, SourceLine } from "@/components/page-shell";
+import { Breadcrumb, CARD, SourceLine } from "@/components/page-shell";
 import { asset } from "@/lib/assets";
 import { SITE_URL, getContent, getNews, isLocale } from "@/lib/i18n";
 
@@ -85,6 +85,14 @@ export default async function NewsItemPage({ params }: Props) {
 
       <section className="bg-surface-50 py-12">
         <div className="mx-auto w-full max-w-4xl px-4">
+          <Breadcrumb
+            locale={locale}
+            trail={[
+              { label: getContent(locale).nav.home, href: `/${locale}` },
+              { label: news.hero.title, href: `/${locale}/news` },
+              { label: title },
+            ]}
+          />
           {item.image && (
             <NewsImage
               alt={item.image.alt || title}

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CARD, PageHero, SourceLine } from "@/components/page-shell";
-import { getServices, isLocale } from "@/lib/i18n";
+import { Breadcrumb, CARD, PageHero, SourceLine } from "@/components/page-shell";
+import { getContent, getServices, isLocale } from "@/lib/i18n";
 
 // Copy from content/<locale>/services.ts, transcribed from the official
 // "กองบริหารงานบริการวิชาการ" page. The phone number is the one printed there.
@@ -32,6 +32,15 @@ export default async function Services({ params }: Props) {
       <PageHero title={services.hero.title} lead={services.hero.lead} />
 
       <section className="bg-surface-50 py-16">
+        <div className="mx-auto w-full max-w-7xl px-4">
+          <Breadcrumb
+            locale={locale}
+            trail={[
+              { label: getContent(locale).nav.home, href: `/${locale}` },
+              { label: services.hero.title },
+            ]}
+          />
+        </div>
         <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 md:grid-cols-2">
           <div className={CARD}>
             <h2 className="text-2xl font-bold text-neutral-800">{services.mission.title}</h2>
