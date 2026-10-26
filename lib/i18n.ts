@@ -97,12 +97,12 @@ export const LOCALE_LABEL: Record<Locale, string> = { th: "ไทย", en: "Engl
 // Nav order and target slugs (architecture §3.1). `href` is filled in only once
 // the page exists, so no nav item is a link to a 404.
 export const NAV: { key: keyof SiteContent["nav"]; href?: (locale: Locale) => string }[] = [
-  { key: "home", href: (locale) => `/${locale}` },
   { key: "about", href: (locale) => `/${locale}/about` },
   { key: "research", href: (locale) => `/${locale}/research` },
   { key: "services", href: (locale) => `/${locale}/services` },
   { key: "documents", href: (locale) => `/${locale}/documents` },
   { key: "news", href: (locale) => `/${locale}/news` },
+  { key: "systems", href: (locale) => `/${locale}/directory` },
   { key: "contact", href: (locale) => `/${locale}/contact` },
 ];
 

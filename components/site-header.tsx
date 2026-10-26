@@ -23,7 +23,7 @@ function NavLink({
   current: boolean;
   notAvailable: string;
 }) {
-  const base = "text-sm font-medium leading-none";
+  const base = "inline-flex min-h-11 items-center text-sm font-medium leading-none";
   if (!item.href) {
     return (
       <span aria-disabled="true" title={notAvailable} className={`${base} cursor-not-allowed opacity-60`}>

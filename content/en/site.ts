@@ -35,6 +35,7 @@ export const en: SiteContent = {
     services: "Academic services",
     documents: "Publications",
     news: "News & activities",
+    systems: "Information systems",
     contact: "Contact",
   },
   hero: {

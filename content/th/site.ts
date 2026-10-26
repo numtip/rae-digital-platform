@@ -31,6 +31,7 @@ export const th = {
     services: "บริการวิชาการ",
     documents: "เอกสารเผยแพร่",
     news: "ข่าวสารและกิจกรรม",
+    systems: "ระบบสารสนเทศ",
     contact: "ติดต่อเรา",
   },
   hero: {
