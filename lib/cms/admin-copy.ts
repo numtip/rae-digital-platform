@@ -16,6 +16,7 @@ export const adminCopy = {
     preview: "ตัวอย่าง",
     empty: "ยังไม่มีรายการ",
     status: "สถานะ",
+    unreachable: "เชื่อมต่อเซิร์ฟเวอร์ของระบบจัดการเนื้อหาไม่ได้",
   },
   en: {
     title: "News desk",
@@ -34,5 +35,6 @@ export const adminCopy = {
     preview: "Preview",
     empty: "Nothing is stored",
     status: "Status",
+    unreachable: "Cannot reach the content management runtime",
   },
 } as const;

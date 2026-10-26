@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { asset } from "@/lib/assets";
 import { LOCALE_LABEL, NAV, getSearch, type Locale, type SiteContent } from "@/lib/i18n";
 
@@ -66,6 +67,13 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: SiteC
   // usePathname() drops the trailing slash that trailingSlash puts on the URL,
   // so the current-page test has to normalize before comparing.
   const path = pathname.replace(/\/+$/, "");
+
+  // The mobile menu is a <details>; without this it stays open across a client-side
+  // route change and covers the page the reader just opened.
+  const menu = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    if (menu.current) menu.current.open = false;
+  }, [pathname]);
 
   const navLinks = NAV.map(({ key, href }) => (
     <NavLink
@@ -144,7 +152,7 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: SiteC
           </span>
         </form>
 
-        <details className="lg:hidden">
+        <details className="lg:hidden" ref={menu}>
           <summary className={`cursor-pointer list-none p-2 [&::-webkit-details-marker]:hidden ${FOCUS_RING}`}>
             <span className="sr-only">{content.header.openMenu}</span>
             {MenuIcon}

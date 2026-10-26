@@ -17,20 +17,30 @@ type Article = {
 };
 
 async function api(base: string, path: string, token: string, method = "GET", body?: unknown) {
-  const response = await fetch(`${base}${path}`, {
-    method,
-    headers: {
-      "content-type": "application/json",
-      ...(token ? { authorization: `Bearer ${token}` } : {}),
-    },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${base}${path}`, {
+      method,
+      headers: {
+        "content-type": "application/json",
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch {
+    // The desk talks to a separate local process. When it is not running, an unhandled
+    // rejection in the click handler left the reader with no feedback at all.
+    return { ok: false, status: 0, payload: { error: "UNREACHABLE" } };
+  }
   const payload = await response.json().catch(() => ({}));
   return { ok: response.ok, status: response.status, payload };
 }
 
 export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: string }) {
   const copy = adminCopy[locale];
+  // status 0 = the fetch never reached the runtime (see api()).
+  const describe = (result: { status: number; payload: { error?: unknown } }) =>
+    result.status === 0 ? copy.unreachable : String(result.payload.error ?? result.status);
   const [token, setToken] = useState("");
   const [items, setItems] = useState<Article[]>([]);
   const [selected, setSelected] = useState<Article | null>(null);
@@ -39,7 +49,7 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
   async function refresh(nextToken = token) {
     const result = await api(apiBase, "/v1/news", nextToken);
     if (!result.ok) {
-      setMessage(String(result.payload.error ?? result.status));
+      setMessage(describe(result));
       return;
     }
     setItems(result.payload.articles ?? []);
@@ -53,7 +63,7 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
       password: String(data.get("password") ?? ""),
     });
     if (!result.ok || !result.payload.token) {
-      setMessage(String(result.payload.error ?? result.status));
+      setMessage(describe(result));
       return;
     }
     setToken(result.payload.token);
@@ -74,7 +84,7 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
     const result = selected
       ? await api(apiBase, `/v1/news/${selected.id}`, token, "PATCH", body)
       : await api(apiBase, "/v1/news", token, "POST", body);
-    setMessage(result.ok ? body.id : String(result.payload.error ?? result.status));
+    setMessage(result.ok ? body.id : describe(result));
     if (result.ok) setSelected(result.payload);
     await refresh();
   }
@@ -82,7 +92,7 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
   async function act(action: "submit" | "approve" | "publish") {
     if (!selected) return;
     const result = await api(apiBase, `/v1/news/${selected.id}/${action}`, token, "POST", {});
-    setMessage(result.ok ? result.payload.status : String(result.payload.error ?? result.status));
+    setMessage(result.ok ? result.payload.status : describe(result));
     if (result.ok) setSelected(result.payload);
     await refresh();
   }
