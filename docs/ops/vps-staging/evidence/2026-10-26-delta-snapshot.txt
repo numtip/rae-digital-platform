@@ -1,0 +1,104 @@
+# Read-only capture 2026-10-26T06:31Z+7 (raeserver, user rae_admin)
+## uname
+Linux raeserver 5.15.0-187-generic #197-Ubuntu SMP Fri Jul 17 19:17:01 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+## uptime
+ 06:32:08 up 68 days, 14:06,  0 users,  load average: 3.29, 2.36, 1.19
+## nproc
+8
+## free -h
+               total        used        free      shared  buff/cache   available
+Mem:           7.6Gi       3.4Gi       167Mi        45Mi       4.0Gi       3.8Gi
+Swap:          4.0Gi       1.9Gi       2.1Gi
+## swapon
+NAME      TYPE SIZE USED PRIO
+/swap.img file   4G 1.9G   -2
+## df -h /
+Filesystem                         Size  Used Avail Use% Mounted on
+/dev/mapper/ubuntu--vg-ubuntu--lv  490G  245G  225G  53% /
+## docker ps
+NAMES                       STATUS                    PORTS
+phpmyadmin                  Up 3 days                 127.0.0.1:8080->80/tcp
+rae-mdb-sandbox             Up 3 days                 
+learning-center-scheduler   Up 4 days                 9000/tcp
+learning-center-web         Up 4 days (healthy)       127.0.0.1:8086->80/tcp
+learning-center-app         Up 4 days (healthy)       9000/tcp
+raenew2026-web              Up 4 days (healthy)       127.0.0.1:8084->80/tcp
+raenew2026-app              Up 4 days (healthy)       9000/tcp
+attendance-api              Up 3 weeks (healthy)      127.0.0.1:3000->3000/tcp
+rae-v2-backend              Up 3 weeks (healthy)      127.0.0.1:3210->3210/tcp
+rae-v2-frontend             Up 3 weeks                80/tcp, 127.0.0.1:8088->8080/tcp
+rae-v2-mariadb              Up 3 weeks (healthy)      3306/tcp
+learning-center-db          Up 2 months (healthy)     3306/tcp
+rae-landing                 Up 2 months               127.0.0.1:8085->80/tcp
+litellm-automation          Up 2 months               
+litellm-dashboard-api       Up 2 months               
+nginx                       Up 2 months (unhealthy)   127.0.0.1:8082->80/tcp, 127.0.0.1:8443->443/tcp
+raenew2026-db               Up 2 months (healthy)     3306/tcp
+raenew2026-redis            Up 2 months (healthy)     6379/tcp
+litellm-dashboard           Up 2 months               
+litellm-stats-collector     Up 2 months               
+mariadb                     Up 2 months (healthy)     127.0.0.1:3306->3306/tcp
+metabase                    Up 2 months (healthy)     127.0.0.1:3100->3000/tcp
+canva-service               Up 2 months (healthy)     127.0.0.1:3005->3005/tcp
+raemju-api                  Up 2 months               127.0.0.1:3006->3006/tcp
+rae-postgres                Up 2 months (healthy)     5432/tcp
+open-webui-new              Up 2 months (healthy)     127.0.0.1:3001->8080/tcp
+## docker network ls
+NETWORK ID     NAME                                   DRIVER    SCOPE
+d329c400cdca   bridge                                 bridge    local
+8bf0e1975564   docker-raeserver_backend               bridge    local
+3b27dbe9843b   docker-raeserver_default               bridge    local
+79eefa3a6129   docker-raeserver_frontend              bridge    local
+486b3c4a4384   goffice-j6-net                         bridge    local
+53e16afc56e2   host                                   host      local
+20c3c7916389   joomla-greenoffice_joomla-network      bridge    local
+6d7cb4ff4ed0   joomla-greenoffice_wordpress-network   bridge    local
+ef64381df23c   learning-center-net                    bridge    local
+5daaba28d940   litellm-gateway_default                bridge    local
+90033d3b6a82   metabase_metabase-network              bridge    local
+d597e3d95443   none                                   null      local
+621d76d3a1b5   rae-attendance-v2_default              bridge    local
+f2c955825b35   rae-internal                           bridge    local
+7afb4fd4c728   rae-landing_default                    bridge    local
+e0de828f7057   raenew2026-net                         bridge    local
+## systemd running count
+39
+## ss public listeners
+LISTEN 0      128          0.0.0.0:22         0.0.0.0:*          
+LISTEN 0      511          0.0.0.0:80         0.0.0.0:*          
+LISTEN 0      511          0.0.0.0:443        0.0.0.0:*          
+LISTEN 0      4096         0.0.0.0:10000      0.0.0.0:*          
+LISTEN 0      128          0.0.0.0:2222       0.0.0.0:*          
+## ss loopback app ports
+LISTEN 0      128        127.0.0.1:40475      0.0.0.0:*          
+LISTEN 0      128        127.0.0.1:8501       0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:11434      0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:20241      0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:3000       0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:3001       0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:3005       0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:3006       0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:3100       0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:3210       0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:3306       0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:8080       0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:8082       0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:8084       0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:8085       0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:8086       0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:8088       0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:8443       0.0.0.0:*          
+LISTEN 0      4096       127.0.0.1:9001       0.0.0.0:*          
+LISTEN 0      511        127.0.0.1:41331      0.0.0.0:*          
+LISTEN 0      511        127.0.0.1:4321       0.0.0.0:*          
+LISTEN 0      511        127.0.0.1:44097      0.0.0.0:*          
+LISTEN 0      511        127.0.0.1:5678       0.0.0.0:*          
+LISTEN 0      5          127.0.0.1:8511       0.0.0.0:*          
+## node -v
+v12.22.9
+## mariadb ping
+mysqld is alive
+## nginx container health
+unhealthy
+## raeservice nginx conf mtime
+2026-10-01 06:37:31.675741093 +0000 /etc/nginx/sites-enabled/raeservice.mju.ac.th.conf
