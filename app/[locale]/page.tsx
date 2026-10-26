@@ -38,6 +38,7 @@ function SectionHead({
       {more &&
         (moreHref ? (
           <Link
+            aria-label={`${more} — ${title}`}
             href={moreHref}
             className="text-sm font-medium text-brand-600 underline underline-offset-2 hover:text-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
           >
