@@ -88,7 +88,24 @@ export default async function About({ params }: Props) {
         </div>
       </section>
 
-      <section className="bg-white py-16">
+      <section aria-labelledby="structure" className="bg-white py-16">
+        <div className="mx-auto w-full max-w-7xl px-4">
+          <h2 className="text-2xl font-bold text-neutral-800 md:text-3xl" id="structure">
+            {about.structure.title}
+          </h2>
+          <p className="mt-2 max-w-3xl text-neutral-700">{about.structure.lead}</p>
+          <ul className="mt-8 grid gap-6 md:grid-cols-3">
+            {about.structure.items.map((item) => (
+              <li key={item.title} className={CARD}>
+                <h3 className="text-lg font-bold text-brand-600">{item.title}</h3>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-6 max-w-3xl text-sm text-neutral-600">{about.structure.note}</p>
+        </div>
+      </section>
+
+      <section className="bg-surface-50 py-16">
         <div className="mx-auto w-full max-w-7xl px-4">
           <h2 className="text-2xl font-bold text-neutral-800 md:text-3xl">{about.history.title}</h2>
           <ol className="mt-10 space-y-6 border-l-2 border-brand-500/30 pl-6">
@@ -98,7 +115,7 @@ export default async function About({ params }: Props) {
                   aria-hidden="true"
                   className="absolute -left-[1.9rem] top-1.5 h-3 w-3 rounded-full bg-brand-500"
                 />
-                <p className="text-sm font-semibold text-gold-600">{entry.year}</p>
+                <p className="text-sm font-semibold text-brand-600">{entry.year}</p>
                 <h3 className="mt-1 text-lg font-semibold text-neutral-800">{entry.title}</h3>
                 <p className="mt-1 max-w-3xl text-neutral-700">{entry.text}</p>
               </li>
