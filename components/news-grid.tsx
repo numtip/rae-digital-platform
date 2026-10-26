@@ -34,7 +34,7 @@ export function NewsGrid({
                 <div aria-hidden="true" className="h-2 bg-brand-600/20" />
               )}
               <div className="p-5">
-                <p className="text-xs font-semibold text-gold-600">{item.date}</p>
+                <p className="text-xs font-semibold text-brand-600">{item.date}</p>
                 <h2 className="mt-2 text-lg font-bold leading-snug text-neutral-800 group-hover:text-brand-600">
                   {title}
                 </h2>

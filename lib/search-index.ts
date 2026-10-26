@@ -3,6 +3,7 @@ import {
   getContent,
   getDirectory,
   getDocuments,
+  getKnowledge,
   getNews,
   getResearch,
   getServices,
@@ -29,6 +30,7 @@ const SECTIONS = [
   "research",
   "services",
   "documents",
+  "knowledge",
   "news",
   "contact",
   "search",
@@ -112,8 +114,16 @@ export function buildSearchIndex(locale: Locale): SearchEntry[] {
     );
   });
 
+  const knowledge = getKnowledge(locale);
+  page(
+    `${base}/knowledge`,
+    knowledge.hero.title,
+    join(knowledge.hero.lead, knowledge.databases.title, knowledge.media.title, Object.values(knowledge.labels)),
+  );
+
   const news = getNews(locale);
   page(`${base}/news`, news.hero.title, join(news.hero.lead, news.snapshotNote, news.categories.items));
+  page(`${base}/news/events`, news.events.hero.title, join(news.events.hero.lead, news.events.snapshotNote));
   const thaiNews = new Map(getNews("th").items.map((entry) => [entry.nid, entry.title]));
   news.items.forEach((entry) =>
     item(`${base}/news/${entry.nid}`, entry.title || thaiNews.get(entry.nid) || entry.nid, join(entry.date, entry.type, entry.body)),
