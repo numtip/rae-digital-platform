@@ -1,6 +1,6 @@
 # Blueprint module completion matrix
 
-Status snapshot: **2026-10-25**, `main` @ `3833e8d` plus open PRs listed in the last column.
+Status snapshot: **2026-10-26**, `main` @ `67969f1` (PRs #32–#37 merged) plus the open PRs named in the last column.
 Verified against the tree (routes, files, workflows), not against the planning documents alone.
 
 Legend — **Status**: ✅ implemented · 🟡 partial · ⬜ not started · ⛔ blocked
@@ -21,10 +21,10 @@ Legend — **Status**: ✅ implemented · 🟡 partial · ⬜ not started · ⛔
 | M03 | Document Center (public library) | BUILD | M15 | 🟡 | `/documents` + `/documents/category/<slug>` for 3 categories (10 outbound links), breadcrumb + `BreadcrumbList`; no record ids, versions or counts | #34 |
 | M04 | Knowledge & static pages | BUILD | M14 | 🟡 | `/about`, `/research`, `/services`, `/documents`, `/news`, `/contact`, `/search` exist and carry a breadcrumb + `BreadcrumbList`; no FAQ/knowledge articles | #34 |
 | M05 | Events & calendar | BUILD | M14 | ⬜ | no event route, no event data | — |
-| M06 | Global search | BUILD | M03, M04, M12, M14 | 🟡 | `/search` + `lib/search-index.ts` + `components/content-search.tsx`, header form, now indexes document categories and contact too; still no personnel (M12 absent) | #29, #34 |
-| M07 | Contact & FAQ | BUILD | M15, M20 | 🟡 | `/contact` renders the verified address/phone/email from `content/*/about.ts` + `site.ts`; **no form** (needs SMTP + PDPA basis) and no FAQ copy | #34 |
+| M06 | Global search | BUILD | M03, M04, M12, M14 | 🟡 | `/search` + `lib/search-index.ts` + `components/content-search.tsx`, header form, indexes document categories and contact; `WebSite`+`SearchAction` JSON-LD now advertises it; still no personnel (M12 absent) | #29, #34, #40 |
+| M07 | Contact & FAQ | BUILD | M15, M20 | 🟡 | `/contact` renders the verified address/phone and the **single official email `researchmju@mju.ac.th`**; **no form** (needs SMTP + PDPA basis) and no FAQ copy | #34, #38 |
 | M08 | SEO, analytics, accessibility | BUILD | M01 | 🟡 | `app/sitemap.ts` (146 URLs incl. paginated news and document categories), `app/robots.ts`, Organization JSON-LD, per-page canonical/hreflang, `NewsArticle` JSON-LD on news pages; no analytics, no automated axe/contrast gate | #30 |
-| M14 | News (data shape + detail pages) | BUILD | M15, M10 | 🟡 | full news items (title, date, type, body, image) in `content/th/news.ts`; `/news/[nid]` for 12 items × 2 locales; no authoring workflow, no revisions (that needs M10/M15) | #30 |
+| M14 | News (data shape + detail pages) | BUILD | M15, M10 | 🟡 | 58 news items (title, date, type, body, image) back to 13 Jul 2026, `/news/[nid]` × 2 locales, index paginated 12/page with real URLs, 58/58 English headlines, no machine-translated bodies; no authoring workflow or revisions (needs M10/M15) | #30, #32, #33, #37 |
 
 ## Deferred / blocked modules
 
@@ -87,3 +87,17 @@ Verified red: changing one URL to `http://` fails the suite; reverting makes it 
 1. **Content contract + provenance gate.** `lib/content.ts` (`Provenance`, `DocumentGroup`, `Statistics` with mandatory `source`/`as_of`), retype the content files against it, and `scripts/check-content.mjs` + `node --test` asserting: every URL is https, every page object carries `source.retrieved`, no unresolved `TODO(translate)`, and rendered link count equals declared link count. Proof: `npm test` goes red when one URL is changed to `http://`.
 2. **Documents → category routes + breadcrumb + JSON-LD.** Add `slug` to each of the 3 document groups, `app/[locale]/documents/category/[slug]/page.tsx` with `generateStaticParams` + `dynamicParams = false`, a `Breadcrumb` in `components/page-shell.tsx`, `BreadcrumbList` JSON-LD, and sitemap entries with the existing `languagesFor()` helper. Proof: 6 new routes built and 6 new `<loc>` with 3 alternates each.
 3. **IA completion: `/contact` + 7th nav item.** Static contact page from the already-verified `content/<locale>/site.ts` `footer` block (no form — that needs SMTP), added to `NAV` and `PAGES` so header and sitemap pick it up automatically. Proof: 7 nav `<a>` with real hrefs on both locales, 2 new sitemap URLs, `href="#"` count still 0.
+
+## Updates since the 2026-10-25 snapshot
+
+- **#32/#33/#37** — news archive (58 items back to 13 Jul 2026), 58/58 English headlines,
+  three image widths per photo, and a paginated index (12/page, `/news/` = page 1,
+  `/news/page/2…5/`, page 6 a real 404). sitemap 38 → **146 URLs**.
+- **#34/#36** — content gate (`npm test`, 7 assertions) and export integrity
+  (`scripts/check-export.mjs`) wired into CI; document categories with breadcrumbs;
+  `/contact`; contact as the 7th nav item.
+- **#38 (open)** — one official contact email; the site previously showed three.
+- **#39 (open)** — owner-supplied Maejo University emblem, masked and fitted; tab icon.
+- **#40 (open)** — per-section link names, `WebSite`/`SearchAction` JSON-LD, bilingual 404.
+- Licence position is assessed in `docs/governance/LICENSE_RECOMMENDATION.md`; **no LICENSE
+  file is added** because content ownership is unresolved.
