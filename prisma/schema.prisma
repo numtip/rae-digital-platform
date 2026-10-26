@@ -1,0 +1,60 @@
+// CMS foundation schema for a future isolated MariaDB. Not connected.
+// Host engine observed read-only on 2026-10-26: MariaDB 10.6.24.
+// Gate A-1 still owns the decision to provision a database. Do not point
+// this file at the attendance MariaDB.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("RAE_CMS_DATABASE_URL")
+}
+
+model User {
+  id           String   @id
+  email        String   @unique
+  role         String
+  createdAt    DateTime @default(now())
+}
+
+model Session {
+  id         String   @id
+  userId     String
+  tokenHash  String   @unique
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+}
+
+model AuditLog {
+  id         String   @id
+  actorId    String
+  action     String
+  entityType String
+  entityId   String
+  beforeJson String   @db.Text
+  afterJson  String   @db.Text
+  requestId  String
+  createdAt  DateTime @default(now())
+}
+
+model NewsArticle {
+  id          String   @id
+  status      String
+  pinned      Boolean  @default(false)
+  authorId    String
+  reviewerId  String?
+  publisherId String?
+  titleTh     String
+  titleEn     String
+  source      String
+}
+
+model DocumentLink {
+  id         String @id
+  code       String @unique
+  titleTh    String
+  titleEn    String
+  storageUrl String @unique
+}
