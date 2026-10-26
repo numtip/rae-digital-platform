@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { DEFAULT_LOCALE, LOCALES, getContent, type Locale } from "@/lib/i18n";
 import { asset } from "@/lib/assets";
 import "./globals.css";
@@ -9,6 +10,12 @@ import "./globals.css";
 // here, so the page is named and linked in every locale rather than guessing one.
 
 const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-500";
+
+// The document title is the only thing missing from a static export's 404.html; Next
+// already emits <meta name="robots" content="noindex"> for the not-found document.
+export const metadata: Metadata = {
+  title: `${getContent(DEFAULT_LOCALE).notFound.title} — ${getContent(DEFAULT_LOCALE).meta.title}`,
+};
 
 function LocaleBlock({ locale }: { locale: Locale }) {
   const content = getContent(locale);

@@ -24,7 +24,7 @@ export const en: SiteContent = {
     navLabelMobile: "Main menu (mobile)",
     openMenu: "Open main menu",
     searchPlaceholder: "Search...",
-    searchLabel: "Search (not available yet)",
+    searchLabel: "Search this site",
     notAvailable: "Not available yet",
     languageLabel: "Change language",
   },

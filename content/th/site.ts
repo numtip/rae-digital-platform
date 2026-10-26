@@ -20,7 +20,7 @@ export const th = {
     navLabelMobile: "เมนูหลัก (มือถือ)",
     openMenu: "เปิดเมนูหลัก",
     searchPlaceholder: "ค้นหา...",
-    searchLabel: "ค้นหา (ยังไม่เปิดใช้งาน)",
+    searchLabel: "ค้นหาในเว็บนี้",
     notAvailable: "ยังไม่เปิดใช้งาน",
     languageLabel: "เปลี่ยนภาษา",
   },

@@ -8,6 +8,9 @@
 //  2. every Thai page has an English twin and vice versa (TH/EN parity)
 //  3. no dead anchors (href="#" or href="")
 //  4. no plain-http link or asset
+//  5. the not-found document carries a <title> and stays noindex (it shipped with
+//     neither, because 404.html is built outside app/[locale]/ and no metadata export
+//     reached it)
 //
 // Exit code 1 on any failure, so CI fails instead of shipping.
 
@@ -110,6 +113,11 @@ for (const page of [...pages].sort()) {
 }
 
 const routes = [...pages].length;
+
+// The not-found document is generated outside app/[locale]/, so no per-page check covers it.
+const notFound = readFileSync(join(OUT, "404.html"), "utf8");
+if (!/<title>[^<]+<\/title>/.test(notFound)) failures.push("404.html: no <title>");
+if (!/<meta name="robots" content="noindex"/.test(notFound)) failures.push("404.html: missing noindex");
 console.log(`check-export: ${htmlFiles.length} html files, ${routes} routes, ${internalLinks} internal refs, ${externalLinks} external links`);
 
 if (failures.length > 0) {
