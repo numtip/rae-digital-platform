@@ -184,6 +184,11 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
       if (request.method === "POST" && url.pathname === "/v1/news") {
         requirePermission(actor.role, "news:draft");
         const body = await readBody(request);
+        // Creating with an id that already exists would overwrite someone else's article and
+        // reset its workflow state; a client that means to change one must PATCH it.
+        if (await repo.getArticle(String(body.id))) {
+          return send(response, 409, { error: "DUPLICATE_ID", message: "an article with this id already exists" }, origin);
+        }
         const article = {
           id: String(body.id),
           status: "draft",
@@ -266,14 +271,26 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
   });
 }
 
-// Started directly (`node cms-runtime/server.mjs`) it binds to loopback only: the API is an
-// internal service, never a public route. Nothing else in the repo starts it.
+/**
+ * Starts the runtime as a service. Requires a database: an operator who forgot the environment
+ * must get an error, not a desk that quietly loses every article on restart. Tests call
+ * `createCmsServer()` directly, which still defaults to the in-memory repository.
+ * Binds to loopback only — the API is internal, never a public route.
+ */
+export async function startRuntime(env = process.env) {
+  if (!env.RAE_CMS_DB_HOST) {
+    throw new Error("RAE_CMS_DB_HOST is required to run the CMS runtime; the in-memory repository is for tests only");
+  }
+  const repository = await repositoryFromEnv(env);
+  const port = Number(env.RAE_CMS_API_PORT ?? 3317);
+  const server = createCmsServer({ repository });
+  await new Promise((resolve) => server.listen(port, "127.0.0.1", resolve));
+  return { server, repository, port };
+}
+
 if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
-  const port = Number(process.env.RAE_CMS_API_PORT ?? 3317);
-  const repository = await repositoryFromEnv();
-  createCmsServer({ repository }).listen(port, "127.0.0.1", () => {
-    console.log(`cms-runtime listening on http://127.0.0.1:${port} (${process.env.RAE_CMS_DB_HOST ? "mysql" : "memory"})`);
-  });
+  const { port } = await startRuntime();
+  console.log(`cms-runtime listening on http://127.0.0.1:${port} (mysql)`);
 }
 
 export { submitForReview, approveNews, returnForRevision };

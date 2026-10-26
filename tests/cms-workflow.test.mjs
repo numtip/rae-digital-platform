@@ -9,7 +9,7 @@ import {
 } from "../lib/cms/news-workflow.ts";
 import { SESSION_ABSOLUTE_MS, SESSION_IDLE_MS, isSessionExpired, openSession } from "../lib/cms/session.ts";
 import { MAX_FAILURES, createLoginThrottle } from "../lib/cms/login-throttle.ts";
-import { addUser, createCmsServer, resetRuntime } from "../cms-runtime/server.mjs";
+import { addUser, createCmsServer, resetRuntime, startRuntime } from "../cms-runtime/server.mjs";
 
 // Four workflow defects fixed in one place, each asserted here: an officer can hand over
 // their own draft, nobody can approve or publish it themselves, a reviewer can send it back
@@ -275,4 +275,55 @@ test("draft, review and returned items never reach the public export", () => {
   ];
   const exported = publishedArticlesForExport(states);
   assert.deepEqual(exported.map((item) => item.id), ["p"]);
+});
+
+test("a duplicate id is rejected instead of overwriting the existing article", async () => {
+  resetRuntime();
+  addUser({ id: "officer", role: "officer", password: "officer-password-12" });
+  const server = createCmsServer();
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    const login = await fetch(`${base}/v1/login`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ userId: "officer", password: "officer-password-12" }),
+    });
+    const { token } = await login.json();
+    const headers = auth(token);
+
+    const first = await fetch(`${base}/v1/news`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ id: "dup-1", titleTh: "เดิม", titleEn: "Original", source: "https://rae.mju.ac.th/1" }),
+    });
+    assert.equal(first.status, 201);
+    await fetch(`${base}/v1/news/dup-1/submit`, { method: "POST", headers });
+
+    const second = await fetch(`${base}/v1/news`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ id: "dup-1", titleTh: "ทับ", titleEn: "Overwrite", source: "https://rae.mju.ac.th/2" }),
+    });
+    assert.equal(second.status, 409);
+    assert.equal((await second.json()).error, "DUPLICATE_ID");
+
+    // the original survives untouched, workflow state included
+    const listed = await (await fetch(`${base}/v1/news`, { headers })).json();
+    const kept = listed.articles.find((item) => item.id === "dup-1");
+    assert.equal(kept.titleEn, "Original");
+    assert.equal(kept.status, "review");
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+    resetRuntime();
+  }
+});
+
+test("the service refuses to start without a database", async () => {
+  await assert.rejects(() => startRuntime({}), /RAE_CMS_DB_HOST is required/);
+  // memory stays available for tests: createCmsServer() still starts with no environment
+  const server = createCmsServer();
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  assert.ok(server.address().port > 0);
+  await new Promise((resolve) => server.close(resolve));
 });
