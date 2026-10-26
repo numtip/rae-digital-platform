@@ -41,6 +41,11 @@ export const enNews: NewsContent = {
     thaiOnly: "This story is published in Thai only; the Thai text is shown below as published.",
     headlineThaiOnly: "Headline shown in Thai — an English translation is not available yet.",
     imageAlt: "Photo from the news story",
+    prevNewer: "Newer story",
+    nextOlder: "Older story",
+    noOlder: "This is the oldest story in the archive",
+    noNewer: "This is the newest story",
+    navLabel: "Article navigation",
   },
   pagination: {
     label: "Pagination",
