@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { publishedArticlesForExport } from "../lib/cms/publish.ts";
 import {
   approveNews,
   publishNews,
@@ -8,13 +9,13 @@ import {
 } from "../lib/cms/news-workflow.ts";
 import { SESSION_ABSOLUTE_MS, SESSION_IDLE_MS, isSessionExpired, openSession } from "../lib/cms/session.ts";
 import { MAX_FAILURES, createLoginThrottle } from "../lib/cms/login-throttle.ts";
-import { addUser, createCmsServer, resetRuntime } from "../cms-runtime/server.mjs";
+import { addUser, createCmsServer, resetRuntime, startRuntime } from "../cms-runtime/server.mjs";
 
 // Four workflow defects fixed in one place, each asserted here: an officer can hand over
 // their own draft, nobody can approve or publish it themselves, a reviewer can send it back
 // with a reason, and the session and login clocks are enforced rather than declared.
 
-const draft = (overrides = {}) => ({
+const draftFixture = (overrides = {}) => ({
   id: "n1",
   status: "draft",
   pinned: false,
@@ -27,7 +28,7 @@ const draft = (overrides = {}) => ({
 
 test("an officer submits their own draft but cannot approve or publish it", () => {
   const officer = { id: "officer", role: "officer" };
-  const submitted = submitForReview(draft(), officer);
+  const submitted = submitForReview(draftFixture(), officer);
   assert.equal(submitted.status, "review");
 
   // Both are refused on the permission, which is the point: drafting is not reviewing.
@@ -37,7 +38,7 @@ test("an officer submits their own draft but cannot approve or publish it", () =
 
 test("someone else cannot submit a draft on the author's behalf without review rights", () => {
   const other = { id: "someone", role: "officer" };
-  assert.throws(() => submitForReview(draft(), other), /missing permission news:review/);
+  assert.throws(() => submitForReview(draftFixture(), other), /missing permission news:review/);
 });
 
 test("a reviewer returns an item with a reason and the author resubmits", () => {
@@ -45,7 +46,7 @@ test("a reviewer returns an item with a reason and the author resubmits", () => 
   const reviewer = { id: "reviewer", role: "editor" };
   const publisher = { id: "publisher", role: "publisher" };
 
-  const submitted = submitForReview(draft(), officer);
+  const submitted = submitForReview(draftFixture(), officer);
   const returned = returnForRevision(submitted, reviewer, "  ขอภาพประกอบและแหล่งอ้างอิง  ");
   assert.equal(returned.status, "draft");
   assert.equal(returned.revisionReason, "ขอภาพประกอบและแหล่งอ้างอิง");
@@ -63,10 +64,10 @@ test("a reviewer returns an item with a reason and the author resubmits", () => 
 });
 
 test("returning needs a reason and a review role", () => {
-  const submitted = submitForReview(draft(), { id: "officer", role: "officer" });
+  const submitted = submitForReview(draftFixture(), { id: "officer", role: "officer" });
   assert.throws(() => returnForRevision(submitted, { id: "reviewer", role: "editor" }, "   "), /reason is required/);
   assert.throws(() => returnForRevision(submitted, { id: "officer", role: "officer" }, "แก้"), /missing permission/);
-  assert.throws(() => returnForRevision(draft(), { id: "reviewer", role: "editor" }, "แก้"), /only a submitted/);
+  assert.throws(() => returnForRevision(draftFixture(), { id: "reviewer", role: "editor" }, "แก้"), /only a submitted/);
 });
 
 test("a session expires after 30 idle minutes and after 8 hours in total", () => {
@@ -214,4 +215,115 @@ test("over the API an officer submits, a reviewer returns it, and the officer re
     const stillDraft = await fetch(`${base}/v1/export`, { headers: auth(reviewer) });
     assert.deepEqual((await stillDraft.json()).articles, [], "nothing unpublished may reach the export");
   }, { nowRef });
+});
+
+// Approved publishing policy (owner decision 2026-10-27): an officer drafts, a reviewer
+// approves or returns, and a publisher may release their own item only on someone else's
+// approval; a pinned item keeps three distinct participants.
+
+const roles = {
+  officer: { id: "officer", role: "officer" },
+  reviewer: { id: "reviewer", role: "editor" },
+  publisher: { id: "publisher", role: "publisher" },
+  otherPublisher: { id: "publisher-2", role: "publisher" },
+};
+
+test("a publisher may publish their own draft only after another person approved it", () => {
+  const author = roles.publisher;
+  const draft = { ...draftFixture(), authorId: author.id };
+  const submitted = submitForReview(draft, author);
+  assert.throws(() => publishNews(submitted, author), /only an approved item/);
+
+  const approved = approveNews(submitted, roles.reviewer);
+  const published = publishNews(approved, author);
+  assert.equal(published.status, "published");
+  assert.equal(published.publisherId, author.id);
+  assert.equal(published.reviewerId, roles.reviewer.id);
+});
+
+test("an approval recorded by the author does not count for publishing", () => {
+  const selfApproved = { ...draftFixture(), status: "approved", reviewerId: "officer", authorId: "officer" };
+  assert.throws(() => publishNews(selfApproved, roles.publisher), /someone other than the author/);
+});
+
+test("a pinned item keeps three distinct participants", () => {
+  // Everyone here holds the rights the role needs, so a refusal can only come from the
+  // pinned rule itself and not from a missing permission.
+  const author = { id: "publisher-1", role: "publisher" };
+  const reviewer = { id: "reviewer-admin", role: "admin" };
+  const thirdPublisher = { id: "publisher-3", role: "publisher" };
+
+  const pinnedDraft = { ...draftFixture(), pinned: true, authorId: author.id };
+  const approved = approveNews(submitForReview(pinnedDraft, author), reviewer);
+
+  assert.throws(() => publishNews(approved, author), /not the author/);
+  assert.throws(() => publishNews(approved, reviewer), /not the reviewer/);
+
+  const published = publishNews(approved, thirdPublisher);
+  assert.equal(published.status, "published");
+  assert.notEqual(published.publisherId, published.authorId);
+  assert.notEqual(published.publisherId, published.reviewerId);
+});
+
+test("draft, review and returned items never reach the public export", () => {
+  const base = draftFixture();
+  const states = [
+    { ...base, id: "d", status: "draft" },
+    { ...base, id: "r", status: "review" },
+    { ...base, id: "b", status: "draft", revisionReason: "ขอภาพประกอบ", returnedBy: "reviewer" },
+    { ...base, id: "p", status: "published", reviewerId: "reviewer", publisherId: "publisher" },
+  ];
+  const exported = publishedArticlesForExport(states);
+  assert.deepEqual(exported.map((item) => item.id), ["p"]);
+});
+
+test("a duplicate id is rejected instead of overwriting the existing article", async () => {
+  resetRuntime();
+  addUser({ id: "officer", role: "officer", password: "officer-password-12" });
+  const server = createCmsServer();
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    const login = await fetch(`${base}/v1/login`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ userId: "officer", password: "officer-password-12" }),
+    });
+    const { token } = await login.json();
+    const headers = auth(token);
+
+    const first = await fetch(`${base}/v1/news`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ id: "dup-1", titleTh: "เดิม", titleEn: "Original", source: "https://rae.mju.ac.th/1" }),
+    });
+    assert.equal(first.status, 201);
+    await fetch(`${base}/v1/news/dup-1/submit`, { method: "POST", headers });
+
+    const second = await fetch(`${base}/v1/news`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ id: "dup-1", titleTh: "ทับ", titleEn: "Overwrite", source: "https://rae.mju.ac.th/2" }),
+    });
+    assert.equal(second.status, 409);
+    assert.equal((await second.json()).error, "DUPLICATE_ID");
+
+    // the original survives untouched, workflow state included
+    const listed = await (await fetch(`${base}/v1/news`, { headers })).json();
+    const kept = listed.articles.find((item) => item.id === "dup-1");
+    assert.equal(kept.titleEn, "Original");
+    assert.equal(kept.status, "review");
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+    resetRuntime();
+  }
+});
+
+test("the service refuses to start without a database", async () => {
+  await assert.rejects(() => startRuntime({}), /RAE_CMS_DB_HOST is required/);
+  // memory stays available for tests: createCmsServer() still starts with no environment
+  const server = createCmsServer();
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  assert.ok(server.address().port > 0);
+  await new Promise((resolve) => server.close(resolve));
 });
