@@ -1,5 +1,8 @@
 import { createServer } from "node:http";
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { assertArticleImage, extensionFor, MediaRejected } from "../lib/cms/media.ts";
 import { submitForReview, approveNews, publishNews, returnForRevision } from "../lib/cms/news-workflow.ts";
 import { publishedArticlesForExport } from "../lib/cms/publish.ts";
 import { requirePermission } from "../lib/cms/permissions.ts";
@@ -15,6 +18,7 @@ const users = new Map();
 const sessions = new Map();
 const articles = new Map();
 const audit = [];
+const media = new Map();
 const throttle = createLoginThrottle();
 
 export function hashPassword(password) {
@@ -27,6 +31,7 @@ export function resetRuntime() {
   throttle.reset();
   sessions.clear();
   articles.clear();
+  media.clear();
   audit.length = 0;
 }
 
@@ -68,6 +73,18 @@ function memoryRepository() {
     },
     async saveArticle(article) {
       articles.set(article.id, article);
+    },
+    async saveMedia(record) {
+      const list = (media.get(record.articleId) ?? []).filter((item) => item.id !== record.id);
+      list.push(record);
+      list.sort((a, b) => a.position - b.position);
+      media.set(record.articleId, list);
+    },
+    async listMedia(articleId) {
+      return [...(media.get(articleId) ?? [])];
+    },
+    async deleteMedia(articleId) {
+      media.delete(articleId);
     },
     async appendAudit(record) {
       audit.push(record);
@@ -143,6 +160,61 @@ function articleId(pathname) {
   return pathname.split("/")[3] ?? "";
 }
 
+function mediaRoot(env = process.env) {
+  return env.RAE_CMS_MEDIA_DIR ?? join(process.cwd(), ".cms-media");
+}
+
+// The preview is server-rendered HTML so the owner can look at a published article and its
+// gallery without the public site and without the admin desk. Loopback only, published items
+// only — a draft is never rendered here.
+function renderPreview(article, mediaList, locale) {
+  const thai = locale !== "en";
+  const title = thai ? article.titleTh : article.titleEn || article.titleTh;
+  const body = article.body ?? [];
+  const figure = mediaList
+    .map(
+      (item) => `<figure>
+        <img src="/v1/media/${article.id}/${item.filename}" alt="${escapeHtml((thai ? item.altTh : item.altEn) || title)}" loading="lazy" />
+        <figcaption>${escapeHtml((thai ? item.captionTh : item.captionEn) || "")}</figcaption>
+      </figure>`,
+    )
+    .join("\n");
+  return `<!doctype html><html lang="${thai ? "th" : "en"}"><head><meta charset="utf-8" />
+<title>${escapeHtml(title)} — CMS preview</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; font-family: system-ui, "Sarabun", sans-serif; background: #f6f7f5; color: #1f2937; }
+  header { background: #014d35; color: #fff; padding: 24px 16px; }
+  main { max-width: 56rem; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; line-height: 1.35; margin: 0 0 8px; }
+  .meta { font-size: .85rem; opacity: .85; }
+  .body p { font-size: 1.05rem; line-height: 1.75; }
+  .gallery { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); margin: 24px 0; }
+  figure { margin: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+  figure img { width: 100%; height: 180px; object-fit: cover; display: block; background: #e5e7eb; }
+  figcaption { font-size: .85rem; padding: 8px 10px; color: #4b5563; }
+  .badge { display: inline-block; background: #b98a2e; color: #1f2937; font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+  @media (max-width: 480px) { .gallery { grid-template-columns: 1fr; } figure img { height: 210px; } }
+</style></head>
+<body>
+<header>
+  <p class="meta"><span class="badge">CMS PREVIEW · STAGING</span></p>
+  <h1>${escapeHtml(title)}</h1>
+  <p class="meta">${escapeHtml(article.dateText ?? "")} · ${escapeHtml(article.source ?? "")}</p>
+</header>
+<main>
+  <div class="gallery">${figure}</div>
+  <div class="body">${body.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}</div>
+</main>
+</body></html>`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+}
+
 export function createCmsServer({ now = () => Date.now(), repository = memoryRepository() } = {}) {
   const repo = repository;
   return createServer(async (request, response) => {
@@ -172,6 +244,39 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         const token = randomBytes(32).toString("base64url");
         await repo.saveSession(hashSessionToken(token), openSession(user.id, now()));
         return send(response, 200, { token }, origin);
+      }
+
+      if (request.method === "GET" && url.pathname.startsWith("/v1/media/")) {
+        const [, , , mediaArticleId, mediaFile] = url.pathname.split("/");
+        const owner = mediaArticleId ? await repo.getArticle(mediaArticleId) : null;
+        if (!owner || !mediaFile || mediaFile.includes("..")) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        // A draft's images stay behind authentication; a published article's images are what the
+        // preview page and, later, the static import need.
+        if (owner.status !== "published" && !(await actorFrom(request, now(), repo))) {
+          return send(response, 404, { error: "NOT_FOUND" }, origin);
+        }
+        const files = await repo.listMedia(mediaArticleId);
+        const match = files.find((item) => item.filename === mediaFile);
+        if (!match) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        try {
+          const bytes = readFileSync(join(mediaRoot(), mediaArticleId, mediaFile));
+          response.writeHead(200, { "content-type": match.mime, "content-length": bytes.length, "cache-control": "private, max-age=60" });
+          response.end(bytes);
+        } catch {
+          send(response, 404, { error: "NOT_FOUND" }, origin);
+        }
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname.startsWith("/preview/")) {
+        const previewId = url.pathname.split("/")[2] ?? "";
+        const article = previewId ? await repo.getArticle(previewId) : null;
+        if (!article || article.status !== "published") return send(response, 404, { error: "NOT_FOUND" }, origin);
+        const mediaList = await repo.listMedia(previewId);
+        const html = renderPreview(article, mediaList, url.searchParams.get("lang") ?? "th");
+        response.writeHead(200, { "content-type": "text/html; charset=utf-8", "x-robots-tag": "noindex, nofollow" });
+        response.end(html);
+        return;
       }
 
       const actor = await actorFrom(request, now(), repo);
@@ -259,8 +364,80 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         return send(response, 200, published, origin);
       }
 
+      // ---- media: ordered images for one article (author uploads, everyone reads) ----
+      if (request.method === "POST" && url.pathname === `/v1/news/${id}/media`) {
+        requirePermission(actor.role, "news:draft");
+        if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        if (current.authorId !== actor.id) {
+          return send(response, 403, { error: "PermissionDenied", message: "only the author can add images" }, origin);
+        }
+        if (current.status !== "draft") {
+          return send(response, 400, { error: "LOCKED", message: "images are added while the article is a draft" }, origin);
+        }
+        const body = await readBody(request);
+        let bytes;
+        try {
+          bytes = Buffer.from(String(body.dataBase64 ?? ""), "base64");
+        } catch {
+          return send(response, 400, { error: "MediaRejected", message: "the payload is not base64" }, origin);
+        }
+        let mime;
+        try {
+          mime = assertArticleImage(bytes.subarray(0, 16), bytes.length);
+        } catch (error) {
+          if (error instanceof MediaRejected) {
+            return send(response, 400, { error: "MediaRejected", message: error.message }, origin);
+          }
+          throw error;
+        }
+        const existing = await repo.listMedia(id);
+        if (existing.length >= 10) {
+          return send(response, 400, { error: "MediaRejected", message: "an article carries at most 10 images" }, origin);
+        }
+        const position = existing.length + 1;
+        const filename = `${String(position).padStart(2, "0")}-${randomUUID().slice(0, 8)}.${extensionFor(mime)}`;
+        const directory = join(mediaRoot(), id);
+        mkdirSync(directory, { recursive: true });
+        writeFileSync(join(directory, filename), bytes);
+        const record = {
+          id: randomUUID(),
+          articleId: id,
+          position,
+          filename,
+          mime,
+          bytes: bytes.length,
+          captionTh: String(body.captionTh ?? ""),
+          captionEn: String(body.captionEn ?? ""),
+          altTh: String(body.altTh ?? ""),
+          altEn: String(body.altEn ?? ""),
+        };
+        await repo.saveMedia(record);
+        await repo.appendAudit({ actorId: actor.id, action: "news.media", entityType: "news", entityId: id });
+        return send(response, 201, record, origin);
+      }
+
+      if (request.method === "GET" && url.pathname === `/v1/news/${id}/media`) {
+        if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        return send(response, 200, { media: await repo.listMedia(id) }, origin);
+      }
+
       if (request.method === "GET" && url.pathname === "/v1/export") {
-        return send(response, 200, { articles: publishedArticlesForExport(await repo.listArticles()) }, origin);
+        const published = publishedArticlesForExport(await repo.listArticles());
+        const withMedia = [];
+        for (const article of published) {
+          const files = await repo.listMedia(article.id);
+          withMedia.push({
+            ...article,
+            media: files.map((item) => ({
+              url: `/v1/media/${article.id}/${item.filename}`,
+              captionTh: item.captionTh,
+              captionEn: item.captionEn,
+              altTh: item.altTh,
+              altEn: item.altEn,
+            })),
+          });
+        }
+        return send(response, 200, { articles: withMedia }, origin);
       }
 
       return send(response, 404, { error: "NOT_FOUND" }, origin);
