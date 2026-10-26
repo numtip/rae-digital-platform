@@ -92,9 +92,23 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: SiteC
             {content.header.staffLogin}
           </span>
           <span className="text-neutral-400" aria-hidden="true">|</span>
-          <Link className={`${FOCUS_RING} hover:text-gold-500`} href={`/${locale}/search`}>
+          {/* The utility bar is where the blueprint puts search. The full input lives here
+              because the main row has no room for it once the nav carries eight sections. */}
+          <Link className={`${FOCUS_RING} hover:text-gold-500 sm:hidden`} href={`/${locale}/search`}>
             {getSearch(locale).hero.title}
           </Link>
+          <form action={asset(`/${locale}/search/`)} className="relative hidden sm:block" method="get" role="search">
+            <input
+              type="search"
+              name="q"
+              placeholder={content.header.searchPlaceholder}
+              aria-label={content.header.searchLabel}
+              className="w-40 rounded-full border-none bg-white py-1 pl-3 pr-8 text-xs text-neutral-800 placeholder:text-neutral-500"
+            />
+            <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-neutral-500">
+              {SearchIcon}
+            </span>
+          </form>
           <span className="text-neutral-400" aria-hidden="true">|</span>
           <Link
             href={otherLocalePath(pathname, locale, other)}
@@ -133,24 +147,9 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: SiteC
           </div>
         </Link>
 
-        <nav aria-label={content.header.navLabel} className="hidden items-center gap-6 lg:flex">
+        <nav aria-label={content.header.navLabel} className="hidden items-center gap-3 lg:flex xl:gap-6">
           {navLinks}
         </nav>
-
-        {/* A plain GET form: the search page reads ?q= on the client, which is
-            the only option on a static export (no server to query). */}
-        <form action={asset(`/${locale}/search/`)} className="relative hidden md:block" method="get" role="search">
-          <input
-            type="search"
-            name="q"
-            placeholder={content.header.searchPlaceholder}
-            aria-label={content.header.searchLabel}
-            className="w-48 rounded-full border-none bg-white py-1.5 pl-4 pr-10 text-sm text-neutral-800 placeholder:text-neutral-500"
-          />
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500">
-            {SearchIcon}
-          </span>
-        </form>
 
         <details className="lg:hidden" ref={menu}>
           <summary className={`cursor-pointer list-none p-2 [&::-webkit-details-marker]:hidden ${FOCUS_RING}`}>
