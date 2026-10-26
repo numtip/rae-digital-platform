@@ -39,6 +39,17 @@ export function linksByGroup(group: LinkGroup): RegistryLink[] {
   return LINKS.filter((link) => link.group === group);
 }
 
+// The Knowledge & Media page (M04) groups these two databases under its own heading.
+// They keep their "systems" group so the systems grid on the homepage and /directory
+// keeps listing them too.
+export const KNOWLEDGE_DATABASE_IDS = ["knowledge-base", "germplasm"] as const;
+
+export function linksByIds(ids: readonly string[]): RegistryLink[] {
+  return ids
+    .map((id) => LINKS.find((link) => link.id === id))
+    .filter((link): link is RegistryLink => Boolean(link));
+}
+
 export function featuredSystems(): RegistryLink[] {
   return LINKS.filter((link) => link.featured);
 }

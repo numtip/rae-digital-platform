@@ -10,6 +10,9 @@ export type NewsRecord = {
   authorId: string;
   reviewerId?: string;
   publisherId?: string;
+  /** Set when a reviewer sends the item back; cleared on the next submission. */
+  revisionReason?: string;
+  returnedBy?: string;
   titleTh: string;
   titleEn: string;
   source: string;
@@ -27,14 +30,38 @@ function next(article: NewsRecord, patch: Partial<NewsRecord>): NewsRecord {
 }
 
 export function submitForReview(article: NewsRecord, actor: { id: string; role: RoleName }): NewsRecord {
-  requirePermission(actor.role, "news:review");
+  // The author hands their own draft to a reviewer; that is drafting, not reviewing, so it
+  // needs news:draft. Anyone submitting on someone else's behalf needs news:review.
+  requirePermission(actor.role, actor.id === article.authorId ? "news:draft" : "news:review");
   if (article.status !== "draft") throw new WorkflowError("only a draft can be submitted");
   try {
     assertBilingual(article);
   } catch {
     throw new WorkflowError("bilingual title and an https source are required");
   }
-  return next(article, { status: "review" });
+  // The reason a reviewer asked for changes is cleared once the author resubmits.
+  return next(article, { status: "review", revisionReason: undefined, returnedBy: undefined });
+}
+
+export function returnForRevision(
+  article: NewsRecord,
+  actor: { id: string; role: RoleName },
+  reason: string,
+): NewsRecord {
+  requirePermission(actor.role, "news:review");
+  if (article.status !== "review" && article.status !== "approved") {
+    throw new WorkflowError("only a submitted or approved item can be returned");
+  }
+  const trimmed = String(reason ?? "").trim();
+  if (!trimmed) throw new WorkflowError("a reason is required to return an item");
+  // Back to draft: the author edits and resubmits, and any earlier approval is void.
+  return next(article, {
+    status: "draft",
+    revisionReason: trimmed,
+    returnedBy: actor.id,
+    reviewerId: undefined,
+    publisherId: undefined,
+  });
 }
 
 export function approveNews(article: NewsRecord, actor: { id: string; role: RoleName }): NewsRecord {

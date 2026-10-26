@@ -163,3 +163,40 @@ export function DirectorAndServices({ copy }: { copy: DirectoryContent }) {
     </section>
   );
 }
+
+/**
+ * A titled set of registry links. `/knowledge/` uses it so the tile markup, the focus
+ * ring and the external-link attributes stay defined once, next to the other link
+ * modules that already render them.
+ */
+export function LinkTiles({
+  id,
+  title,
+  subtitle,
+  links,
+  labels,
+}: {
+  id: string;
+  title: string;
+  subtitle: string;
+  links: RegistryLink[];
+  labels: Record<string, string>;
+}) {
+  return (
+    <section aria-labelledby={id} className="bg-white py-12">
+      <div className="mx-auto max-w-7xl px-4">
+        <h2 id={id} className="text-2xl font-bold text-neutral-800 md:text-3xl">
+          {title}
+        </h2>
+        <p className="mt-1 mb-8 text-sm text-neutral-600">{subtitle}</p>
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {links.map((link) => (
+            <li key={link.id}>
+              <External label={labels[link.id] ?? link.id} link={link} />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}

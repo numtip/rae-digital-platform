@@ -1,17 +1,20 @@
 import { createServer } from "node:http";
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
-import { submitForReview, approveNews, publishNews } from "../lib/cms/news-workflow.ts";
+import { submitForReview, approveNews, publishNews, returnForRevision } from "../lib/cms/news-workflow.ts";
 import { publishedArticlesForExport } from "../lib/cms/publish.ts";
 import { requirePermission } from "../lib/cms/permissions.ts";
-import { hashSessionToken } from "../lib/cms/session.ts";
+import { hashSessionToken, isSessionExpired, openSession } from "../lib/cms/session.ts";
+import { FAILURE_WINDOW_MS, createLoginThrottle } from "../lib/cms/login-throttle.ts";
 
 const users = new Map();
 const sessions = new Map();
+const throttle = createLoginThrottle();
 const articles = new Map();
 const audit = [];
 
 export function resetRuntime() {
   users.clear();
+  throttle.reset();
   sessions.clear();
   articles.clear();
   audit.length = 0;
@@ -30,12 +33,18 @@ function passwordMatches(user, password) {
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
-function actorFrom(request) {
+function actorFrom(request, now) {
   const header = request.headers.authorization ?? "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
   if (!token) return null;
-  const session = sessions.get(hashSessionToken(token));
+  const key = hashSessionToken(token);
+  const session = sessions.get(key);
   if (!session) return null;
+  if (isSessionExpired(session, now)) {
+    sessions.delete(key);
+    return null;
+  }
+  session.lastSeenAt = now;
   return users.get(session.userId) ?? null;
 }
 
@@ -69,7 +78,7 @@ function articleId(pathname) {
   return pathname.split("/")[3] ?? "";
 }
 
-export function createCmsServer() {
+export function createCmsServer({ now = () => Date.now() } = {}) {
   return createServer(async (request, response) => {
     try {
       const url = new URL(request.url ?? "/", "http://127.0.0.1");
@@ -83,16 +92,23 @@ export function createCmsServer() {
       }
       if (request.method === "POST" && url.pathname === "/v1/login") {
         const body = await readBody(request);
-        const user = users.get(body.userId);
+        const attemptKey = String(body.userId ?? "");
+        if (throttle.isBlocked(attemptKey, now())) {
+          response.setHeader("retry-after", String(Math.ceil(FAILURE_WINDOW_MS / 1000)));
+          return send(response, 429, { error: "TOO_MANY_ATTEMPTS" }, origin);
+        }
+        const user = users.get(attemptKey);
         if (!user || !passwordMatches(user, String(body.password ?? ""))) {
+          throttle.recordFailure(attemptKey, now());
           return send(response, 401, { error: "UNAUTHORIZED" }, origin);
         }
+        throttle.clear(attemptKey);
         const token = randomBytes(32).toString("base64url");
-        sessions.set(hashSessionToken(token), { userId: user.id });
+        sessions.set(hashSessionToken(token), openSession(user.id, now()));
         return send(response, 200, { token }, origin);
       }
 
-      const actor = actorFrom(request);
+      const actor = actorFrom(request, now());
       if (!actor) return send(response, 401, { error: "UNAUTHORIZED" }, origin);
 
       if (request.method === "GET" && url.pathname === "/v1/news") {
@@ -142,6 +158,15 @@ export function createCmsServer() {
         return send(response, 200, next, origin);
       }
 
+      if (request.method === "POST" && url.pathname === `/v1/news/${id}/return`) {
+        if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        const body = await readBody(request);
+        const next = returnForRevision(current, actor, String(body.reason ?? ""));
+        articles.set(id, next);
+        audit.push({ actorId: actor.id, action: "news.return", entityId: id });
+        return send(response, 200, next, origin);
+      }
+
       if (request.method === "POST" && url.pathname === `/v1/news/${id}/approve`) {
         if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
         const next = approveNews(current, actor);
@@ -163,9 +188,9 @@ export function createCmsServer() {
       return send(response, 404, { error: "NOT_FOUND" }, origin);
     } catch (error) {
       const status = error?.status === 403 || error?.name === "PermissionDenied" ? 403 : 400;
-      send(response, status, { error: error?.name ?? "ERROR" }, request.headers.origin);
+      send(response, status, { error: error?.name ?? "ERROR", message: error?.message ?? "" }, request.headers.origin);
     }
   });
 }
 
-export { submitForReview, approveNews };
+export { submitForReview, approveNews, returnForRevision };

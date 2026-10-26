@@ -53,6 +53,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   );
 
+  // Events (M05) lives under the news section, so it is not in PAGES.
+  const events = LOCALES.map((locale) => ({
+    url: `${SITE_URL}/${locale}/news/events/`,
+    changeFrequency: "weekly" as const,
+    priority: 0.5,
+    alternates: { languages: languagesFor("news/events") },
+  }));
+
   // News index pages 2..N; page 1 is already in PAGES as /news/.
   const newsPageCount = getNewsPages("th").length;
   const newsIndexPages = Array.from({ length: Math.max(0, newsPageCount - 1) }, (_, index) => index + 2)
@@ -65,5 +73,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
       })),
     );
 
-  return [...home, ...pages, ...newsItems, ...docCategories, ...newsIndexPages];
+  return [...home, ...pages, ...events, ...newsItems, ...docCategories, ...newsIndexPages];
 }
