@@ -55,14 +55,15 @@ test("every source block names when it was retrieved", () => {
   assert.deepEqual(missing, [], `source block without retrieved:\n${missing.join("\n")}`);
 });
 
-test("unverified statistics stay labelled as sample data", () => {
-  const th = read(join(CONTENT, "th/site.ts"));
-  const en = read(join(CONTENT, "en/site.ts"));
-  // The four homepage figures are not published by the office, so the page must keep
-  // saying so. If real figures are ever approved, replace this test with a check for
-  // `source` + `as_of` on each value (ADR-0002).
-  assert.match(th.slice(th.indexOf("stats: {")), /ตัวอย่าง/, "Thai statistics lost the sample-data label");
-  assert.match(en.slice(en.indexOf("stats: {")), /mock-up/, "English statistics lost the sample-data label");
+test("the homepage carries no unsourced statistics", () => {
+  // The four figures on the old homepage came from the design reference, not from an
+  // office publication. They were removed rather than labelled, because a visitor reads a
+  // big number as a fact. If real figures are ever approved, this test must be replaced by
+  // a check that every value carries `source` and `as_of` (ADR-0002).
+  for (const [locale, file] of [["Thai", "th"], ["English", "en"]]) {
+    const src = read(join(CONTENT, file, "site.ts"));
+    assert.ok(!/stats:\s*\{/.test(src), `${locale} site.ts still declares a statistics block`);
+  }
 });
 
 test("no unresolved translation markers in content VALUES", () => {

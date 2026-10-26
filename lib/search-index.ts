@@ -35,7 +35,13 @@ export function buildSearchIndex(locale: Locale): SearchEntry[] {
   page(
     `${base}/`,
     site.hero.title,
-    join(site.hero.titleAccent, site.hero.description, site.sections.services.items.map((i) => `${i.title} ${i.description}`)),
+    join(
+      site.hero.titleAccent,
+      site.hero.description,
+      site.sections.services.items.map((i) => i.title),
+      site.sections.research.items.map((i) => `${i.title} ${i.description}`),
+      site.sections.resources.items.map((i) => `${i.title} ${i.description}`),
+    ),
   );
 
   const about = getAbout(locale);

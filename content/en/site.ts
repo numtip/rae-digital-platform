@@ -46,76 +46,75 @@ export const en: SiteContent = {
     secondaryCta: "Our services",
   },
   sections: {
+    // Real, linked content only. The mock copy from the Stitch reference (invented
+    // services, research projects, news and four sample statistics) was removed on
+    // 2026-10-27.
     services: {
       title: "Our services",
-      subtitle: "Academic services and knowledge transfer to society",
-      more: "View all",
+      subtitle: "The units that carry out the office's academic services",
+      more: "See the academic services page",
       items: [
-        {
-          title: "Analytical testing",
-          description: "A standards-compliant laboratory for agricultural analysis",
-        },
-        {
-          title: "Training and transfer",
-          description: "Training courses, seminars and agricultural technology transfer",
-        },
-        {
-          title: "Consultancy and advice",
-          description: "Research and agricultural development advice for farmers and communities",
-        },
-        {
-          title: "Facilities and equipment",
-          description: "Research sites, trial plots and equipment for research",
-        },
-        {
-          title: "Certification",
-          description: "Professional certification of agricultural products",
-        },
-      ],
-    },
-    // Figures translated as-is from the TH source; they still need owner
-    // confirmation there (see the note in content/th/site.ts).
-    stats: {
-      title: "Outputs and statistics",
-      // Sample figures from the Stitch V2 design reference — not verified
-      // organisational KPIs. Never present them as official numbers.
-      subtitle: "(figures shown are from the design mock-up — the office website does not publish these statistics yet; pending confirmation)",
-      more: "View all statistics",
-      items: [
-        { label: "Active research projects", value: "586", unit: "projects" },
-        { label: "Publications", value: "1,248", unit: "articles" },
-        { label: "Researchers and staff", value: "124", unit: "people" },
-        { label: "Communities reached", value: "8,732", unit: "people" },
+        { title: "Academic-service project administration and coordination" },
+        { title: "Plant and animal improvement and propagation" },
+        { title: "Academic-service information and dissemination" },
+        { title: "Royal-initiated projects and area development support" },
       ],
     },
     research: {
-      title: "Featured research and innovation",
-      more: "View all",
+      title: "Research at the office",
+      subtitle: "The internal units responsible for research, plus the university research database",
+      more: "See the research page",
       items: [
-        { tag: "Innovation", title: "Automated climate-controlled greenhouse crop system" },
-        { tag: "Crops and production technology", title: "Drought-tolerant quality fragrant rice variety" },
-        { tag: "Livestock and biotechnology", title: "Local microbial probiotics for animal health" },
+        {
+          title: "Research administration and promotion",
+          description: "Prepare and review the university's research strategy, regulations, rules and announcements.",
+        },
+        {
+          title: "Research funding administration",
+          description: "Coordinate budget allocation for projects that serve the university's research strategy.",
+        },
+        {
+          title: "Research information and dissemination",
+          description: "Build and maintain the university's research databases.",
+        },
       ],
     },
     news: {
       title: "News and activities",
-      more: "View all",
-      items: [
-        { date: "20 May 2024", title: "Signing of a research and innovation cooperation agreement with partner agencies" },
-        { date: "15 May 2024", title: "Workshop \"Safe crop production technology\" for a new generation of farmers" },
-        { date: "10 May 2024", title: "The 10th Maejo University National Academic Conference" },
-        { date: "5 May 2024", title: "Field visit following up the community quality-of-life project" },
-      ],
+      subtitle: "The latest items from the office",
+      more: "See all news",
+      readLabel: "Read the story",
     },
-    knowledge: {
-      title: "Knowledge hub",
-      subtitle: "Access agricultural knowledge and publications",
+    resources: {
+      title: "Resources and quick links",
+      subtitle: "Services and information that visitors ask for most",
       items: [
-        { title: "Research database", description: "Search and browse research" },
-        { title: "Publications", description: "Research reports, manuals and guidelines" },
-        { title: "Agricultural knowledge base", description: "Knowledge and technology" },
-        { title: "Journals and print", description: "Academic journals, online" },
-        { title: "Media and multimedia", description: "Videos, teaching media, infographics" },
+        {
+          title: "Research database",
+          description: "Search the university's research through its ERP system",
+          href: "https://erp.mju.ac.th/researchIndex.aspx",
+          external: true,
+        },
+        {
+          title: "Documents and forms",
+          description: "Regulations, announcements, forms and manuals, grouped by area",
+          href: "/documents",
+        },
+        {
+          title: "News and activities",
+          description: "Past activity news and press releases",
+          href: "/news",
+        },
+        {
+          title: "Search this site",
+          description: "Search the text of every page here",
+          href: "/search",
+        },
+        {
+          title: "Contact the office",
+          description: "Address, telephone and the official e-mail",
+          href: "/contact",
+        },
       ],
     },
   },
