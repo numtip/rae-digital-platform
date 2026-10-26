@@ -1,6 +1,7 @@
 import {
   getAbout,
   getContent,
+  getDirectory,
   getDocuments,
   getNews,
   getResearch,
@@ -31,6 +32,7 @@ const SECTIONS = [
   "news",
   "contact",
   "search",
+  "directory",
 ] as const;
 
 export type SearchSection = (typeof SECTIONS)[number];
@@ -62,6 +64,13 @@ export function buildSearchIndex(locale: Locale): SearchEntry[] {
       site.sections.research.items.map((i) => `${i.title} ${i.description}`),
       site.sections.resources.items.map((i) => `${i.title} ${i.description}`),
     ),
+  );
+
+  const directory = getDirectory(locale);
+  page(
+    `${base}/directory`,
+    directory.hero.title,
+    join(directory.hero.lead, Object.values(directory.labels)),
   );
 
   const about = getAbout(locale);
