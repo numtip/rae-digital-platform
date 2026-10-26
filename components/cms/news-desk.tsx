@@ -2,49 +2,164 @@
 
 import { useState, type FormEvent } from "react";
 import { adminCopy } from "@/lib/cms/admin-copy";
-import { ContentValidationError, assertBilingual } from "@/lib/cms/validation";
 
 const FOCUS =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600";
+const FIELD = `min-h-11 w-full rounded-md border border-neutral-300 px-3 ${FOCUS}`;
 
-export function NewsDesk({ locale }: { locale: "th" | "en" }) {
+type Article = {
+  id: string;
+  status: string;
+  titleTh: string;
+  titleEn: string;
+  source: string;
+  pinned: boolean;
+};
+
+async function api(base: string, path: string, token: string, method = "GET", body?: unknown) {
+  const response = await fetch(`${base}${path}`, {
+    method,
+    headers: {
+      "content-type": "application/json",
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const payload = await response.json().catch(() => ({}));
+  return { ok: response.ok, status: response.status, payload };
+}
+
+export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: string }) {
   const copy = adminCopy[locale];
+  const [token, setToken] = useState("");
+  const [items, setItems] = useState<Article[]>([]);
+  const [selected, setSelected] = useState<Article | null>(null);
   const [message, setMessage] = useState<string>(copy.empty);
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function refresh(nextToken = token) {
+    const result = await api(apiBase, "/v1/news", nextToken);
+    if (!result.ok) {
+      setMessage(String(result.payload.error ?? result.status));
+      return;
+    }
+    setItems(result.payload.articles ?? []);
+  }
+
+  async function onLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    try {
-      assertBilingual({
-        titleTh: String(data.get("titleTh") ?? ""),
-        titleEn: String(data.get("titleEn") ?? ""),
-        source: String(data.get("source") ?? ""),
-      });
-      setMessage(copy.ok);
-    } catch (error) {
-      const text = error instanceof ContentValidationError ? error.message : "invalid";
-      setMessage(text);
+    const result = await api(apiBase, "/v1/login", "", "POST", {
+      userId: String(data.get("userId") ?? ""),
+      password: String(data.get("password") ?? ""),
+    });
+    if (!result.ok || !result.payload.token) {
+      setMessage(String(result.payload.error ?? result.status));
+      return;
     }
+    setToken(result.payload.token);
+    setMessage(copy.login);
+    await refresh(result.payload.token);
+  }
+
+  async function onSave(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const body = {
+      id: selected?.id ?? `news-${Date.now()}`,
+      titleTh: String(data.get("titleTh") ?? ""),
+      titleEn: String(data.get("titleEn") ?? ""),
+      source: String(data.get("source") ?? ""),
+      pinned: false,
+    };
+    const result = selected
+      ? await api(apiBase, `/v1/news/${selected.id}`, token, "PATCH", body)
+      : await api(apiBase, "/v1/news", token, "POST", body);
+    setMessage(result.ok ? body.id : String(result.payload.error ?? result.status));
+    if (result.ok) setSelected(result.payload);
+    await refresh();
+  }
+
+  async function act(action: "submit" | "approve" | "publish") {
+    if (!selected) return;
+    const result = await api(apiBase, `/v1/news/${selected.id}/${action}`, token, "POST", {});
+    setMessage(result.ok ? result.payload.status : String(result.payload.error ?? result.status));
+    if (result.ok) setSelected(result.payload);
+    await refresh();
   }
 
   return (
-    <form className="grid gap-4" onSubmit={onSubmit}>
-      <label className="grid gap-1 text-sm font-medium text-neutral-800" htmlFor="titleTh">
-        {copy.titleTh}
-        <input autoComplete="off" className={`min-h-11 rounded-md border border-neutral-300 px-3 ${FOCUS}`} id="titleTh" name="titleTh" />
-      </label>
-      <label className="grid gap-1 text-sm font-medium text-neutral-800" htmlFor="titleEn">
-        {copy.titleEn}
-        <input autoComplete="off" className={`min-h-11 rounded-md border border-neutral-300 px-3 ${FOCUS}`} id="titleEn" name="titleEn" />
-      </label>
-      <label className="grid gap-1 text-sm font-medium text-neutral-800" htmlFor="source">
-        {copy.source}
-        <input autoComplete="off" className={`min-h-11 rounded-md border border-neutral-300 px-3 ${FOCUS}`} id="source" name="source" type="url" />
-      </label>
-      <button className={`min-h-11 rounded-md bg-brand-600 px-4 text-sm font-medium text-white ${FOCUS}`} type="submit">
-        {copy.check}
-      </button>
-      <p role="status">{message}</p>
-    </form>
+    <div className="grid gap-6 lg:grid-cols-[16rem_1fr]">
+      <form className="grid gap-3" onSubmit={onLogin}>
+        <label className="grid gap-1 text-sm font-medium" htmlFor="userId">
+          {copy.user}
+          <input className={FIELD} id="userId" name="userId" autoComplete="off" />
+        </label>
+        <label className="grid gap-1 text-sm font-medium" htmlFor="password">
+          {copy.password}
+          <input className={FIELD} id="password" name="password" type="password" autoComplete="current-password" />
+        </label>
+        <button className={`min-h-11 rounded-md bg-brand-700 px-4 text-sm font-medium text-white ${FOCUS}`} type="submit">
+          {copy.login}
+        </button>
+      </form>
+
+      <div className="grid gap-4">
+        <ul className="grid gap-2">
+          {items.length === 0 ? <li className="text-sm text-neutral-600">{copy.empty}</li> : null}
+          {items.map((item) => (
+            <li key={item.id}>
+              <button
+                className={`min-h-11 w-full rounded-md border px-3 text-left text-sm ${FOCUS}`}
+                type="button"
+                onClick={() => setSelected(item)}
+              >
+                {locale === "th" ? item.titleTh : item.titleEn} · {item.status}
+              </button>
+            </li>
+          ))}
+        </ul>
+
+        <form className="grid gap-3" onSubmit={onSave}>
+          <label className="grid gap-1 text-sm font-medium" htmlFor="titleTh">
+            {copy.titleTh}
+            <input className={FIELD} id="titleTh" name="titleTh" defaultValue={selected?.titleTh ?? ""} key={`${selected?.id ?? "new"}-th`} />
+          </label>
+          <label className="grid gap-1 text-sm font-medium" htmlFor="titleEn">
+            {copy.titleEn}
+            <input className={FIELD} id="titleEn" name="titleEn" defaultValue={selected?.titleEn ?? ""} key={`${selected?.id ?? "new"}-en`} />
+          </label>
+          <label className="grid gap-1 text-sm font-medium" htmlFor="source">
+            {copy.source}
+            <input className={FIELD} id="source" name="source" type="url" defaultValue={selected?.source ?? ""} key={`${selected?.id ?? "new"}-src`} />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <button className={`min-h-11 rounded-md bg-brand-600 px-4 text-sm font-medium text-white ${FOCUS}`} type="submit">
+              {copy.save}
+            </button>
+            <button className={`min-h-11 rounded-md border px-4 text-sm ${FOCUS}`} type="button" onClick={() => act("submit")}>
+              {copy.submit}
+            </button>
+            <button className={`min-h-11 rounded-md border px-4 text-sm ${FOCUS}`} type="button" onClick={() => act("approve")}>
+              {copy.approve}
+            </button>
+            <button className={`min-h-11 rounded-md border px-4 text-sm ${FOCUS}`} type="button" onClick={() => act("publish")}>
+              {copy.publish}
+            </button>
+          </div>
+        </form>
+
+        <section aria-labelledby="preview" className="rounded-md bg-surface-50 p-4">
+          <h3 className="text-sm font-bold" id="preview">
+            {copy.preview}
+          </h3>
+          <p className="mt-2 text-lg font-bold">{selected?.titleTh}</p>
+          <p>{selected?.titleEn}</p>
+          <p className="text-sm text-neutral-600">
+            {copy.status}: {selected?.status ?? "—"}
+          </p>
+        </section>
+        <p role="status">{message}</p>
+      </div>
+    </div>
   );
 }
