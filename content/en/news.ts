@@ -46,6 +46,7 @@ export const enNews: NewsContent = {
     noOlder: "This is the oldest story in the archive",
     noNewer: "This is the newest story",
     navLabel: "Article navigation",
+    eventsLink: "See all events",
   },
   pagination: {
     label: "Pagination",
@@ -60,6 +61,25 @@ export const enNews: NewsContent = {
   officialLink: {
     label: "See all news on the office website",
     url: "https://rae.mju.ac.th/wtms_news.aspx?lang=en-US",
+  },
+  // Activity-only list. Nothing on the office site announces a future date, so the
+  // upcoming section is omitted rather than invented.
+  events: {
+    meta: {
+      title: "Events — The Office of Research and Academic Services",
+      description:
+        "Activities the office has already published on its own website, newest first",
+    },
+    hero: {
+      title: "Office events",
+      lead: "Only activities already published by the office, newest first",
+    },
+    snapshotNote:
+      "Counts only stories the office tags as activity news, so the list carries no forward schedule and no \"upcoming events\" section until the office announces real dates",
+    upcomingTitle: "Upcoming events",
+    pastTitle: "Past events",
+    empty: "No published events yet",
+    backToNews: "Back to news and activities",
   },
   source: {
     label: "Source",

@@ -1,4 +1,5 @@
 import { enDirectory } from "@/content/en/directory";
+import { enKnowledge } from "@/content/en/knowledge";
 import { thDirectory, type DirectoryContent } from "@/content/th/directory";
 import { en } from "@/content/en/site";
 import { enAbout } from "@/content/en/about";
@@ -10,6 +11,7 @@ import { enServices } from "@/content/en/services";
 import { th, type SiteContent } from "@/content/th/site";
 import { thAbout, type AboutContent } from "@/content/th/about";
 import { thDocuments, type DocumentsContent } from "@/content/th/documents";
+import { thKnowledge, type KnowledgeContent } from "@/content/th/knowledge";
 import { thNews, type NewsContent, type NewsItem } from "@/content/th/news";
 import { thResearch, type ResearchContent } from "@/content/th/research";
 import { thSearch, type SearchContent } from "@/content/th/search";
@@ -26,6 +28,7 @@ export type { ServicesContent } from "@/content/th/services";
 export type { DocumentsContent } from "@/content/th/documents";
 export type { NewsContent, NewsItem } from "@/content/th/news";
 export type { SearchContent } from "@/content/th/search";
+export type { KnowledgeContent } from "@/content/th/knowledge";
 
 const CONTENT: Record<Locale, SiteContent> = { th, en };
 
@@ -38,6 +41,7 @@ const DOCUMENTS: Record<Locale, DocumentsContent> = { th: thDocuments, en: enDoc
 const NEWS: Record<Locale, NewsContent> = { th: thNews, en: enNews };
 const SEARCH: Record<Locale, SearchContent> = { th: thSearch, en: enSearch };
 const DIRECTORY: Record<Locale, DirectoryContent> = { th: thDirectory, en: enDirectory };
+const KNOWLEDGE: Record<Locale, KnowledgeContent> = { th: thKnowledge, en: enKnowledge };
 
 export function isLocale(value: string): value is Locale {
   return (LOCALES as readonly string[]).includes(value);
@@ -78,6 +82,10 @@ export function getDirectory(locale: Locale): DirectoryContent {
   return DIRECTORY[locale];
 }
 
+export function getKnowledge(locale: Locale): KnowledgeContent {
+  return KNOWLEDGE[locale];
+}
+
 // One page of the news index. Every page is a real URL, so the whole thing stays a
 // static export: /news/ is page 1, /news/page/2/ onwards are generated routes.
 export const NEWS_PAGE_SIZE = 12;
@@ -91,6 +99,31 @@ export function getNewsPages(locale: Locale): NewsItem[][] {
   return pages;
 }
 
+// Activity news is classified once, in the Thai source (`type` starts with this prefix),
+// and both locales are filtered by the same nids — an English item carries a translated
+// type, so filtering on the translated string would silently empty the events page.
+const ACTIVITY_TYPE_PREFIX = "ข่าวกิจกรรม";
+
+export function getActivityItems(locale: Locale): NewsItem[] {
+  const ids = new Set(
+    getNews("th")
+      .items.filter((item) => item.type.startsWith(ACTIVITY_TYPE_PREFIX))
+      .map((item) => item.nid),
+  );
+  return getNews(locale).items.filter((item) => ids.has(item.nid));
+}
+
+// Only a published activity can be listed. Nothing on the office site announces a future
+// date, so `upcoming` is empty today and the events page omits that section rather than
+// filling it with invented events.
+export function splitActivities(locale: Locale, today = new Date().toISOString().slice(0, 10)) {
+  const items = getActivityItems(locale);
+  return {
+    upcoming: items.filter((item) => item.dateIso > today),
+    past: items.filter((item) => item.dateIso <= today),
+  };
+}
+
 // Each language named in that language — a switcher label readers recognise.
 export const LOCALE_LABEL: Record<Locale, string> = { th: "ไทย", en: "English" };
 
@@ -101,13 +134,24 @@ export const NAV: { key: keyof SiteContent["nav"]; href?: (locale: Locale) => st
   { key: "research", href: (locale) => `/${locale}/research` },
   { key: "services", href: (locale) => `/${locale}/services` },
   { key: "documents", href: (locale) => `/${locale}/documents` },
+  { key: "knowledge", href: (locale) => `/${locale}/knowledge` },
   { key: "news", href: (locale) => `/${locale}/news` },
   { key: "systems", href: (locale) => `/${locale}/directory` },
   { key: "contact", href: (locale) => `/${locale}/contact` },
 ];
 
 // Interior pages that exist in every locale, in the order the sitemap lists them.
-export const PAGES = ["about", "research", "services", "documents", "news", "contact", "search", "directory"] as const;
+export const PAGES = [
+  "about",
+  "research",
+  "services",
+  "documents",
+  "knowledge",
+  "news",
+  "contact",
+  "search",
+  "directory",
+] as const;
 
 // shortcut: placeholder origin until the owner names the production domain;
 // canonical/hreflang/sitemap need an absolute base, so set NEXT_PUBLIC_SITE_URL

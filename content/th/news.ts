@@ -43,6 +43,7 @@ export const thNews = {
     noOlder: "ไม่มีข่าวเก่ากว่านี้แล้ว",
     noNewer: "นี่คือข่าวล่าสุดแล้ว",
     navLabel: "การนำทางระหว่างข่าว",
+    eventsLink: "ดูกิจกรรมทั้งหมด",
   },
   pagination: {
     label: "การแบ่งหน้า",
@@ -57,6 +58,26 @@ export const thNews = {
   officialLink: {
     label: "ดูข่าวทั้งหมดบนเว็บของหน่วยงาน",
     url: "https://rae.mju.ac.th/wtms_news.aspx?lang=th-TH",
+  },
+  // /th/news/events/ (M05). Only activities the office has already published are
+  // listed: no forward schedule exists on the public site, so the upcoming section stays
+  // out of the page instead of being filled with guesses.
+  events: {
+    meta: {
+      title: "กิจกรรมของสำนักวิจัยและบริการวิชาการ — มหาวิทยาลัยแม่โจ้",
+      description:
+        "รายการกิจกรรมที่สำนักวิจัยและบริการวิชาการเผยแพร่บนเว็บของหน่วยงานแล้ว เรียงจากใหม่ไปเก่า",
+    },
+    hero: {
+      title: "กิจกรรมของสำนักฯ",
+      lead: "เฉพาะกิจกรรมที่หน่วยงานเผยแพร่แล้ว เรียงจากใหม่ไปเก่า",
+    },
+    snapshotNote:
+      "นับเฉพาะข่าวที่หน่วยงานจัดประเภทเป็นข่าวกิจกรรม รายการนี้จึงยังไม่มีกำหนดการล่วงหน้า และไม่มีส่วน \"กิจกรรมที่กำลังจะมาถึง\" จนกว่าหน่วยงานจะประกาศวันจริง",
+    upcomingTitle: "กิจกรรมที่กำลังจะมาถึง",
+    pastTitle: "กิจกรรมที่จัดแล้ว",
+    empty: "ยังไม่มีกิจกรรมที่เผยแพร่แล้ว",
+    backToNews: "กลับไปหน้าข่าวสารและกิจกรรม",
   },
   source: {
     label: "ที่มาของข้อมูล",
