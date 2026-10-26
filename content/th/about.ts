@@ -64,6 +64,19 @@ export const thAbout = {
       },
     ],
   },
+  // The three divisions are the names published in the 2562 history entry on the office's
+  // own page; nothing is added beyond those names, because the office publishes no duties
+  // per division here.
+  structure: {
+    title: "โครงสร้างองค์กร",
+    lead: "ตั้งแต่ปี 2562 สำนักวิจัยและบริการวิชาการแบ่งการบริหารออกเป็น 3 กอง",
+    items: [
+      { title: "กองบริหารงานสำนักวิจัยฯ" },
+      { title: "กองบริหารงานวิจัย" },
+      { title: "กองบริหารงานบริการวิชาการ" },
+    ],
+    note: "ชื่อกองทั้งสามคัดจากข้อความประวัติความเป็นมาบนเว็บของหน่วยงาน — หน้านี้ยังไม่แสดงหน้าที่ความรับผิดชอบรายกอง เพราะหน่วยงานยังไม่ได้เผยแพร่เป็นรายการ",
+  },
   contact: {
     title: "ที่อยู่และการติดต่อ",
     addressLabel: "ที่อยู่",

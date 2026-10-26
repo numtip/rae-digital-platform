@@ -64,6 +64,18 @@ export const enAbout: AboutContent = {
       },
     ],
   },
+  // The three divisions are the names published in the 2562 history entry; no duties are
+  // added because the office publishes none per division.
+  structure: {
+    title: "Organisation structure",
+    lead: "Since 2019 the office has been administered as three divisions",
+    items: [
+      { title: "Office of the RAE director (กองบริหารงานสำนักวิจัยฯ)" },
+      { title: "Research administration division (กองบริหารงานวิจัย)" },
+      { title: "Academic services administration division (กองบริหารงานบริการวิชาการ)" },
+    ],
+    note: "The three division names are taken from the history text on the office website; this page does not list each division's duties, because the office has not published them as a list",
+  },
   contact: {
     title: "Address and contact",
     addressLabel: "Address",
