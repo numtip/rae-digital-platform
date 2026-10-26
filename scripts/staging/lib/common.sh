@@ -31,6 +31,7 @@ staging_load_env() {
 
 staging_compose() {
   local repo_root="$1"
+  shift
   local file="${RAE_STAGING_COMPOSE:-docker-compose.staging.yml}"
   docker compose -f "${repo_root}/${file}" --project-name rae-digital-staging "$@"
 }

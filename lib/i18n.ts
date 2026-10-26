@@ -1,3 +1,5 @@
+import { enDirectory } from "@/content/en/directory";
+import { thDirectory, type DirectoryContent } from "@/content/th/directory";
 import { en } from "@/content/en/site";
 import { enAbout } from "@/content/en/about";
 import { enDocuments } from "@/content/en/documents";
@@ -35,6 +37,7 @@ const SERVICES: Record<Locale, ServicesContent> = { th: thServices, en: enServic
 const DOCUMENTS: Record<Locale, DocumentsContent> = { th: thDocuments, en: enDocuments };
 const NEWS: Record<Locale, NewsContent> = { th: thNews, en: enNews };
 const SEARCH: Record<Locale, SearchContent> = { th: thSearch, en: enSearch };
+const DIRECTORY: Record<Locale, DirectoryContent> = { th: thDirectory, en: enDirectory };
 
 export function isLocale(value: string): value is Locale {
   return (LOCALES as readonly string[]).includes(value);
@@ -71,6 +74,10 @@ export function getSearch(locale: Locale): SearchContent {
   return SEARCH[locale];
 }
 
+export function getDirectory(locale: Locale): DirectoryContent {
+  return DIRECTORY[locale];
+}
+
 // One page of the news index. Every page is a real URL, so the whole thing stays a
 // static export: /news/ is page 1, /news/page/2/ onwards are generated routes.
 export const NEWS_PAGE_SIZE = 12;
@@ -100,7 +107,7 @@ export const NAV: { key: keyof SiteContent["nav"]; href?: (locale: Locale) => st
 ];
 
 // Interior pages that exist in every locale, in the order the sitemap lists them.
-export const PAGES = ["about", "research", "services", "documents", "news", "contact", "search"] as const;
+export const PAGES = ["about", "research", "services", "documents", "news", "contact", "search", "directory"] as const;
 
 // shortcut: placeholder origin until the owner names the production domain;
 // canonical/hreflang/sitemap need an absolute base, so set NEXT_PUBLIC_SITE_URL

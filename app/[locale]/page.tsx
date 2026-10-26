@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { NewsImage } from "@/components/news-image";
 import { asset } from "@/lib/assets";
-import { getContent, getNews, isLocale } from "@/lib/i18n";
+import { DirectorAndServices, MediaCards, SystemsGrid, UnitCards } from "@/components/legacy-modules";
+import { getContent, getDirectory, getNews, isLocale } from "@/lib/i18n";
 
 // Every string comes from content/<locale>/site.ts, and the news headlines are read
 // from the real news archive at render time. The page carries no sample statistics
@@ -52,6 +53,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const content = getContent(locale);
+  const directory = getDirectory(locale);
   const { hero, sections } = content;
 
   // The three newest real stories, with their lead photo when there is one.
@@ -183,6 +185,11 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           </ul>
         </div>
       </section>
+
+      <SystemsGrid copy={directory} moreHref={href("/directory")} />
+      <UnitCards copy={directory} />
+      <MediaCards copy={directory} />
+      <DirectorAndServices copy={directory} />
 
       {/* Quick links — every card opens something that exists. This replaces the
           sample statistics band, which showed four figures the office does not publish. */}
