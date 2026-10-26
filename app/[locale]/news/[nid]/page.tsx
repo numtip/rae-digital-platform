@@ -131,13 +131,16 @@ export default async function NewsItemPage({ params }: Props) {
             </div>
           </div>
 
-          <nav aria-label={`${news.labels.prevNewer} / ${news.labels.nextOlder}`} className="mt-8 grid gap-4 border-t border-neutral-200 pt-6 sm:grid-cols-2">
+          <nav aria-label={news.labels.navLabel} className="mt-8 grid gap-4 border-t border-neutral-200 pt-6 sm:grid-cols-2">
             {newer ? (
               <Link
                 className="rounded-md border border-neutral-200 bg-white p-4 hover:border-brand-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
                 href={`/${locale}/news/${newer.nid}`}
               >
-                <span className="block text-xs font-semibold text-brand-600">← {news.labels.prevNewer}</span>
+                <span className="block text-xs font-semibold text-brand-600">
+                  <span aria-hidden="true">← </span>
+                  {news.labels.prevNewer}
+                </span>
                 <span className="mt-1 block text-sm font-medium leading-snug text-neutral-800">
                   {neighbourTitle(newer)}
                 </span>
@@ -152,7 +155,10 @@ export default async function NewsItemPage({ params }: Props) {
                 className="rounded-md border border-neutral-200 bg-white p-4 text-right hover:border-brand-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 sm:col-start-2"
                 href={`/${locale}/news/${older.nid}`}
               >
-                <span className="block text-xs font-semibold text-brand-600">{news.labels.nextOlder} →</span>
+                <span className="block text-xs font-semibold text-brand-600">
+                  {news.labels.nextOlder}
+                  <span aria-hidden="true"> →</span>
+                </span>
                 <span className="mt-1 block text-sm font-medium leading-snug text-neutral-800">
                   {neighbourTitle(older)}
                 </span>
