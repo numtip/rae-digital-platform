@@ -162,3 +162,17 @@ Draft PR → รายงานเช้า ห้าม merge/deploy เอง 
 
 ยังไม่มีไฟล์ `LICENSE` — repo เป็น public แต่เจ้าของยังไม่ได้เลือกสัญญาอนุญาต
 ดูประเด็นและตัวเลือกใน `docs/PROVENANCE.md §5` (ต้องตัดสินก่อนเปิดให้ภายนอกมีส่วนร่วม)
+
+## Licence
+
+The **original source code** of this project is released under the
+[Apache License 2.0](LICENSE). The copyright in that code sits with its individual authors as
+recorded in the git history; whether Maejo University holds rights through an employment or IP
+agreement is **unresolved** and stated in [NOTICE](NOTICE).
+
+The licence does **not** cover the institutional material: the Thai copy transcribed from
+`rae.mju.ac.th` and its translations, the news and building photographs, the office emblem, or
+Maejo University's official seal used as the site emblem and favicon. Those remain under the
+rights of the office and the university — see [docs/governance/ASSET_RIGHTS.md](docs/governance/ASSET_RIGHTS.md)
+for the per-asset register and [docs/governance/LICENSE_RECOMMENDATION.md](docs/governance/LICENSE_RECOMMENDATION.md)
+for the reasoning.
