@@ -32,13 +32,22 @@ function SectionHead({
         </h2>
         {subtitle && <p className="mt-1 text-sm text-neutral-600">{subtitle}</p>}
       </div>
-      {/* TODO(issue #2): the target pages do not exist yet, so this is plain
-          text, never a href="#" dead control. neutral-600 keeps it above AA. */}
-      {more && (
-        <span aria-disabled="true" title={notAvailable} className="cursor-not-allowed text-sm text-neutral-600">
-          {more}
-        </span>
-      )}
+      {/* A section whose page exists links to it; the rest stay disabled text
+          rather than an empty-hash dead control (issue #2 rule). brand-600 is
+          9.9:1 on white, well above AA. */}
+      {more &&
+        (moreHref ? (
+          <Link
+            href={moreHref}
+            className="text-sm font-medium text-brand-600 underline underline-offset-2 hover:text-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
+          >
+            {more}
+          </Link>
+        ) : (
+          <span aria-disabled="true" title={notAvailable} className="cursor-not-allowed text-sm text-neutral-600">
+            {more}
+          </span>
+        ))}
     </div>
   );
 }
@@ -72,18 +81,18 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               <span className="text-gold-500">{hero.titleAccent}</span>
             </h1>
             <p className="mb-8 max-w-2xl text-lg text-neutral-200 md:text-xl">{hero.description}</p>
-            {/* TODO(issue #2): both CTAs land in the next slices (/about, /services).
-                Disabled <button>s speak the truth to screen readers; no dead anchors.
-                Gold keeps dark text: white on gold-500 is 2.3:1 and would fail AA. */}
+            {/* Each label sits next to its own destination: "About us" →
+                /about, "Our services" → /services. Both pages exist. Gold
+                keeps dark text: white on gold-500 is 2.3:1 and would fail AA. */}
             <div className="flex flex-wrap gap-4">
               <Link
-                href={`/${locale}/services`}
+                href={`/${locale}/about`}
                 className="rounded-md bg-brand-500 px-8 py-3 font-medium text-white shadow-lg hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-500"
               >
                 {hero.primaryCta}
               </Link>
               <Link
-                href={`/${locale}/about`}
+                href={`/${locale}/services`}
                 className="rounded-md bg-gold-500 px-8 py-3 font-medium text-brand-700 shadow-lg hover:bg-gold-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
               >
                 {hero.secondaryCta}
