@@ -110,7 +110,7 @@ export default async function LocaleLayout({
         </a>
         <SiteHeader locale={locale} content={content} />
         <div className="flex-1">{children}</div>
-        <SiteFooter content={content} />
+        <SiteFooter content={content} locale={locale} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}

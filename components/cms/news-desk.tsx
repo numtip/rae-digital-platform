@@ -10,6 +10,7 @@ const FIELD = `min-h-11 w-full rounded-md border border-neutral-300 px-3 ${FOCUS
 type Article = {
   id: string;
   status: string;
+  revisionReason?: string;
   titleTh: string;
   titleEn: string;
   source: string;
@@ -30,7 +31,7 @@ async function api(base: string, path: string, token: string, method = "GET", bo
   } catch {
     // The desk talks to a separate local process. When it is not running, an unhandled
     // rejection in the click handler left the reader with no feedback at all.
-    return { ok: false, status: 0, payload: { error: "UNREACHABLE" } };
+    return { ok: false, status: 0, payload: { error: "UNREACHABLE" } as { error?: unknown; message?: unknown } };
   }
   const payload = await response.json().catch(() => ({}));
   return { ok: response.ok, status: response.status, payload };
@@ -39,12 +40,15 @@ async function api(base: string, path: string, token: string, method = "GET", bo
 export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: string }) {
   const copy = adminCopy[locale];
   // status 0 = the fetch never reached the runtime (see api()).
-  const describe = (result: { status: number; payload: { error?: unknown } }) =>
-    result.status === 0 ? copy.unreachable : String(result.payload.error ?? result.status);
+  const describe = (result: { status: number; payload: { error?: unknown; message?: unknown } }) =>
+    result.status === 0
+      ? copy.unreachable
+      : String(result.payload.message || result.payload.error || result.status);
   const [token, setToken] = useState("");
   const [items, setItems] = useState<Article[]>([]);
   const [selected, setSelected] = useState<Article | null>(null);
   const [message, setMessage] = useState<string>(copy.empty);
+  const [reason, setReason] = useState("");
 
   async function refresh(nextToken = token) {
     const result = await api(apiBase, "/v1/news", nextToken);
@@ -89,9 +93,19 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
     await refresh();
   }
 
-  async function act(action: "submit" | "approve" | "publish") {
-    if (!selected) return;
-    const result = await api(apiBase, `/v1/news/${selected.id}/${action}`, token, "POST", {});
+  async function act(action: "submit" | "approve" | "publish" | "return", reason?: string) {
+    // Silently doing nothing on an unselected desk reads like a broken button.
+    if (!selected) {
+      setMessage(copy.selectFirst);
+      return;
+    }
+    if (action === "return" && !String(reason ?? "").trim()) {
+      setMessage(copy.reasonRequired);
+      return;
+    }
+    const body = action === "return" ? { reason } : {};
+    const result = await api(apiBase, `/v1/news/${selected.id}/${action}`, token, "POST", body);
+    if (action === "return" && result.ok) setReason("");
     setMessage(result.ok ? result.payload.status : describe(result));
     if (result.ok) setSelected(result.payload);
     await refresh();
@@ -156,6 +170,25 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
               {copy.publish}
             </button>
           </div>
+          <label className="grid gap-1 text-sm font-medium" htmlFor="revisionReason">
+            {copy.reasonLabel}
+            <input
+              className={FIELD}
+              id="revisionReason"
+              name="revisionReason"
+              onChange={(event) => setReason(event.target.value)}
+              value={reason}
+            />
+          </label>
+          <div>
+            <button
+              className={`min-h-11 rounded-md border border-gold-600 px-4 text-sm text-neutral-800 ${FOCUS}`}
+              type="button"
+              onClick={() => act("return", reason)}
+            >
+              {copy.returnFor}
+            </button>
+          </div>
         </form>
 
         <section aria-labelledby="preview" className="rounded-md bg-surface-50 p-4">
@@ -167,6 +200,11 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
           <p className="text-sm text-neutral-600">
             {copy.status}: {selected?.status ?? "—"}
           </p>
+          {selected?.revisionReason && (
+            <p className="mt-2 text-sm text-neutral-700">
+              {copy.revisionNote} {selected.revisionReason}
+            </p>
+          )}
         </section>
         <p role="status">{message}</p>
       </div>

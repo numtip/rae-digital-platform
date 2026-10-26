@@ -34,6 +34,7 @@ export const en: SiteContent = {
     research: "Research & innovation",
     services: "Academic services",
     documents: "Publications",
+    knowledge: "Knowledge",
     news: "News & activities",
     systems: "Information systems",
     contact: "Contact",
@@ -113,6 +114,16 @@ export const en: SiteContent = {
           href: "/search",
         },
         {
+          title: "Knowledge and media",
+          description: "Knowledge databases, Maejo Vision and the newsletter",
+          href: "/knowledge",
+        },
+        {
+          title: "Past events",
+          description: "Activities the office has already published, newest first",
+          href: "/news/events",
+        },
+        {
           title: "Contact the office",
           description: "Address, telephone and the official e-mail",
           href: "/contact",
@@ -128,6 +139,7 @@ export const en: SiteContent = {
   },
   footer: {
     contactLabel: "Contact us",
+    sectionsLabel: "Site sections",
     address: "63 Moo 4, Nong Han, San Sai, Chiang Mai 50290, Thailand",
     phone: "+66 53 873 400",
     email: "researchmju@mju.ac.th",

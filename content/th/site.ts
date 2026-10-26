@@ -30,6 +30,7 @@ export const th = {
     research: "วิจัยและนวัตกรรม",
     services: "บริการวิชาการ",
     documents: "เอกสารเผยแพร่",
+    knowledge: "องค์ความรู้",
     news: "ข่าวสารและกิจกรรม",
     systems: "ระบบสารสนเทศ",
     contact: "ติดต่อเรา",
@@ -115,6 +116,16 @@ export const th = {
           href: "/search",
         },
         {
+          title: "องค์ความรู้และสื่อ",
+          description: "ฐานข้อมูลองค์ความรู้ แม่โจ้ปริทัศน์ และจดหมายข่าว",
+          href: "/knowledge",
+        },
+        {
+          title: "กิจกรรมย้อนหลัง",
+          description: "กิจกรรมที่หน่วยงานเผยแพร่แล้ว เรียงจากใหม่ไปเก่า",
+          href: "/news/events",
+        },
+        {
           title: "ติดต่อสำนักฯ",
           description: "ที่อยู่ โทรศัพท์ และอีเมลทางการ",
           href: "/contact",
@@ -130,6 +141,7 @@ export const th = {
   },
   footer: {
     contactLabel: "ติดต่อเรา",
+    sectionsLabel: "ส่วนของเว็บไซต์",
     address: "63 หมู่ 4 ตำบลหนองหาร อำเภอสันทราย จังหวัดเชียงใหม่ 50290",
     phone: "0 5387 3400",
     email: "researchmju@mju.ac.th",
