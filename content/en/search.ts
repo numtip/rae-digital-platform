@@ -16,9 +16,26 @@ export const enSearch: SearchContent = {
     hint: "Searches the text on these pages only, not the university's systems.",
     results: "Results",
     countTemplate: "{n} results",
+    // "1 results" is the kind of thing a visitor notices immediately.
+    countTemplateOne: "{n} result",
     noResults: "Nothing matched that word. Try a shorter one.",
     empty: "Type a word to start searching",
+
     kindPage: "Page",
     kindItem: "On this page",
+    filterLabel: "Filter by category",
+    showAll: "Show every category",
+    hiddenByFilter: "{n} more matches are hidden by the category filter",
+    categories: {
+      all: "All",
+      home: "Home",
+      about: "About us",
+      research: "Research & innovation",
+      services: "Academic services",
+      documents: "Publications",
+      news: "News & activities",
+      contact: "Contact",
+      search: "Search",
+    },
   },
 };

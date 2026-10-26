@@ -16,10 +16,26 @@ export const thSearch = {
     // "{n}" is replaced by the component; a function cannot be passed to a
     // client component from a server component.
     countTemplate: "พบ {n} รายการ",
+    countTemplateOne: "พบ {n} รายการ",
     noResults: "ไม่พบข้อความที่ตรงกับคำนี้ ลองใช้คำสั้นลง",
     empty: "พิมพ์คำเพื่อเริ่มค้นหา",
+
     kindPage: "หน้าเว็บ",
     kindItem: "เนื้อหาในหน้า",
+    filterLabel: "กรองตามหมวด",
+    showAll: "แสดงทุกหมวด",
+    hiddenByFilter: "มีอีก {n} รายการที่ตรงกับคำนี้แต่ถูกซ่อนด้วยตัวกรองหมวด",
+    categories: {
+      all: "ทั้งหมด",
+      home: "หน้าหลัก",
+      about: "เกี่ยวกับเรา",
+      research: "วิจัยและนวัตกรรม",
+      services: "บริการวิชาการ",
+      documents: "เอกสารเผยแพร่",
+      news: "ข่าวสารและกิจกรรม",
+      contact: "ติดต่อเรา",
+      search: "ค้นหา",
+    },
   },
 };
 

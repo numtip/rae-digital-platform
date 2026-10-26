@@ -20,6 +20,26 @@ export type SearchEntry = {
   kind: "page" | "item";
 };
 
+// The category of an entry is read off its own URL rather than stored again on every
+// entry, so the index and the navigation can never disagree about where a page lives.
+const SECTIONS = [
+  "home",
+  "about",
+  "research",
+  "services",
+  "documents",
+  "news",
+  "contact",
+  "search",
+] as const;
+
+export type SearchSection = (typeof SECTIONS)[number];
+
+export function sectionOf(href: string): SearchSection {
+  const name = href.split("/").filter(Boolean)[1];
+  return (SECTIONS as readonly string[]).includes(name) ? (name as SearchSection) : "home";
+}
+
 const join = (...parts: (string | string[] | undefined)[]) =>
   parts.flat().filter(Boolean).join(" · ");
 
