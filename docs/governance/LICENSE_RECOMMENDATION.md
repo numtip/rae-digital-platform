@@ -1,5 +1,19 @@
 # License recommendation — rae-digital-platform
 
+> **Decision taken 2026-10-26 (owner).** Apache-2.0 is approved for the **original source code
+> only**, with institutional assets excluded until separately authorised. The policy was restated
+> in four clauses (A1–A4) and is implemented in [NOTICE](../../NOTICE) parts A/B/C, which separate
+> the owner's declaration from independently verified facts and from the authority that remains
+> unresolved. It is implemented in
+> [LICENSE](../../LICENSE) (Apache-2.0, verbatim from apache.org), [NOTICE](../../NOTICE) (scope,
+> exclusions, unresolved-authority statement) and the per-asset register in
+> [ASSET_RIGHTS.md](ASSET_RIGHTS.md).
+>
+> Still **unresolved**: (a) whether Maejo University holds rights in the code through a written
+> employment/IP agreement — no such document exists in this repository; (b) written permission for
+> the photographs, news text and translations; (c) insignia rules for the university seal. `NOTICE`
+> states all three openly so the licence cannot be misread as covering them.
+
 Proposal only. Nothing here has legal force until the repository owner and the office approve
 it and the copyright holder is named. Evidence read on 2026-10-26 from `main` @ `67969f1`
 (a parallel branch `feat/brand-emblem` carries the owner-supplied Maejo seal and is not merged).
