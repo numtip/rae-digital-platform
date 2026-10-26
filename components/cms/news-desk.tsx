@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { adminCopy } from "@/lib/cms/admin-copy";
 
 const FOCUS =
@@ -16,7 +16,35 @@ type Article = {
   titleEn: string;
   source: string;
   pinned: boolean;
+  bodyTh?: string[];
+  bodyEn?: string[];
 };
+
+// <img src> cannot carry the bearer token, so a draft's image would 404 in the desk. Fetch it with
+// the token, then show the object URL.
+function PrivateImage({ src, token, alt }: { src: string; token: string; alt: string }) {
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    let objectUrl = "";
+    let live = true;
+    void (async () => {
+      const response = await fetch(src, { headers: { authorization: `Bearer ${token}` } }).catch(() => null);
+      if (!response?.ok || !live) return;
+      objectUrl = URL.createObjectURL(await response.blob());
+      setUrl(objectUrl);
+    })();
+    return () => {
+      live = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [src, token]);
+  return url ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img alt={alt} className="h-20 w-full rounded object-cover" src={url} />
+  ) : (
+    <div aria-hidden="true" className="h-20 w-full rounded bg-neutral-100" />
+  );
+}
 
 async function api(base: string, path: string, token: string, method = "GET", body?: unknown) {
   let response: Response;
@@ -51,6 +79,8 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
   const [message, setMessage] = useState<string>(copy.empty);
   const [reason, setReason] = useState("");
   const [media, setMedia] = useState<Article["media"]>([]);
+  const [pending, setPending] = useState<File[]>([]);
+  const [busy, setBusy] = useState(false);
 
   async function loadMedia(article: Article | null, nextToken = token) {
     if (!article) {
@@ -95,6 +125,8 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
       titleTh: String(data.get("titleTh") ?? ""),
       titleEn: String(data.get("titleEn") ?? ""),
       source: String(data.get("source") ?? ""),
+      bodyTh: String(data.get("bodyTh") ?? ""),
+      bodyEn: String(data.get("bodyEn") ?? ""),
       pinned: false,
     };
     const result = selected
@@ -103,6 +135,36 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
     setMessage(result.ok ? body.id : describe(result));
     if (result.ok) setSelected(result.payload);
     await refresh();
+  }
+
+  async function onUpload(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selected) return setMessage(copy.selectFirst);
+    if (pending.length === 0) return setMessage(copy.chooseImages);
+    const data = new FormData(event.currentTarget);
+    setBusy(true);
+    for (const [index, file] of pending.entries()) {
+      const encoded = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? "").split(",")[1] ?? "");
+        reader.readAsDataURL(file);
+      });
+      const result = await api(apiBase, `/v1/news/${selected.id}/media`, token, "POST", {
+        dataBase64: encoded,
+        captionTh: String(data.get(`captionTh-${index}`) ?? ""),
+        captionEn: String(data.get(`captionEn-${index}`) ?? ""),
+        altTh: String(data.get(`altTh-${index}`) ?? ""),
+        altEn: String(data.get(`altEn-${index}`) ?? ""),
+      });
+      if (!result.ok) {
+        setBusy(false);
+        return setMessage(describe(result));
+      }
+    }
+    setBusy(false);
+    setPending([]);
+    setMessage(copy.uploaded);
+    await loadMedia(selected);
   }
 
   async function act(action: "submit" | "approve" | "publish" | "return", reason?: string) {
@@ -171,6 +233,14 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
             {copy.source}
             <input className={FIELD} id="source" name="source" type="url" defaultValue={selected?.source ?? ""} key={`${selected?.id ?? "new"}-src`} />
           </label>
+          <label className="grid gap-1 text-sm font-medium" htmlFor="bodyTh">
+            {copy.bodyTh}
+            <textarea className={FIELD} id="bodyTh" name="bodyTh" rows={4} defaultValue={(selected?.bodyTh ?? []).join("\n\n")} key={`${selected?.id ?? "new"}-body-th`} />
+          </label>
+          <label className="grid gap-1 text-sm font-medium" htmlFor="bodyEn">
+            {copy.bodyEn}
+            <textarea className={FIELD} id="bodyEn" name="bodyEn" rows={4} defaultValue={(selected?.bodyEn ?? []).join("\n\n")} key={`${selected?.id ?? "new"}-body-en`} />
+          </label>
           <div className="flex flex-wrap gap-2">
             <button className={`min-h-11 rounded-md bg-brand-600 px-4 text-sm font-medium text-white ${FOCUS}`} type="submit">
               {copy.save}
@@ -223,11 +293,10 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
               <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3" aria-labelledby="gallery">
                 {(media ?? []).map((item) => (
                   <li key={item.filename} className="rounded border border-neutral-200 bg-white p-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <PrivateImage
                       alt={(locale === "th" ? item.altTh : item.altEn) || item.captionTh || copy.gallery}
-                      className="h-20 w-full rounded object-cover"
                       src={`${apiBase}/v1/media/${selected?.id}/${item.filename}`}
+                      token={token}
                     />
                     <p className="mt-1 text-xs text-neutral-600">
                       {(locale === "th" ? item.captionTh : item.captionEn) || "—"}
@@ -238,12 +307,48 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
             </div>
           )}
 
+          {selected?.status === "published" && (
+            <p className="mt-2">
+              <a className="text-sm underline" href={`${apiBase}/preview/${selected.id}?lang=${locale}`} rel="noreferrer" target="_blank">
+                {copy.openPreview}
+              </a>
+            </p>
+          )}
+
           {selected?.revisionReason && (
             <p className="mt-2 text-sm text-neutral-700">
               {copy.revisionNote} {selected.revisionReason}
             </p>
           )}
         </section>
+
+        <form className="grid gap-3 rounded-md border border-neutral-200 p-4" onSubmit={onUpload}>
+          <h3 className="text-sm font-bold">{copy.addImages}</h3>
+          <p className="text-xs text-neutral-600">{copy.galleryHint}</p>
+          <label className="grid gap-1 text-sm font-medium" htmlFor="images">
+            {copy.chooseImages}
+            <input
+              accept="image/png,image/jpeg,image/webp"
+              className={FIELD}
+              id="images"
+              multiple
+              onChange={(event) => setPending([...(event.target.files ?? [])])}
+              type="file"
+            />
+          </label>
+          {pending.map((file, index) => (
+            <fieldset className="grid gap-2 rounded border border-neutral-200 p-3" key={`${file.name}-${index}`}>
+              <legend className="px-1 text-xs text-neutral-600">{`${index + 1}. ${file.name}`}</legend>
+              <input className={FIELD} name={`captionTh-${index}`} placeholder={copy.captionTh} />
+              <input className={FIELD} name={`captionEn-${index}`} placeholder={copy.captionEn} />
+              <input className={FIELD} name={`altTh-${index}`} placeholder={copy.altTh} />
+              <input className={FIELD} name={`altEn-${index}`} placeholder={copy.altEn} />
+            </fieldset>
+          ))}
+          <button className={`min-h-11 rounded-md border px-4 text-sm ${FOCUS}`} disabled={busy} type="submit">
+            {busy ? copy.uploading : copy.upload}
+          </button>
+        </form>
         <p role="status">{message}</p>
       </div>
     </div>

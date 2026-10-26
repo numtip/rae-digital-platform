@@ -1,0 +1,59 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { articlesFromExport, previewFiles, renderArticlePage, PreviewRejected } from "../lib/cms/preview-site.ts";
+
+// The static preview is the only path from the CMS to something a browser shows. These checks are
+// about what it refuses: a draft, a missing translation, an id that could escape the output folder.
+
+const article = {
+  id: "staging-real-20261027",
+  titleTh: "สำนักวิจัยฯ จัดประชาพิจารณ์",
+  titleEn: "Public hearing on quality assurance",
+  source: "https://www.facebook.com/share/p/1BsZLPpCyV/",
+  bodyTh: ["ย่อหน้าที่หนึ่ง", "ย่อหน้าที่สอง"],
+  bodyEn: ["First paragraph", "Second paragraph"],
+  media: [
+    {
+      url: "/v1/media/staging-real-20261027/01-aaaaaaaa.jpg",
+      captionTh: "ภาพรวมการประชุม",
+      captionEn: "Overview of the meeting",
+      altTh: "ผู้เข้าร่วมนั่งในห้องประชุม",
+      altEn: "Participants seated in the meeting room",
+    },
+  ],
+};
+
+test("a published article becomes a Thai and an English page plus an index", () => {
+  const files = previewFiles(articlesFromExport({ articles: [article] }));
+  const paths = files.map((file) => file.path).sort();
+  assert.deepEqual(paths, ["index.html", "staging-real-20261027/en.html", "staging-real-20261027/th.html"]);
+
+  const thai = renderArticlePage(article, "th");
+  assert.match(thai, /ย่อหน้าที่หนึ่ง/);
+  assert.match(thai, /ภาพรวมการประชุม/);
+  assert.doesNotMatch(thai, /First paragraph/);
+  assert.match(thai, /noindex/);
+
+  const english = renderArticlePage(article, "en");
+  assert.match(english, /First paragraph/);
+  assert.match(english, /Overview of the meeting/);
+  assert.doesNotMatch(english, /ย่อหน้าที่หนึ่ง/);
+});
+
+test("markup in the content is escaped, not rendered", () => {
+  const hostile = { ...article, titleTh: "<script>alert(1)</script>", bodyTh: ["<img src=x onerror=1>"] };
+  const page = renderArticlePage(hostile, "th");
+  assert.doesNotMatch(page, /<script>alert/);
+  assert.match(page, /&lt;script&gt;/);
+  assert.doesNotMatch(page, /<img src=x/);
+});
+
+test("a draft, an unsafe id or a half-translated article is refused", () => {
+  assert.throws(() => articlesFromExport({ articles: [{ ...article, status: "draft" }] }), /not published/);
+  assert.throws(() => articlesFromExport({ articles: [{ ...article, status: "approved" }] }), /not published/);
+  assert.throws(() => articlesFromExport({ articles: [{ ...article, id: "../../etc/passwd" }] }), /unsafe article id/);
+  assert.throws(() => articlesFromExport({ articles: [{ ...article, bodyEn: [] }] }), PreviewRejected);
+  assert.throws(() => articlesFromExport({ articles: [{ ...article, titleEn: "  " }] }), /missing a title/);
+  const noAlt = { ...article, media: [{ ...article.media[0], altEn: "" }] };
+  assert.throws(() => articlesFromExport({ articles: [noAlt] }), /bilingual captions/);
+});

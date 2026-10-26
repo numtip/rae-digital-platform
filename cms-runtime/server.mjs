@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { assertArticleImage, extensionFor, MediaRejected } from "../lib/cms/media.ts";
+import { assertArticleImage, extensionFor, MediaRejected, SAFE_ID, SAFE_MEDIA_FILE } from "../lib/cms/media.ts";
 import { submitForReview, approveNews, publishNews, returnForRevision } from "../lib/cms/news-workflow.ts";
 import { publishedArticlesForExport } from "../lib/cms/publish.ts";
 import { requirePermission } from "../lib/cms/permissions.ts";
@@ -188,11 +188,6 @@ function send(response, status, body, origin) {
   response.writeHead(status, headers);
   response.end(JSON.stringify(body));
 }
-
-// Ids become directory names under the media root, so they are validated rather than trusted.
-export const SAFE_ID = /^[a-z0-9][a-z0-9-]{1,63}$/;
-// Uploads are named by the runtime (`01-1a2b3c4d.jpg`); anything else is not ours to read.
-export const SAFE_MEDIA_FILE = /^\d{2}-[0-9a-f]{8}\.(png|jpg|webp)$/;
 
 function articleId(pathname) {
   const candidate = pathname.split("/")[3] ?? "";
