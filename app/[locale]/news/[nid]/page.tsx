@@ -71,12 +71,18 @@ export default async function NewsItemPage({ params }: Props) {
   const neighbourTitle = (entry: { nid: string; title: string }) =>
     localisedTitles.get(entry.nid) || entry.title;
 
+  // The article URL is the page's own canonical, so a crawler reads the same address the
+  // head advertises; `inLanguage` stays "th" because the body is the Thai text as published,
+  // whatever the headline language on the English route.
+  const articleUrl = `${SITE_URL}/${locale}/news/${item.nid}/`;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
     headline: item.title || title,
     datePublished: item.dateIso,
     inLanguage: "th",
+    mainEntityOfPage: { "@type": "WebPage", "@id": articleUrl },
+    url: articleUrl,
     image: item.image ? [`${SITE_URL}${asset(item.image.src)}`] : undefined,
     publisher: { "@type": "Organization", name: getContent(locale).header.orgFull },
   };
