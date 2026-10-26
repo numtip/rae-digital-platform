@@ -111,7 +111,7 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: SiteC
             alt=""
             width={192}
             height={192}
-            className="h-11 w-11 shrink-0"
+            className="h-12 w-12 shrink-0"
             priority
           />
           <div>
