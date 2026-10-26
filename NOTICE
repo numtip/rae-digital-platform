@@ -24,11 +24,12 @@ A2. Original application source code — licensed under Apache-2.0.
     subject to any applicable ownership agreement and to Maejo University's
     intellectual-property regulations. The licensed paths are:
 
-        app/  components/  lib/  scripts/  tests/
+        app/  components/  lib/  scripts/  tests/  deploy/staging/
 
     together with the original build and configuration files at the repository
     root: package.json, next.config.ts, tsconfig.json, postcss.config.mjs,
-    eslint.config.mjs. Data files that describe dependencies
+    eslint.config.mjs, Dockerfile.staging, docker-compose.staging.yml,
+    .dockerignore, .env.staging.example. Data files that describe dependencies
     (package-lock.json) and repository metadata (.gitignore, .nvmrc) carry no
     creative content and are not the subject of the grant either way.
 

@@ -151,8 +151,9 @@ test("every path in the repository is either Apache-licensed or named as exclude
   // NOTICE — the failure mode it prevents is a new asset directory landing in the repo and
   // silently reading as Apache-2.0 licensed.
   const LICENSED = [
-    "app", "components", "lib", "scripts", "tests",
+    "app", "components", "deploy", "lib", "scripts", "tests",
     "package.json", "next.config.ts", "tsconfig.json", "postcss.config.mjs", "eslint.config.mjs",
+    "Dockerfile.staging", "docker-compose.staging.yml",
   ];
   // Generated or non-creative files: Next writes next-env.d.ts and the tsbuildinfo cache,
   // .gitignore/.nvmrc/package-lock.json describe the repo rather than express anything, and

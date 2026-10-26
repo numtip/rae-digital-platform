@@ -4,7 +4,10 @@ import type { NextConfig } from "next";
 // Only the pages-preview workflow sets NEXT_PAGES_PREVIEW=1; CI and the future
 // production host build normally (no export), so server features stay available.
 const preview = process.env.NEXT_PAGES_PREVIEW === "1";
-const basePath = preview ? "/rae-digital-platform" : "";
+// GitHub Pages keeps the default; VPS staging sets NEXT_PREVIEW_BASE_PATH=/rae-digital-staging.
+const previewBasePath =
+  process.env.NEXT_PREVIEW_BASE_PATH?.replace(/\/$/, "") || "/rae-digital-platform";
+const basePath = preview ? previewBasePath : "";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
