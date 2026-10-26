@@ -16,6 +16,8 @@ export const enSearch: SearchContent = {
     hint: "Searches the text on these pages only, not the university's systems.",
     results: "Results",
     countTemplate: "{n} results",
+    // "1 results" is the kind of thing a visitor notices immediately.
+    countTemplateOne: "{n} result",
     noResults: "Nothing matched that word. Try a shorter one.",
     empty: "Type a word to start searching",
 

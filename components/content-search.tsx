@@ -11,7 +11,7 @@ import type { SearchContent } from "@/lib/i18n";
 // Substring matching is enough for Thai (no word spaces to split on).
 
 const CHIP =
-  "rounded-full border px-4 py-1.5 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600";
+  "rounded-full border px-4 py-2 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600";
 
 type Categories = SearchContent["labels"]["categories"];
 
@@ -85,12 +85,16 @@ export function ContentSearch({ entries, labels }: { entries: SearchEntry[]; lab
       </div>
 
       <p aria-live="polite" className="mt-8 text-sm font-semibold text-neutral-700">
-        {needle ? labels.countTemplate.replace("{n}", String(results.length)) : labels.empty}
+        {needle
+          ? (results.length === 1 ? labels.countTemplateOne : labels.countTemplate).replace("{n}", String(results.length))
+          : labels.empty}
       </p>
 
       {needle && results.length === 0 && (
         <div className="mt-4 rounded-lg border-l-4 border-gold-500 bg-cream-50 p-4" role="status">
-          <p className="text-neutral-800">{labels.noResults}</p>
+          {/* "try a shorter word" is wrong advice when the word matched fine and the
+              category filter is what removed it. */}
+          {hiddenByFilter === 0 && <p className="text-neutral-800">{labels.noResults}</p>}
           {hiddenByFilter > 0 && (
             <>
               <p className="mt-1 text-sm text-neutral-700">
@@ -98,7 +102,12 @@ export function ContentSearch({ entries, labels }: { entries: SearchEntry[]; lab
               </p>
               <button
                 className="mt-3 rounded-md border border-brand-600 px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
-                onClick={() => setSection("all")}
+                onClick={() => {
+                  setSection("all");
+                  // the clicked button disappears with the empty-state box, so focus would
+                  // fall back to <body> and the next Tab would restart at the skip link
+                  document.getElementById("search-input")?.focus();
+                }}
                 type="button"
               >
                 {labels.showAll}
