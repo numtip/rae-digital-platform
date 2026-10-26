@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
-import { Sarabun } from "next/font/google";
+import localFont from "next/font/local";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { LOCALES, SITE_URL, getContent, isLocale } from "@/lib/i18n";
 import "../globals.css";
 
-// Self-hosted at build time by next/font — no runtime request to Google.
-const sarabun = Sarabun({
-  subsets: ["thai", "latin"],
-  weight: ["300", "400", "500", "600", "700"],
+// WOFF2 files committed under assets/fonts/sarabun (SIL OFL 1.1; provenance, conversion
+// command and per-file sha256 in SOURCE.md beside them). Loading from disk instead of
+// next/font/google keeps the build — and CI — working when Google cannot be reached, and the
+// four weights are the ones the site actually renders (no unused 300 face to download).
+const sarabun = localFont({
+  src: [
+    { path: "../../assets/fonts/sarabun/Sarabun-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../../assets/fonts/sarabun/Sarabun-Medium.woff2", weight: "500", style: "normal" },
+    { path: "../../assets/fonts/sarabun/Sarabun-SemiBold.woff2", weight: "600", style: "normal" },
+    { path: "../../assets/fonts/sarabun/Sarabun-Bold.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-sarabun",
   display: "swap",
 });

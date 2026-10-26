@@ -171,6 +171,7 @@ Draft PR → รายงานเช้า ห้าม merge/deploy เอง 
 | Original application source code — `app/ components/ lib/ scripts/ tests/` and the root build/config files | **Apache-2.0** ([LICENSE](LICENSE), the unmodified Apache text), licensed by the developer Prinya (GitHub: numtip), subject to any ownership agreement and to Maejo University's IP regulations |
 | University emblems and insignia, institutional branding, official documents, news, photographs, institutional content and media | **Excluded** — remain under Maejo University's or their rights holders' copyright |
 | Third-party components (443 packages, CI actions) | **Unchanged** — their own notices and licences apply; nothing here relicenses them |
+| Sarabun typeface — `assets/fonts/sarabun/*.woff2` | **SIL OFL 1.1** — third-party font, not covered by Apache-2.0; see [OFL.txt](assets/fonts/sarabun/OFL.txt) and [SOURCE.md](assets/fonts/sarabun/SOURCE.md) for origin, conversion and checksums |
 | `docs/`, research references, blueprints, translations, design assets | **Excluded** unless separately authorised in writing |
 
 **Declared vs verified.** [NOTICE](NOTICE) is deliberately split into three parts: **A** the
