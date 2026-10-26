@@ -128,7 +128,7 @@ export const en: SiteContent = {
     contactLabel: "Contact us",
     address: "63 Moo 4, Nong Han, San Sai, Chiang Mai 50290, Thailand",
     phone: "+66 53 873 400",
-    email: "rae@mju.ac.th",
+    email: "researchmju@mju.ac.th",
     rights: "All rights reserved",
   },
 };

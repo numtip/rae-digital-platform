@@ -125,7 +125,7 @@ export const th = {
     contactLabel: "ติดต่อเรา",
     address: "63 หมู่ 4 ตำบลหนองหาร อำเภอสันทราย จังหวัดเชียงใหม่ 50290",
     phone: "0 5387 3400",
-    email: "rae@mju.ac.th",
+    email: "researchmju@mju.ac.th",
     rights: "สงวนลิขสิทธิ์",
   },
 };
