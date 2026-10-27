@@ -78,9 +78,19 @@ test("a published article renders in both languages with its gallery", () => {
     const thaiItems = cmsNewsItems("th", dir);
     assert.equal(thaiItems[0].nid, "staging-real-20261027");
     assert.equal(thaiItems[0].title, article.titleTh);
-    assert.equal(thaiItems[0].image, null);
+    assert.equal(thaiItems[0].image.src, article.media[0].url);
+    assert.equal(thaiItems[0].image.alt, article.media[0].altTh);
+    // The card carries the first photo only; the gallery stays on the detail page.
+    assert.equal(cmsNewsItems("en", dir)[0].image.alt, article.media[0].altEn);
     assert.equal(cmsNewsItems("en", dir)[0].title, article.titleEn);
     assert.equal(cmsArticle("th", "no-such-id", dir), null);
+  });
+});
+
+test("an article without photos still gets a card, just without an image", () => {
+  withSite({ articles: [{ ...article, media: [] }] }, (dir) => {
+    assert.equal(cmsNewsItems("th", dir)[0].image, null);
+    assert.equal(cmsArticle("en", article.id, dir).gallery.length, 0);
   });
 });
 
@@ -105,6 +115,8 @@ test("a draft can never reach a page, even if it is in the data file", () => {
   withSite({ articles: [{ ...article, media: [{ ...article.media[0], url: "/etc/passwd" }] }] }, (dir) => {
     // Pinned to the export gate, which is the one that reads this url before the renderer sees it.
     assert.throws(() => cmsArticle("th", article.id, dir), /outside its own folder/);
+    // The card path checks the same rule, so a bad lead photo cannot reach an <img src> either.
+    assert.throws(() => cmsNewsItems("th", dir), /outside its own folder/);
   });
 });
 

@@ -1,14 +1,10 @@
-import { asset } from "@/lib/assets";
+import { asset, photoSources } from "@/lib/assets";
 
 // next/image cannot emit a srcset in this project: the Pages preview needs
 // `images.unoptimized`, and without the optimiser there is no srcset. So the three
-// pre-built WebP widths are offered directly. None of the widths needs the intrinsic
-// size because every call site fixes the aspect through CSS, which also keeps CLS
-// at zero while the file loads.
-function widths(src: string) {
-  const base = src.replace(/\.webp$/, "");
-  return { small: `${base}-320.webp`, medium: `${base}-640.webp`, large: src };
-}
+// pre-built WebP widths are offered directly when they exist (lib/assets.ts decides).
+// None of the widths needs the intrinsic size because every call site fixes the aspect
+// through CSS, which also keeps CLS at zero while the file loads.
 
 export function NewsImage({
   src,
@@ -23,7 +19,7 @@ export function NewsImage({
   className: string;
   eager?: boolean;
 }) {
-  const w = widths(src);
+  const w = photoSources(src);
   return (
     // eslint-disable-next-line @next/next/no-img-element -- see the comment above
     <img
@@ -33,8 +29,8 @@ export function NewsImage({
       fetchPriority={eager ? "high" : undefined}
       loading={eager ? "eager" : "lazy"}
       sizes={sizes}
-      src={asset(w.medium)}
-      srcSet={`${asset(w.small)} 320w, ${asset(w.medium)} 640w, ${asset(w.large)} 900w`}
+      src={asset(w.src)}
+      srcSet={w.candidates.length > 0 ? w.candidates.map((c) => `${asset(c.url)} ${c.width}w`).join(", ") : undefined}
     />
   );
 }

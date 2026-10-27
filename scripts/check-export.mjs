@@ -114,6 +114,14 @@ for (const file of htmlFiles) {
       if (!existsSync(join(OUT, rel.replace(/^\//, "")))) failures.push(`${page}: missing srcset asset ${url}`);
     }
   }
+  // The share card and the structured data must name the same image: they are read by different
+  // machines (a social scraper, a crawler) and they drifted once — the JSON-LD one carried the
+  // basePath twice, so every article advertised an image URL that 404s.
+  const ogImage = html.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
+  const ldImage = html.match(/"image":\["([^"]+)"\]/)?.[1];
+  if (ogImage && ldImage && ogImage !== ldImage) {
+    failures.push(`${page}: JSON-LD image ${ldImage} differs from og:image ${ogImage}`);
+  }
 }
 
 // TH/EN parity over the exported routes

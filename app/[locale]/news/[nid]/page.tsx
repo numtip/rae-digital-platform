@@ -61,7 +61,8 @@ export default async function NewsItemPage({ params }: Props) {
   if (!cms && !item) notFound();
 
   // The hand-typed archive and a published CMS item meet here, so the markup below reads one
-  // shape. A CMS item has no `type` (the export carries none) and no card-sized photo.
+  // shape. A CMS item has no `type` (the export carries none) and no lead photo of its own on the
+  // detail page — its photos are the gallery below.
   const view = {
     title: cms?.title ?? item?.title ?? "",
     type: item?.type ?? "",
@@ -108,7 +109,9 @@ export default async function NewsItemPage({ params }: Props) {
     inLanguage: cms ? locale : "th",
     mainEntityOfPage: { "@type": "WebPage", "@id": articleUrl },
     url: articleUrl,
-    image: socialImage ? [`${SITE_URL}${asset(socialImage)}`] : undefined,
+    // Absolute through SITE_URL alone: it already carries the Pages basePath, so `asset()` here
+    // doubled it and every article advertised an image that 404s. Same value as `og:image` above.
+    image: socialImage ? [`${SITE_URL}${socialImage}`] : undefined,
     publisher: { "@type": "Organization", name: getContent(locale).header.orgFull },
   };
 
