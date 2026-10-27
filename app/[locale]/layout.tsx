@@ -54,11 +54,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       locale: locale === "th" ? "th_TH" : "en_US",
       alternateLocale: locale === "th" ? ["en_US"] : ["th_TH"],
     },
-    twitter: {
-      card: "summary",
-      title: content.meta.title,
-      description: content.meta.description,
-    },
+    // Card title, description and image must follow the page too. Next fills them from
+    // each page's openGraph (falling back to its title/description), so only the parts
+    // that are true site-wide live here.
+    twitter: { card: "summary" },
   };
 }
 

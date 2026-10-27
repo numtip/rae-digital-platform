@@ -135,7 +135,8 @@ const routes = [...pages].length;
 
 // Share cards must describe the page they sit on. The layout used to hard-code
 // openGraph url/title/description to the locale home, so every shared subpage opened
-// the homepage; scope this to the URLs the site asks crawlers to index.
+// the homepage; scope this to the URLs the site asks crawlers to index. Twitter had the
+// same bug, so its title is held to the same rule.
 const sitemapLocs = [...readFileSync(join(OUT, "sitemap.xml"), "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map(
   (m) => m[1],
 );
@@ -149,9 +150,12 @@ for (const loc of sitemapLocs) {
   const html = readFileSync(file, "utf8");
   const ogUrl = (html.match(/<meta property="og:url" content="([^"]*)"/) || [])[1];
   const ogTitle = (html.match(/<meta property="og:title" content="([^"]*)"/) || [])[1] ?? "";
+  const twitterTitle = (html.match(/<meta name="twitter:title" content="([^"]*)"/) || [])[1] ?? "";
   const title = (html.match(/<title>([^<]*)<\/title>/) || [])[1] ?? "";
   if (ogUrl !== loc) failures.push(`${loc}: og:url is ${ogUrl ?? "(missing)"}`);
   if (!ogTitle || !title.startsWith(ogTitle)) failures.push(`${loc}: og:title "${ogTitle}" is not this page's title`);
+  if (!twitterTitle || !title.startsWith(twitterTitle))
+    failures.push(`${loc}: twitter:title "${twitterTitle || "(missing)"}" is not this page's title`);
 }
 
 // The not-found document is generated outside app/[locale]/, so no per-page check covers it.
