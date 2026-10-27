@@ -5,6 +5,11 @@ const ALLOWED = [
   { mime: "application/pdf", bytes: [0x25, 0x50, 0x44, 0x46] },
 ] as const;
 
+// Ids become directory names under the media root, so they are validated rather than trusted.
+export const SAFE_ID = /^[a-z0-9][a-z0-9-]{1,63}$/;
+// Uploads are named by the runtime (`01-1a2b3c4d.jpg`); anything else is not ours to read.
+export const SAFE_MEDIA_FILE = /^\d{2}-[0-9a-f]{8}\.(png|jpg|webp)$/;
+
 export class MediaRejected extends Error {
   constructor(message: string) {
     super(message);
