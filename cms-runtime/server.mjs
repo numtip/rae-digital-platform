@@ -1,5 +1,8 @@
 import { createServer } from "node:http";
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { assertArticleImage, extensionFor, MediaRejected } from "../lib/cms/media.ts";
 import { submitForReview, approveNews, publishNews, returnForRevision } from "../lib/cms/news-workflow.ts";
 import { publishedArticlesForExport } from "../lib/cms/publish.ts";
 import { requirePermission } from "../lib/cms/permissions.ts";
@@ -15,6 +18,7 @@ const users = new Map();
 const sessions = new Map();
 const articles = new Map();
 const audit = [];
+const media = new Map();
 const throttle = createLoginThrottle();
 
 export function hashPassword(password) {
@@ -27,6 +31,7 @@ export function resetRuntime() {
   throttle.reset();
   sessions.clear();
   articles.clear();
+  media.clear();
   audit.length = 0;
 }
 
@@ -68,6 +73,18 @@ function memoryRepository() {
     },
     async saveArticle(article) {
       articles.set(article.id, article);
+    },
+    async saveMedia(record) {
+      const list = (media.get(record.articleId) ?? []).filter((item) => item.id !== record.id);
+      list.push(record);
+      list.sort((a, b) => a.position - b.position);
+      media.set(record.articleId, list);
+    },
+    async listMedia(articleId) {
+      return [...(media.get(articleId) ?? [])];
+    },
+    async deleteMedia(articleId) {
+      media.delete(articleId);
     },
     async appendAudit(record) {
       audit.push(record);
@@ -113,10 +130,32 @@ async function actorFrom(request, now, repository) {
   return repository.findUser(session.userId);
 }
 
+// One image may be 8 MB, which is ~11 MB once base64 encoded; 12 MB leaves room for the captions
+// and rejects anything larger before it is buffered.
+export const MAX_REQUEST_BYTES = 12 * 1024 * 1024;
+
+class PayloadTooLarge extends Error {
+  constructor() {
+    super("the request body is larger than 12 MB");
+    this.name = "PayloadTooLarge";
+    this.status = 413;
+  }
+}
+
 function readBody(request) {
   return new Promise((resolve, reject) => {
+    const declared = Number(request.headers["content-length"] ?? 0);
+    if (declared > MAX_REQUEST_BYTES) return reject(new PayloadTooLarge());
     const chunks = [];
-    request.on("data", (chunk) => chunks.push(chunk));
+    let received = 0;
+    request.on("data", (chunk) => {
+      received += chunk.length;
+      if (received > MAX_REQUEST_BYTES) {
+        request.destroy();
+        return reject(new PayloadTooLarge());
+      }
+      chunks.push(chunk);
+    });
     request.on("end", () => {
       const raw = Buffer.concat(chunks).toString("utf8");
       if (!raw) return resolve({});
@@ -129,6 +168,17 @@ function readBody(request) {
   });
 }
 
+// A body arrives as an array of paragraphs or as text separated by blank lines; either way the
+// stored shape is one paragraph per element.
+function toParagraphs(value) {
+  if (value === undefined || value === null) return undefined;
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+  return String(value)
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+}
+
 function send(response, status, body, origin) {
   const headers = { "content-type": "application/json; charset=utf-8" };
   if (origin && /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(origin)) {
@@ -139,8 +189,69 @@ function send(response, status, body, origin) {
   response.end(JSON.stringify(body));
 }
 
+// Ids become directory names under the media root, so they are validated rather than trusted.
+export const SAFE_ID = /^[a-z0-9][a-z0-9-]{1,63}$/;
+// Uploads are named by the runtime (`01-1a2b3c4d.jpg`); anything else is not ours to read.
+export const SAFE_MEDIA_FILE = /^\d{2}-[0-9a-f]{8}\.(png|jpg|webp)$/;
+
 function articleId(pathname) {
-  return pathname.split("/")[3] ?? "";
+  const candidate = pathname.split("/")[3] ?? "";
+  return SAFE_ID.test(candidate) ? candidate : "";
+}
+
+function mediaRoot(env = process.env) {
+  return env.RAE_CMS_MEDIA_DIR ?? join(process.cwd(), ".cms-media");
+}
+
+// The preview is server-rendered HTML so the owner can look at a published article and its
+// gallery without the public site and without the admin desk. Loopback only, published items
+// only — a draft is never rendered here.
+function renderPreview(article, mediaList, locale) {
+  const thai = locale !== "en";
+  const title = thai ? article.titleTh : article.titleEn || article.titleTh;
+  const body = (thai ? article.bodyTh : article.bodyEn) ?? article.bodyTh ?? article.bodyEn ?? [];
+  const figure = mediaList
+    .map(
+      (item) => `<figure>
+        <img src="/v1/media/${article.id}/${item.filename}" alt="${escapeHtml((thai ? item.altTh : item.altEn) || title)}" loading="lazy" />
+        <figcaption>${escapeHtml((thai ? item.captionTh : item.captionEn) || "")}</figcaption>
+      </figure>`,
+    )
+    .join("\n");
+  return `<!doctype html><html lang="${thai ? "th" : "en"}"><head><meta charset="utf-8" />
+<title>${escapeHtml(title)} — CMS preview</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; font-family: system-ui, "Sarabun", sans-serif; background: #f6f7f5; color: #1f2937; }
+  header { background: #014d35; color: #fff; padding: 24px 16px; }
+  main { max-width: 56rem; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; line-height: 1.35; margin: 0 0 8px; }
+  .meta { font-size: .85rem; opacity: .85; }
+  .body p { font-size: 1.05rem; line-height: 1.75; }
+  .gallery { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); margin: 24px 0; }
+  figure { margin: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+  figure img { width: 100%; height: 180px; object-fit: cover; display: block; background: #e5e7eb; }
+  figcaption { font-size: .85rem; padding: 8px 10px; color: #4b5563; }
+  .badge { display: inline-block; background: #b98a2e; color: #1f2937; font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+  @media (max-width: 480px) { .gallery { grid-template-columns: 1fr; } figure img { height: 210px; } }
+</style></head>
+<body>
+<header>
+  <p class="meta"><span class="badge">CMS PREVIEW · STAGING</span></p>
+  <h1>${escapeHtml(title)}</h1>
+  <p class="meta">${escapeHtml(article.dateText ?? "")} · ${escapeHtml(article.source ?? "")}</p>
+</header>
+<main>
+  <div class="gallery">${figure}</div>
+  <div class="body">${body.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}</div>
+</main>
+</body></html>`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 }
 
 export function createCmsServer({ now = () => Date.now(), repository = memoryRepository() } = {}) {
@@ -174,6 +285,39 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         return send(response, 200, { token }, origin);
       }
 
+      if (request.method === "GET" && url.pathname.startsWith("/v1/media/")) {
+        const [, , , mediaArticleId, mediaFile] = url.pathname.split("/");
+        const owner = mediaArticleId ? await repo.getArticle(mediaArticleId) : null;
+        if (!owner || !mediaFile || !SAFE_MEDIA_FILE.test(mediaFile)) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        // A draft's images stay behind authentication; a published article's images are what the
+        // preview page and, later, the static import need.
+        if (owner.status !== "published" && !(await actorFrom(request, now(), repo))) {
+          return send(response, 404, { error: "NOT_FOUND" }, origin);
+        }
+        const files = await repo.listMedia(mediaArticleId);
+        const match = files.find((item) => item.filename === mediaFile);
+        if (!match) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        try {
+          const bytes = readFileSync(join(mediaRoot(), mediaArticleId, mediaFile));
+          response.writeHead(200, { "content-type": match.mime, "content-length": bytes.length, "cache-control": "private, max-age=60" });
+          response.end(bytes);
+        } catch {
+          send(response, 404, { error: "NOT_FOUND" }, origin);
+        }
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname.startsWith("/preview/")) {
+        const previewId = url.pathname.split("/")[2] ?? "";
+        const article = previewId ? await repo.getArticle(previewId) : null;
+        if (!article || article.status !== "published") return send(response, 404, { error: "NOT_FOUND" }, origin);
+        const mediaList = await repo.listMedia(previewId);
+        const html = renderPreview(article, mediaList, url.searchParams.get("lang") ?? "th");
+        response.writeHead(200, { "content-type": "text/html; charset=utf-8", "x-robots-tag": "noindex, nofollow" });
+        response.end(html);
+        return;
+      }
+
       const actor = await actorFrom(request, now(), repo);
       if (!actor) return send(response, 401, { error: "UNAUTHORIZED" }, origin);
 
@@ -184,6 +328,9 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
       if (request.method === "POST" && url.pathname === "/v1/news") {
         requirePermission(actor.role, "news:draft");
         const body = await readBody(request);
+        if (!SAFE_ID.test(String(body.id ?? ""))) {
+          return send(response, 400, { error: "INVALID_ID", message: "an id is 2-64 characters of a-z, 0-9 and -" }, origin);
+        }
         // Creating with an id that already exists would overwrite someone else's article and
         // reset its workflow state; a client that means to change one must PATCH it.
         if (await repo.getArticle(String(body.id))) {
@@ -197,6 +344,8 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
           titleTh: String(body.titleTh ?? ""),
           titleEn: String(body.titleEn ?? ""),
           source: String(body.source ?? ""),
+          bodyTh: toParagraphs(body.bodyTh),
+          bodyEn: toParagraphs(body.bodyEn),
         };
         await repo.saveArticle(article);
         await repo.appendAudit({ actorId: actor.id, action: "news.draft", entityType: "news", entityId: article.id });
@@ -220,6 +369,8 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
           titleEn: String(body.titleEn ?? current.titleEn),
           source: String(body.source ?? current.source),
           pinned: body.pinned === undefined ? current.pinned : Boolean(body.pinned),
+          bodyTh: body.bodyTh === undefined ? current.bodyTh : toParagraphs(body.bodyTh),
+          bodyEn: body.bodyEn === undefined ? current.bodyEn : toParagraphs(body.bodyEn),
         };
         await repo.saveArticle(next);
         await repo.appendAudit({ actorId: actor.id, action: "news.edit", entityType: "news", entityId: id });
@@ -259,13 +410,88 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         return send(response, 200, published, origin);
       }
 
+      // ---- media: ordered images for one article (author uploads, everyone reads) ----
+      if (request.method === "POST" && url.pathname === `/v1/news/${id}/media`) {
+        requirePermission(actor.role, "news:draft");
+        if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        if (current.authorId !== actor.id) {
+          return send(response, 403, { error: "PermissionDenied", message: "only the author can add images" }, origin);
+        }
+        if (current.status !== "draft") {
+          return send(response, 400, { error: "LOCKED", message: "images are added while the article is a draft" }, origin);
+        }
+        const body = await readBody(request);
+        let bytes;
+        try {
+          bytes = Buffer.from(String(body.dataBase64 ?? ""), "base64");
+        } catch {
+          return send(response, 400, { error: "MediaRejected", message: "the payload is not base64" }, origin);
+        }
+        let mime;
+        try {
+          mime = assertArticleImage(bytes.subarray(0, 16), bytes.length);
+        } catch (error) {
+          if (error instanceof MediaRejected) {
+            return send(response, 400, { error: "MediaRejected", message: error.message }, origin);
+          }
+          throw error;
+        }
+        if (!SAFE_ID.test(id)) return send(response, 400, { error: "INVALID_ID" }, origin);
+        const existing = await repo.listMedia(id);
+        if (existing.length >= 10) {
+          return send(response, 400, { error: "MediaRejected", message: "an article carries at most 10 images" }, origin);
+        }
+        const position = existing.length + 1;
+        const filename = `${String(position).padStart(2, "0")}-${randomUUID().slice(0, 8)}.${extensionFor(mime)}`;
+        const directory = join(mediaRoot(), id);
+        mkdirSync(directory, { recursive: true });
+        writeFileSync(join(directory, filename), bytes);
+        const record = {
+          id: randomUUID(),
+          articleId: id,
+          position,
+          filename,
+          mime,
+          bytes: bytes.length,
+          captionTh: String(body.captionTh ?? ""),
+          captionEn: String(body.captionEn ?? ""),
+          altTh: String(body.altTh ?? ""),
+          altEn: String(body.altEn ?? ""),
+        };
+        await repo.saveMedia(record);
+        await repo.appendAudit({ actorId: actor.id, action: "news.media", entityType: "news", entityId: id });
+        return send(response, 201, record, origin);
+      }
+
+      if (request.method === "GET" && url.pathname === `/v1/news/${id}/media`) {
+        if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        return send(response, 200, { media: await repo.listMedia(id) }, origin);
+      }
+
       if (request.method === "GET" && url.pathname === "/v1/export") {
-        return send(response, 200, { articles: publishedArticlesForExport(await repo.listArticles()) }, origin);
+        const published = publishedArticlesForExport(await repo.listArticles());
+        const withMedia = [];
+        for (const article of published) {
+          const files = await repo.listMedia(article.id);
+          withMedia.push({
+            ...article,
+            bodyTh: article.bodyTh ?? [],
+            bodyEn: article.bodyEn ?? [],
+            media: files.map((item) => ({
+              url: `/v1/media/${article.id}/${item.filename}`,
+              captionTh: item.captionTh,
+              captionEn: item.captionEn,
+              altTh: item.altTh,
+              altEn: item.altEn,
+            })),
+          });
+        }
+        return send(response, 200, { articles: withMedia }, origin);
       }
 
       return send(response, 404, { error: "NOT_FOUND" }, origin);
     } catch (error) {
-      const status = error?.status === 403 || error?.name === "PermissionDenied" ? 403 : 400;
+      const status = error?.status === 413 ? 413 : error?.status === 403 || error?.name === "PermissionDenied" ? 403 : 400;
       send(response, status, { error: error?.name ?? "ERROR", message: error?.message ?? "" }, request.headers.origin);
     }
   });
@@ -283,14 +509,18 @@ export async function startRuntime(env = process.env) {
   }
   const repository = await repositoryFromEnv(env);
   const port = Number(env.RAE_CMS_API_PORT ?? 3317);
+  // Loopback by default. Inside a container the listener has to cover the container's own
+  // interface, because a published port is forwarded to that address — the port is still
+  // published on 127.0.0.1 only, so nothing is reachable from outside the host.
+  const bind = env.RAE_CMS_API_BIND ?? "127.0.0.1";
   const server = createCmsServer({ repository });
-  await new Promise((resolve) => server.listen(port, "127.0.0.1", resolve));
-  return { server, repository, port };
+  await new Promise((resolve) => server.listen(port, bind, resolve));
+  return { server, repository, port, bind };
 }
 
 if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
-  const { port } = await startRuntime();
-  console.log(`cms-runtime listening on http://127.0.0.1:${port} (mysql)`);
+  const { port, bind } = await startRuntime();
+  console.log(`cms-runtime listening on http://${bind}:${port} (mysql)`);
 }
 
 export { submitForReview, approveNews, returnForRevision };

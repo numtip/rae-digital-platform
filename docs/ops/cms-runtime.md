@@ -31,7 +31,9 @@ appear in `/v1/export`.
 The service must have a database: `startRuntime()` throws when `RAE_CMS_DB_HOST` is missing, so
 an operator who forgets the environment gets an error instead of a desk that loses articles on
 restart. `createCmsServer()` on its own still defaults to the in-memory repository, which is what
-the tests use. The listener is always `127.0.0.1`.
+the tests use. The listener binds `127.0.0.1` by default. In the container it binds the container interface
+(`RAE_CMS_API_BIND=0.0.0.0`) because a published port is forwarded to that address — the host
+publishes it on `127.0.0.1` only, so the service stays private to the host.
 
 Prepared on the database host (not activated): `~/rae-cms-runtime/prepare-app.sh` refreshes a
 checkout and installs the one dependency the runtime needs, and

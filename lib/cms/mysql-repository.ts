@@ -10,6 +10,19 @@ import type { Session } from "./session.ts";
 
 export type CmsUser = { id: string; role: RoleName; passwordHash: string };
 
+export type MediaRecord = {
+  id: string;
+  articleId: string;
+  position: number;
+  filename: string;
+  mime: string;
+  bytes: number;
+  captionTh: string;
+  captionEn: string;
+  altTh: string;
+  altEn: string;
+};
+
 export type AuditRecord = {
   actorId: string;
   action: string;
@@ -28,6 +41,9 @@ export type Repository = {
   listArticles(): Promise<NewsRecord[]>;
   getArticle(id: string): Promise<NewsRecord | null>;
   saveArticle(article: NewsRecord): Promise<void>;
+  saveMedia(record: MediaRecord): Promise<void>;
+  listMedia(articleId: string): Promise<MediaRecord[]>;
+  deleteMedia(articleId: string): Promise<void>;
   appendAudit(record: AuditRecord): Promise<void>;
   listAudit(): Promise<AuditRecord[]>;
   close(): Promise<void>;
@@ -45,7 +61,15 @@ type ArticleRow = {
   source: string;
   revision_reason: string | null;
   returned_by: string | null;
+  body_th: string | null;
+  body_en: string | null;
 };
+
+const paragraphs = (value: string | null) =>
+  (value ?? "")
+    .split("\n\n")
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
 
 const toRecord = (row: ArticleRow): NewsRecord => ({
   id: row.id,
@@ -59,6 +83,8 @@ const toRecord = (row: ArticleRow): NewsRecord => ({
   source: row.source,
   revisionReason: row.revision_reason ?? undefined,
   returnedBy: row.returned_by ?? undefined,
+  bodyTh: paragraphs(row.body_th),
+  bodyEn: paragraphs(row.body_en),
 });
 
 export type MysqlConfig = {
@@ -139,12 +165,13 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
     async saveArticle(article) {
       await pool.query(
         `INSERT INTO news_articles
-           (id, status, pinned, author_id, reviewer_id, publisher_id, title_th, title_en, source, revision_reason, returned_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           (id, status, pinned, author_id, reviewer_id, publisher_id, title_th, title_en, source, revision_reason, returned_by, body_th, body_en)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            status = VALUES(status), pinned = VALUES(pinned), reviewer_id = VALUES(reviewer_id),
            publisher_id = VALUES(publisher_id), title_th = VALUES(title_th), title_en = VALUES(title_en),
-           source = VALUES(source), revision_reason = VALUES(revision_reason), returned_by = VALUES(returned_by)`,
+           source = VALUES(source), revision_reason = VALUES(revision_reason), returned_by = VALUES(returned_by),
+           body_th = VALUES(body_th), body_en = VALUES(body_en)`,
         [
           article.id,
           article.status,
@@ -157,8 +184,57 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
           article.source,
           article.revisionReason ?? null,
           article.returnedBy ?? null,
+          (article.bodyTh ?? []).join("\n\n"),
+          (article.bodyEn ?? []).join("\n\n"),
         ],
       );
+    },
+
+    async saveMedia(record) {
+      await pool.query(
+        `INSERT INTO news_media
+           (id, article_id, position, filename, mime, bytes, caption_th, caption_en, alt_th, alt_en)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           position = VALUES(position), filename = VALUES(filename), mime = VALUES(mime),
+           bytes = VALUES(bytes), caption_th = VALUES(caption_th), caption_en = VALUES(caption_en),
+           alt_th = VALUES(alt_th), alt_en = VALUES(alt_en)`,
+        [
+          record.id,
+          record.articleId,
+          record.position,
+          record.filename,
+          record.mime,
+          record.bytes,
+          record.captionTh,
+          record.captionEn,
+          record.altTh,
+          record.altEn,
+        ],
+      );
+    },
+
+    async listMedia(articleId) {
+      const [rows] = await pool.query("SELECT * FROM news_media WHERE article_id = ? ORDER BY position", [articleId]);
+      return (rows as {
+        id: string; article_id: string; position: number; filename: string; mime: string; bytes: number;
+        caption_th: string; caption_en: string; alt_th: string; alt_en: string;
+      }[]).map((row) => ({
+        id: row.id,
+        articleId: row.article_id,
+        position: row.position,
+        filename: row.filename,
+        mime: row.mime,
+        bytes: row.bytes,
+        captionTh: row.caption_th,
+        captionEn: row.caption_en,
+        altTh: row.alt_th,
+        altEn: row.alt_en,
+      }));
+    },
+
+    async deleteMedia(articleId) {
+      await pool.query("DELETE FROM news_media WHERE article_id = ?", [articleId]);
     },
 
     async appendAudit(record) {
