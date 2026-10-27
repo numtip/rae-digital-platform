@@ -103,7 +103,8 @@ test("a draft can never reach a page, even if it is in the data file", () => {
     assert.throws(() => cmsNewsItems("en", dir), /not published/);
   });
   withSite({ articles: [{ ...article, media: [{ ...article.media[0], url: "/etc/passwd" }] }] }, (dir) => {
-    assert.throws(() => cmsArticle("th", article.id, dir), /outside public\/cms-published|bilingual/);
+    // Either gate may be the one that refuses it: the export gate, or the one the renderer applies.
+    assert.throws(() => cmsArticle("th", article.id, dir), /outside/);
   });
 });
 

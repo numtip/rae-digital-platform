@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { articlesFromExport, previewFiles, renderArticlePage, PreviewRejected } from "../lib/cms/preview-site.ts";
 
 // The static preview is the only path from the CMS to something a browser shows. These checks are
-// about what it refuses: a draft, a missing translation, an id that could escape the output folder.
+// about what it refuses: a draft, a missing translation, an id that could escape the output folder,
+// an image that is not this article's own file.
 
 const article = {
   id: "staging-real-20261027",
@@ -57,3 +58,33 @@ test("a draft, an unsafe id or a half-translated article is refused", () => {
   const noAlt = { ...article, media: [{ ...article.media[0], altEn: "" }] };
   assert.throws(() => articlesFromExport({ articles: [noAlt] }), /bilingual captions/);
 });
+
+// The preview downloads each image with an editor's token, so an image reference that is not this
+// article's own runtime file is refused rather than fetched: another folder could hold a draft's
+// photo, and a path that is not `/v1/media/<id>/NN-xxxxxxxx.ext` is not ours to read at all.
+test("an image that is not the article's own runtime file is refused", () => {
+  const withUrl = (url) => articlesFromExport({ articles: [{ ...article, media: [{ ...article.media[0], url }] }] });
+
+  assert.throws(() => withUrl("/v1/media/some-other-article/01-aaaaaaaa.jpg"), /outside its own folder/);
+  assert.throws(() => withUrl("/v1/media/staging-real-20261027/../../etc/passwd"), /outside its own folder/);
+  assert.throws(() => withUrl("/v1/media/staging-real-20261027/passwd.jpg"), /outside its own folder/);
+  assert.throws(() => withUrl("/v1/media/staging-real-20261027/01-aaaaaaaa.pdf"), /outside its own folder/);
+  assert.throws(() => withUrl("https://example.com/01-aaaaaaaa.jpg"), /outside its own folder/);
+  assert.throws(() => withUrl(""), /outside its own folder/);
+
+  // Both shapes the generator writes are accepted, so the gate runs again on its own site data.
+  assert.equal(withUrl("/v1/media/staging-real-20261027/01-aaaaaaaa.jpg").length, 1);
+  assert.equal(withUrl("/cms-published/staging-real-20261027/01-aaaaaaaa.webp").length, 1);
+});
+
+// The source is rendered as a link, so only a real https URL may become one.
+test("a source that is not https is shown as text, never as an href", () => {
+  const hostile = { ...article, source: "javascript:alert(1)" };
+  const page = renderArticlePage(hostile, "th");
+  assert.doesNotMatch(page, /href="javascript:/);
+  assert.match(page, /javascript:alert\(1\)/);
+
+  const missing = renderArticlePage({ ...article, source: "" }, "th");
+  assert.doesNotMatch(missing, /href=""/);
+});
+
