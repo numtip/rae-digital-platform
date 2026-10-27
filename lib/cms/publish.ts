@@ -15,6 +15,9 @@ export function publishedArticlesForExport(articles: NewsRecord[]) {
         // headline. Media references are added by the runtime, which owns the file layer.
         bodyTh: article.bodyTh ?? [],
         bodyEn: article.bodyEn ?? [],
+        // The export is the only carrier of the publication date: a consumer that sees null
+        // has to leave the date off rather than invent one.
+        publishedAt: article.publishedAt ?? null,
       };
     });
 }

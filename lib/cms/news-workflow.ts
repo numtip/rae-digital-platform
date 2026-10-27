@@ -19,6 +19,8 @@ export type NewsRecord = {
   /** Paragraphs, as published. Thai is the source of truth; English is a faithful translation. */
   bodyTh?: string[];
   bodyEn?: string[];
+  /** Set once, when the item transitions to published (ISO 8601). Never derived from an export. */
+  publishedAt?: string;
 };
 
 export class WorkflowError extends Error {
@@ -88,5 +90,5 @@ export function publishNews(article: NewsRecord, actor: { id: string; role: Role
     if (actor.id === article.authorId) throw new WorkflowError("a pinned item needs a publisher who is not the author");
     if (actor.id === article.reviewerId) throw new WorkflowError("a pinned item needs a publisher who is not the reviewer");
   }
-  return next(article, { status: "published", publisherId: actor.id });
+  return next(article, { status: "published", publisherId: actor.id, publishedAt: new Date().toISOString() });
 }
