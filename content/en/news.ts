@@ -36,7 +36,7 @@ export const enNews: NewsContent = {
   // named only when there is at least one (see content/th/news.ts).
   snapshotNote: (legacyCount: number, cmsCount: number) =>
     `${legacyCount} items from 2026-07-13 to 2026-10-06, newest first` +
-    (cmsCount > 0 ? `, plus ${cmsCount} published through the content management system` : "") +
+    (cmsCount > 0 ? `, plus ${cmsCount} additional news items` : "") +
     ` — new items always appear on the office website first.`,
   labels: {
     read: "Read the story",

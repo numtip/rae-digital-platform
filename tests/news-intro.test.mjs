@@ -11,7 +11,12 @@ import { cmsNewsItems } from "../lib/cms/published-site.ts";
 // legacy archive the copy was transcribed from — never the CMS items, which have their own dates —
 // and the CMS fragment disappears entirely when this build loaded none.
 
-const CMS_WORDS = /CMS|content management system|ระบบจัดการเนื้อหา/;
+// The owner's exact wording for the CMS fragment, per locale, and the phrasing it replaced.
+const fragment = {
+  th: (n) => `และข่าวเพิ่มเติมอีก ${n} รายการ`,
+  en: (n) => `plus ${n} additional news items`,
+};
+const OLD_WORDING = /CMS|content management system|ระบบจัดการเนื้อหา|มีข่าวเผยแพร่ใหม่/;
 
 const published = (n) => ({
   id: `cms-intro-${n}`,
@@ -40,11 +45,12 @@ function withCms(count, run) {
 
 test("the intro states the legacy range alone while no CMS item is loaded", () => {
   const absent = join(tmpdir(), "rae-news-intro-absent");
-  for (const news of [thNews, enNews]) {
-    assert.equal(cmsNewsItems("th", absent).length, 0);
+  for (const [locale, news] of Object.entries({ th: thNews, en: enNews })) {
+    assert.equal(cmsNewsItems(locale, absent).length, 0);
     const intro = news.snapshotNote(news.items.length, 0);
     assert.ok(intro.includes(String(news.items.length)), intro);
-    assert.doesNotMatch(intro, CMS_WORDS);
+    assert.doesNotMatch(intro, /และข่าวเพิ่มเติมอีก|additional news items/);
+    assert.doesNotMatch(intro, OLD_WORDING);
     // No "+ 0", no empty parentheses left behind by a hidden fragment.
     assert.doesNotMatch(intro, /\+/);
     assert.doesNotMatch(intro, /\(\s*\)/);
@@ -57,11 +63,11 @@ test("the intro states the legacy count and the CMS count when both have records
       const cmsCount = cmsNewsItems(locale, dir).length;
       assert.equal(cmsCount, 3);
       const intro = news.snapshotNote(news.items.length, cmsCount);
-      assert.match(intro, CMS_WORDS);
+      assert.ok(intro.includes(fragment[locale](cmsCount)), intro);
       assert.ok(intro.includes(String(news.items.length)), intro);
-      assert.ok(intro.includes(" 3 "), intro);
+      assert.doesNotMatch(intro, OLD_WORDING);
       // The legacy range stays in front of the CMS fragment.
-      assert.ok(intro.indexOf(String(news.items.length)) < intro.search(CMS_WORDS), intro);
+      assert.ok(intro.indexOf(String(news.items.length)) < intro.indexOf(fragment[locale](cmsCount)), intro);
     }
   });
 });

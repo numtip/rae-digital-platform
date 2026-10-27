@@ -33,7 +33,7 @@ export const thNews = {
   // named only when there is at least one, so a build without CMS data reads exactly as before.
   snapshotNote: (legacyCount: number, cmsCount: number) =>
     `รายการตั้งแต่วันที่ 13 กรกฎาคม ถึง 6 ตุลาคม 2569 (${legacyCount} รายการ เรียงใหม่สุดก่อน)` +
-    (cmsCount > 0 ? ` และมีข่าวเผยแพร่ใหม่ผ่านระบบจัดการเนื้อหาเพิ่มอีก ${cmsCount} รายการ` : "") +
+    (cmsCount > 0 ? ` และข่าวเพิ่มเติมอีก ${cmsCount} รายการ` : "") +
     ` — ข่าวใหม่เผยแพร่บนเว็บของหน่วยงานก่อนเสมอ`,
   labels: {
     read: "อ่านรายละเอียด",
