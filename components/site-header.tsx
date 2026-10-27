@@ -15,6 +15,11 @@ import { LOCALE_LABEL, NAV, getSearch, type Locale, type SiteContent } from "@/l
 const FOCUS_RING =
   "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold-500";
 
+// Every control in the header is at least 44x44, like the nav links already were. The
+// utility-bar links were 28x16 and 38x16 at 375px and the menu button 40x40, so the two
+// controls a phone reader actually taps sat below the target size the rest of the site uses.
+const TAP_TARGET = "inline-flex min-h-11 min-w-11 items-center justify-center";
+
 function NavLink({
   item,
   current,
@@ -94,7 +99,7 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: SiteC
           <span className="text-neutral-400" aria-hidden="true">|</span>
           {/* The utility bar is where the blueprint puts search. The full input lives here
               because the main row has no room for it once the nav carries eight sections. */}
-          <Link className={`${FOCUS_RING} hover:text-gold-500 sm:hidden`} href={`/${locale}/search`}>
+          <Link className={`${TAP_TARGET} ${FOCUS_RING} hover:text-gold-500 sm:hidden`} href={`/${locale}/search`}>
             {getSearch(locale).hero.title}
           </Link>
           <form action={asset(`/${locale}/search/`)} className="relative hidden sm:block" method="get" role="search">
@@ -115,7 +120,7 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: SiteC
             hrefLang={other}
             lang={other}
             aria-label={`${content.header.languageLabel}: ${LOCALE_LABEL[other]}`}
-            className={`${FOCUS_RING} hover:text-gold-500`}
+            className={`${TAP_TARGET} ${FOCUS_RING} hover:text-gold-500`}
           >
             {LOCALE_LABEL[other]}
           </Link>
@@ -123,7 +128,7 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: SiteC
       </div>
 
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3">
-        <Link href={`/${locale}`} className={`flex items-center gap-3 ${FOCUS_RING}`}>
+        <Link href={`/${locale}`} className={`flex min-h-11 items-center gap-3 ${FOCUS_RING}`}>
           {/* Decorative: the wordmark beside it already names the office, so the
               emblem carries an empty alt instead of repeating the name twice. The file is
               transparent PNG with the surrounding text masked out, so it sits straight on
@@ -152,7 +157,7 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: SiteC
         </nav>
 
         <details className="lg:hidden" ref={menu}>
-          <summary className={`cursor-pointer list-none p-2 [&::-webkit-details-marker]:hidden ${FOCUS_RING}`}>
+          <summary className={`flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center [&::-webkit-details-marker]:hidden ${FOCUS_RING}`}>
             <span className="sr-only">{content.header.openMenu}</span>
             {MenuIcon}
           </summary>
