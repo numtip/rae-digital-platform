@@ -1,5 +1,5 @@
 import type { NewsRecord } from "./news-workflow.ts";
-import { SAFE_ID } from "./media.ts";
+import { SAFE_ID, SAFE_MEDIA_FILE } from "./media.ts";
 
 // A published-only bridge from the CMS runtime to static files. It exists so an editor can look at
 // what the public site would render without any draft reaching GitHub Pages: the script writes into
@@ -39,14 +39,26 @@ const escape = (value: string) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
+// The runtime names every article image itself (`/v1/media/<id>/NN-xxxxxxxx.ext`), and the preview
+// downloads it with an editor's token. So the export may only name this article's own file: another
+// article's folder could hold a draft's photo, and any other path is not ours to read.
+function isOwnMedia(id: string, url: unknown) {
+  const parts = String(url ?? "").split("/");
+  const file = parts.pop() ?? "";
+  const folder = parts.pop() ?? "";
+  const root = parts.join("/");
+  return (root === "/v1/media" || root === "/cms-published") && folder === id && SAFE_MEDIA_FILE.test(file);
+}
+
 // The export endpoint already filters to published items; this refuses anything that would still be
-// wrong to publish — an id that could escape the output directory, a missing translation, no body.
+// wrong to publish — an id that could escape the output directory, an image that is not this
+// article's own file, a missing translation, no body.
 export function assertPreviewable(item: PreviewArticle) {
   if (!SAFE_ID.test(item.id)) throw new PreviewRejected(`unsafe article id: ${item.id}`);
   if (!item.titleTh.trim() || !item.titleEn.trim()) throw new PreviewRejected(`${item.id} is missing a title in one language`);
   if (item.bodyTh.length === 0 || item.bodyEn.length === 0) throw new PreviewRejected(`${item.id} is missing a body in one language`);
   for (const media of item.media) {
-    if (!SAFE_ID.test(item.id)) throw new PreviewRejected(`unsafe media reference in ${item.id}`);
+    if (!isOwnMedia(item.id, media.url)) throw new PreviewRejected(`${item.id} points an image outside its own folder: ${media.url}`);
     if (!media.captionTh.trim() || !media.captionEn.trim() || !media.altTh.trim() || !media.altEn.trim()) {
       throw new PreviewRejected(`${item.id} has an image without bilingual captions or alt text`);
     }
@@ -69,11 +81,15 @@ export function renderArticlePage(item: PreviewArticle, locale: "th" | "en") {
     )
     .join("\n");
   const heading = thai ? item.titleTh : item.titleEn;
+  // The source is shown as a link, so only a real https URL becomes one — anything else stays text.
+  const source = /^https:\/\/\S/.test(item.source)
+    ? `<a href="${escape(item.source)}" rel="noreferrer">${escape(item.source)}</a>`
+    : escape(item.source);
   return page(heading, thai ? "th" : "en", `<article><h1>${escape(heading)}</h1>
 <p style="font-size:0.875rem;color:#525252">${escape(thai ? item.titleEn : item.titleTh)}</p>
 ${body}
 ${figures}
-<p style="font-size:0.875rem"><a href="${escape(item.source)}" rel="noreferrer">${escape(item.source)}</a></p>
+${item.source ? `<p style="font-size:0.875rem">${source}</p>` : ""}
 </article>`);
 }
 
