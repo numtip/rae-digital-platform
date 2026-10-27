@@ -42,8 +42,8 @@ const escape = (value: string) =>
 // The runtime names every article image itself (`/v1/media/<id>/NN-xxxxxxxx.ext`), and the preview
 // downloads it with an editor's token. So the export may only name this article's own file: another
 // article's folder could hold a draft's photo, and any other path is not ours to read.
-function isOwnMedia(id: string, url: string) {
-  const parts = url.split("/");
+function isOwnMedia(id: string, url: unknown) {
+  const parts = String(url ?? "").split("/");
   const file = parts.pop() ?? "";
   const folder = parts.pop() ?? "";
   const root = parts.join("/");
@@ -51,7 +51,8 @@ function isOwnMedia(id: string, url: string) {
 }
 
 // The export endpoint already filters to published items; this refuses anything that would still be
-// wrong to publish — an id that could escape the output directory, a missing translation, no body.
+// wrong to publish — an id that could escape the output directory, an image that is not this
+// article's own file, a missing translation, no body.
 export function assertPreviewable(item: PreviewArticle) {
   if (!SAFE_ID.test(item.id)) throw new PreviewRejected(`unsafe article id: ${item.id}`);
   if (!item.titleTh.trim() || !item.titleEn.trim()) throw new PreviewRejected(`${item.id} is missing a title in one language`);
@@ -81,7 +82,7 @@ export function renderArticlePage(item: PreviewArticle, locale: "th" | "en") {
     .join("\n");
   const heading = thai ? item.titleTh : item.titleEn;
   // The source is shown as a link, so only a real https URL becomes one — anything else stays text.
-  const source = /^https:\/\//.test(item.source)
+  const source = /^https:\/\/\S/.test(item.source)
     ? `<a href="${escape(item.source)}" rel="noreferrer">${escape(item.source)}</a>`
     : escape(item.source);
   return page(heading, thai ? "th" : "en", `<article><h1>${escape(heading)}</h1>

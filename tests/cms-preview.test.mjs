@@ -71,10 +71,14 @@ test("an image that is not the article's own runtime file is refused", () => {
   assert.throws(() => withUrl("/v1/media/staging-real-20261027/01-aaaaaaaa.pdf"), /outside its own folder/);
   assert.throws(() => withUrl("https://example.com/01-aaaaaaaa.jpg"), /outside its own folder/);
   assert.throws(() => withUrl(""), /outside its own folder/);
+  // A malformed export answers the documented error, not a TypeError from the gate itself.
+  assert.throws(() => withUrl(null), PreviewRejected);
 
   // Both shapes the generator writes are accepted, so the gate runs again on its own site data.
   assert.equal(withUrl("/v1/media/staging-real-20261027/01-aaaaaaaa.jpg").length, 1);
   assert.equal(withUrl("/cms-published/staging-real-20261027/01-aaaaaaaa.webp").length, 1);
+  // ...and the own-folder rule holds on that second shape too.
+  assert.throws(() => withUrl("/cms-published/some-other-article/01-aaaaaaaa.jpg"), /outside its own folder/);
 });
 
 // The source is rendered as a link, so only a real https URL may become one.
@@ -86,5 +90,9 @@ test("a source that is not https is shown as text, never as an href", () => {
 
   const missing = renderArticlePage({ ...article, source: "" }, "th");
   assert.doesNotMatch(missing, /href=""/);
+
+  // A bare scheme is not a destination, so it stays text rather than linking to itself.
+  const bare = renderArticlePage({ ...article, source: "https://" }, "th");
+  assert.doesNotMatch(bare, /href="https:\/\/"/);
 });
 
