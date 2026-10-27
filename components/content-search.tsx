@@ -53,7 +53,17 @@ export function ContentSearch({ entries, labels }: { entries: SearchEntry[]; lab
         autoComplete="off"
         className="mt-2 w-full max-w-xl rounded-md border border-neutral-300 px-4 py-3 text-lg text-neutral-800 shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
         id="search-input"
-        onChange={(event) => setQuery(event.target.value)}
+        onChange={(event) => {
+          const value = event.target.value;
+          setQuery(value);
+          // The word also lives in the address bar, so a reload, a shared link and the
+          // language switcher all see the search the reader is looking at.
+          const url = new URL(window.location.href);
+          if (value) url.searchParams.set("q", value);
+          else url.searchParams.delete("q");
+          // Keep the router's own history state instead of clearing it.
+          window.history.replaceState(window.history.state, "", url);
+        }}
         placeholder={labels.placeholder}
         type="search"
         value={query}
