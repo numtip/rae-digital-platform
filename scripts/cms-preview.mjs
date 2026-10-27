@@ -13,6 +13,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { articlesFromExport, previewFiles } from "../lib/cms/preview-site.ts";
 import { SAFE_MEDIA_FILE } from "../lib/cms/media.ts";
+import { siteDataFile } from "../lib/cms/site-data.ts";
 
 const args = process.argv.slice(2);
 const value = (flag, fallback) => {
@@ -73,17 +74,8 @@ console.log("cms-preview: open index.html; nothing was deployed");
 
 if (siteData) {
   // Same export, two readers: the offline page opens images beside the article, the running site
-  // loads them from its own root. The file keeps the export's shape so its validation applies.
-  const data = {
-    generatedAt: new Date().toISOString(),
-    articles: articles.map((article) => ({
-      ...article,
-      media: article.media.map((media) => ({
-        ...media,
-        url: `/cms-published/${article.id}/${media.url.split("/").pop()}`,
-      })),
-    })),
-  };
-  await writeFile(join(siteData, "index.json"), JSON.stringify(data, null, 2), "utf8");
-  console.log(`cms-preview: site data → ${siteData} (git-ignored; run the dev server to review it)`);
+  // loads them from its own root. `scripts/cms-sync.mjs` is the publishing path (it also builds
+  // the resized card widths); this one is for looking at the data in `next dev`.
+  await writeFile(join(siteData, "index.json"), siteDataFile(articles), "utf8");
+  console.log(`cms-preview: site data → ${siteData}`);
 }

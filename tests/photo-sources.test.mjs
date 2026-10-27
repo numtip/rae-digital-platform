@@ -17,10 +17,20 @@ test("an archive photo offers the three widths that were actually exported", () 
   ]);
 });
 
+test("a photo the sync published as webp offers the three widths beside it", () => {
+  const photo = photoSources("/cms-published/staging-real-20261027/02-b2c3d4e5.webp");
+  assert.equal(photo.src, "/cms-published/staging-real-20261027/02-b2c3d4e5-640.webp");
+  assert.deepEqual(photo.candidates, [
+    { url: "/cms-published/staging-real-20261027/02-b2c3d4e5-320.webp", width: 320 },
+    { url: "/cms-published/staging-real-20261027/02-b2c3d4e5-640.webp", width: 640 },
+    { url: "/cms-published/staging-real-20261027/02-b2c3d4e5.webp", width: 900 },
+  ]);
+});
+
 test("a single-file photo is handed over as it is, with no invented widths", () => {
   for (const src of [
+    // A full-size upload: the sync had no resize CLI (or could not convert it), so no widths exist.
     "/cms-published/staging-real-20261027/01-a1b2c3d1.jpg",
-    "/cms-published/staging-real-20261027/02-b2c3d4e5.webp",
     "/images/brand/logo.png",
   ]) {
     const photo = photoSources(src);
