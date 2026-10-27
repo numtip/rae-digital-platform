@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { asset } from "@/lib/assets";
 import { LOCALE_LABEL, NAV, getSearch, type Locale, type SiteContent } from "@/lib/i18n";
@@ -68,7 +68,9 @@ function otherLocalePath(pathname: string, from: Locale, to: Locale): string {
 
 export function SiteHeader({ locale, content }: { locale: Locale; content: SiteContent }) {
   const pathname = usePathname();
+  const router = useRouter();
   const other: Locale = locale === "th" ? "en" : "th";
+  const switchHref = otherLocalePath(pathname, locale, other);
   // usePathname() drops the trailing slash that trailingSlash puts on the URL,
   // so the current-page test has to normalize before comparing.
   const path = pathname.replace(/\/+$/, "");
@@ -116,11 +118,19 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: SiteC
           </form>
           <span className="text-neutral-400" aria-hidden="true">|</span>
           <Link
-            href={otherLocalePath(pathname, locale, other)}
+            href={switchHref}
             hrefLang={other}
             lang={other}
             aria-label={`${content.header.languageLabel}: ${LOCALE_LABEL[other]}`}
             className={`${TAP_TARGET} ${FOCUS_RING} hover:text-gold-500`}
+            // A search word lives in ?q=, which usePathname() cannot see, so the plain
+            // href would open an empty search in the other locale. The href stays the
+            // prerendered page; the click carries the query string the reader has now.
+            onClick={(event) => {
+              if (!window.location.search) return;
+              event.preventDefault();
+              router.push(switchHref + window.location.search);
+            }}
           >
             {LOCALE_LABEL[other]}
           </Link>
