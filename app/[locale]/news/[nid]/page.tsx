@@ -47,7 +47,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: "article",
       // Resolves to this article's own canonical, not the locale home.
       url: "./",
-      images: cms?.gallery[0] ? [{ url: asset(cms.gallery[0].src) }] : item?.image ? [{ url: item.image.src }] : [],
+      // metadataBase already carries the Pages basePath, so pass the gallery's own path: routing it
+      // through `asset()` first produced `/rae-digital-platform/rae-digital-platform/cms-published/…`.
+      images: cms?.gallery[0] ? [{ url: cms.gallery[0].src }] : item?.image ? [{ url: item.image.src }] : [],
     },
   };
 }
