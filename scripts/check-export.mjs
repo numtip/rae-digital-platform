@@ -114,11 +114,32 @@ for (const page of [...pages].sort()) {
 
 const routes = [...pages].length;
 
+// Share cards must describe the page they sit on. The layout used to hard-code
+// openGraph url/title/description to the locale home, so every shared subpage opened
+// the homepage; scope this to the URLs the site asks crawlers to index.
+const sitemapLocs = [...readFileSync(join(OUT, "sitemap.xml"), "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map(
+  (m) => m[1],
+);
+for (const loc of sitemapLocs) {
+  const path = new URL(loc).pathname.replace(BASE, "").replace(/^\/|\/$/g, "");
+  const file = join(OUT, path, "index.html");
+  if (!existsSync(file)) {
+    failures.push(`sitemap: ${loc} has no exported page`);
+    continue;
+  }
+  const html = readFileSync(file, "utf8");
+  const ogUrl = (html.match(/<meta property="og:url" content="([^"]*)"/) || [])[1];
+  const ogTitle = (html.match(/<meta property="og:title" content="([^"]*)"/) || [])[1] ?? "";
+  const title = (html.match(/<title>([^<]*)<\/title>/) || [])[1] ?? "";
+  if (ogUrl !== loc) failures.push(`${loc}: og:url is ${ogUrl ?? "(missing)"}`);
+  if (!ogTitle || !title.startsWith(ogTitle)) failures.push(`${loc}: og:title "${ogTitle}" is not this page's title`);
+}
+
 // The not-found document is generated outside app/[locale]/, so no per-page check covers it.
 const notFound = readFileSync(join(OUT, "404.html"), "utf8");
 if (!/<title>[^<]+<\/title>/.test(notFound)) failures.push("404.html: no <title>");
 if (!/<meta name="robots" content="noindex"/.test(notFound)) failures.push("404.html: missing noindex");
-console.log(`check-export: ${htmlFiles.length} html files, ${routes} routes, ${internalLinks} internal refs, ${externalLinks} external links`);
+console.log(`check-export: ${htmlFiles.length} html files, ${routes} routes, ${internalLinks} internal refs, ${externalLinks} external links, ${sitemapLocs.length} share cards`);
 
 if (failures.length > 0) {
   console.error(`\ncheck-export FAILED with ${failures.length} problem(s):`);
