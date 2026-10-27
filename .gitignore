@@ -25,6 +25,9 @@ node_modules/
 .cms-media/
 # Static preview of published CMS articles (generated, never deployed)
 out-cms-preview/
+# Site data for CMS-published news, written by `scripts/cms-preview.mjs --site-data`.
+# Git-ignored on purpose: editorial content must never reach the tracked public site.
+/public/cms-published/
 /build/
 /dist/
 /coverage/

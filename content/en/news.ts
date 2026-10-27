@@ -46,6 +46,7 @@ export const enNews: NewsContent = {
     noOlder: "This is the oldest story in the archive",
     noNewer: "This is the newest story",
     navLabel: "Article navigation",
+    gallery: "Photos from this story",
     eventsLink: "See all events",
   },
   pagination: {

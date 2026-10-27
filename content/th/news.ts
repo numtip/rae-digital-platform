@@ -43,6 +43,7 @@ export const thNews = {
     noOlder: "ไม่มีข่าวเก่ากว่านี้แล้ว",
     noNewer: "นี่คือข่าวล่าสุดแล้ว",
     navLabel: "การนำทางระหว่างข่าว",
+    gallery: "ภาพประกอบข่าว",
     eventsLink: "ดูกิจกรรมทั้งหมด",
   },
   pagination: {
