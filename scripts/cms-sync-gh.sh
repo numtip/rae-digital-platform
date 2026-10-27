@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Publishes the synced CMS data as a pull request, because branch protection forbids pushing to
 # main. One branch, one PR, reused: every run rebuilds `cms/auto-sync` from origin/main and
-# force-pushes it, so the PR never needs a merge. When the export has not changed since the last
-# sync it exits 0 without a commit, a push or a PR.
+# force-pushes it. When the export has not changed it exits 0 without a commit, a push or a PR.
 #
 #   RAE_CMS_TOKEN_FILE=/path/to/token scripts/cms-sync-gh.sh [extra args for scripts/cms-sync.mjs]
 #
@@ -23,22 +22,34 @@ git worktree add --force -B cms/auto-sync "$wt" origin/main >/dev/null
 node "$wt/scripts/cms-sync.mjs" --out "$wt/public/cms-published" "$@"
 git -C "$wt" add -A -- public/cms-published
 
-# Compared against what is already on the branch, not only against main: a second run before the
-# PR is merged must not commit the same data again.
-base=origin/main
-if git -C "$repo" rev-parse --verify --quiet refs/remotes/origin/cms/auto-sync >/dev/null; then
-  base=origin/cms/auto-sync
-fi
-if git -C "$wt" diff --cached --quiet "$base" -- public/cms-published; then
-  echo "cms-sync-gh: no change since the last sync — nothing to push"
+# Nothing staged means the export matches what main already carries — the last sync merged and the
+# CMS has published nothing since. Exiting here is what keeps the cron log and CI quiet.
+if git -C "$wt" diff --cached --quiet -- public/cms-published; then
+  echo "cms-sync-gh: site data already matches main — nothing to push"
   exit 0
 fi
 
 git -C "$wt" commit --quiet -m "chore(cms): sync published articles"
+
+# The branch is always rebuilt from the current main, so after main moves it carries the same data
+# tree with a different parent. Push only when the data really differs, or when the branch no longer
+# contains main — otherwise every run would re-trigger CI on identical content. (Comparing against
+# the branch alone left the PR stranded and BEHIND forever once main moved past it.)
+if git -C "$repo" rev-parse --verify --quiet refs/remotes/origin/cms/auto-sync >/dev/null; then
+  if [ "$(git -C "$wt" rev-parse "HEAD^{tree}")" = "$(git -C "$repo" rev-parse "origin/cms/auto-sync^{tree}")" ] &&
+    git -C "$repo" merge-base --is-ancestor origin/main origin/cms/auto-sync; then
+    echo "cms-sync-gh: cms/auto-sync already carries this data on top of main — nothing to push"
+    exit 0
+  fi
+fi
+
 git -C "$wt" push --quiet --force-with-lease origin cms/auto-sync
 
-if gh pr view cms/auto-sync --json number >/dev/null 2>&1; then
-  echo "cms-sync-gh: updated the existing pull request for cms/auto-sync"
+# A merged pull request keeps its head branch, so "this branch has a PR" is not the same as "a PR is
+# waiting". Reuse it only while it is open; new commits after a merge need a new one.
+state=$(gh pr view cms/auto-sync --json state -q .state 2>/dev/null || echo NONE)
+if [ "$state" = "OPEN" ]; then
+  echo "cms-sync-gh: updated the open pull request for cms/auto-sync"
 else
   gh pr create --base main --head cms/auto-sync \
     --title "chore(cms): sync published articles" \
