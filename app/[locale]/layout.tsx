@@ -43,21 +43,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       canonical: `/${locale}/`,
       languages: { th: "/th/", en: "/en/", "x-default": "/th/" },
     },
-    // Social previews use the same verified copy — no invented taglines.
+    // Social previews use the same verified copy — no invented taglines. The card title,
+    // description and URL must describe the page being shared, so this block carries only
+    // what is true site-wide; Next takes og:title/og:description from each page's own
+    // metadata, and a hard-coded url here made every subpage advertise the locale home.
     openGraph: {
       type: "website",
       siteName: content.header.orgFull,
-      title: content.meta.title,
-      description: content.meta.description,
-      url: `/${locale}/`,
+      url: "./",
       locale: locale === "th" ? "th_TH" : "en_US",
       alternateLocale: locale === "th" ? ["en_US"] : ["th_TH"],
     },
-    twitter: {
-      card: "summary",
-      title: content.meta.title,
-      description: content.meta.description,
-    },
+    // Card title, description and image must follow the page too. Next fills them from
+    // each page's openGraph (falling back to its title/description), so only the parts
+    // that are true site-wide live here.
+    twitter: { card: "summary" },
   };
 }
 

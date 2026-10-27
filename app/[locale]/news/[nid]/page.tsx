@@ -45,6 +45,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       type: "article",
+      // Resolves to this article's own canonical, not the locale home.
+      url: "./",
       images: cms?.gallery[0] ? [{ url: asset(cms.gallery[0].src) }] : item?.image ? [{ url: item.image.src }] : [],
     },
   };
