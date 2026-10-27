@@ -23,9 +23,10 @@ export function NewsIndex({
   total: number;
   thaiTitles: Map<string, string>;
 }) {
-  // The intro states the size of the list it sits on, so a published CMS item, wherever it is
-  // paged to, is counted here rather than in a number baked into the copy.
-  const listed = news.items.length + cmsNewsItems(locale).length;
+  // The intro counts two real collections: the legacy archive the copy was transcribed from, and
+  // the CMS items this build actually loaded. The legacy date range only ever covers the former.
+  const legacyCount = news.items.length;
+  const cmsCount = cmsNewsItems(locale).length;
   return (
     <main id="main-content" tabIndex={-1}>
       <PageHero title={news.hero.title} lead={news.hero.lead} />
@@ -39,7 +40,7 @@ export function NewsIndex({
               { label: news.hero.title },
             ]}
           />
-          <p className="mb-6 text-sm text-neutral-600">{news.snapshotNote(listed)}</p>
+          <p className="mb-6 text-sm text-neutral-600">{news.snapshotNote(legacyCount, cmsCount)}</p>
           <p className="mb-6">
             <Link
               className="text-sm font-medium text-brand-600 underline underline-offset-2"

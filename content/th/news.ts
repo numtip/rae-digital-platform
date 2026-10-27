@@ -29,10 +29,12 @@ export const thNews = {
     title: "ข่าวสารและกิจกรรม",
     lead: "รวมข่าวกิจกรรม ข่าวประชาสัมพันธ์ และข่าวประกาศของสำนักวิจัยและบริการวิชาการ เรียงจากใหม่ไปเก่า",
   },
-  // The total is passed in from the entries the index actually lists, so a published CMS
-  // item cannot leave this line claiming a fixed legacy count.
-  snapshotNote: (count: number) =>
-    `รายการตั้งแต่วันที่ 13 กรกฎาคม ถึง 6 ตุลาคม 2569 (${count} รายการ เรียงใหม่สุดก่อน) — ข่าวใหม่เผยแพร่บนเว็บของหน่วยงานก่อนเสมอ`,
+  // The date range belongs to the legacy archive alone. A CMS item is counted separately and
+  // named only when there is at least one, so a build without CMS data reads exactly as before.
+  snapshotNote: (legacyCount: number, cmsCount: number) =>
+    `รายการตั้งแต่วันที่ 13 กรกฎาคม ถึง 6 ตุลาคม 2569 (${legacyCount} รายการ เรียงใหม่สุดก่อน)` +
+    (cmsCount > 0 ? ` และมีข่าวเผยแพร่ใหม่ผ่านระบบจัดการเนื้อหาเพิ่มอีก ${cmsCount} รายการ` : "") +
+    ` — ข่าวใหม่เผยแพร่บนเว็บของหน่วยงานก่อนเสมอ`,
   labels: {
     read: "อ่านรายละเอียด",
     published: "เผยแพร่เมื่อ",
