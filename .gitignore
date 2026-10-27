@@ -23,6 +23,8 @@ node_modules/
 /out/
 # Local CMS media when RAE_CMS_MEDIA_DIR is unset (tests use their own temp dir)
 .cms-media/
+# Static preview of published CMS articles (generated, never deployed)
+out-cms-preview/
 /build/
 /dist/
 /coverage/
