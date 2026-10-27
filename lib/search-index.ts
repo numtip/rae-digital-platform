@@ -122,7 +122,7 @@ export function buildSearchIndex(locale: Locale): SearchEntry[] {
   );
 
   const news = getNews(locale);
-  page(`${base}/news`, news.hero.title, join(news.hero.lead, news.snapshotNote, news.categories.items));
+  page(`${base}/news`, news.hero.title, join(news.hero.lead, news.snapshotNote(news.items.length), news.categories.items));
   page(`${base}/news/events`, news.events.hero.title, join(news.events.hero.lead, news.events.snapshotNote));
   const thaiNews = new Map(getNews("th").items.map((entry) => [entry.nid, entry.title]));
   news.items.forEach((entry) =>

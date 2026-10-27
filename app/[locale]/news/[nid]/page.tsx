@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { NewsImage } from "@/components/news-image";
 import { Breadcrumb, CARD, SourceLine } from "@/components/page-shell";
 import { asset } from "@/lib/assets";
-import { cmsArticle, publishedIds } from "@/lib/cms/published-site";
+import { cmsArticle, publicationStamp, publishedIds } from "@/lib/cms/published-site";
 import { SITE_URL, getContent, getNews, isLocale } from "@/lib/i18n";
 
 // One page per published item. Bodies are the office's own text (Thai); the
@@ -97,11 +97,12 @@ export default async function NewsItemPage({ params }: Props) {
   // routes carry their own language.
   const articleUrl = `${SITE_URL}/${locale}/news/${nid}/`;
   const socialImage = view.image?.src ?? cms?.gallery[0]?.src;
+  const published = publicationStamp(view.date, view.dateIso);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
     headline: view.title || title,
-    datePublished: view.dateIso || undefined,
+    datePublished: published?.datePublished,
     inLanguage: cms ? locale : "th",
     mainEntityOfPage: { "@type": "WebPage", "@id": articleUrl },
     url: articleUrl,
@@ -122,9 +123,9 @@ export default async function NewsItemPage({ params }: Props) {
           {!view.title && news.labels.headlineThaiOnly && (
             <p className="mt-2 text-sm text-neutral-300">{news.labels.headlineThaiOnly}</p>
           )}
-          {view.date ? (
+          {published ? (
             <p className="mt-3 text-neutral-200">
-              {news.labels.published}: {view.date}
+              {news.labels.published}: {published.date}
             </p>
           ) : null}
         </div>

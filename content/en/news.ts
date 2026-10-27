@@ -32,7 +32,9 @@ export const enNews: NewsContent = {
     title: "News and activities",
     lead: "Activity news, press releases and announcements from the office, newest first.",
   },
-  snapshotNote: "58 items from 2026-07-13 to 2026-10-06, newest first — new items always appear on the office website first.",
+  // Count comes from the entries the index actually lists (see content/th/news.ts).
+  snapshotNote: (count: number) =>
+    `${count} items from 2026-07-13 to 2026-10-06, newest first — new items always appear on the office website first.`,
   labels: {
     read: "Read the story",
     published: "Published",

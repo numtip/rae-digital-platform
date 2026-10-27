@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { assertNoPreviewDataOnBuild } from "../lib/cms/build-guard.ts";
-import { cmsArticle, cmsNewsItems, publishedIds } from "../lib/cms/published-site.ts";
+import { cmsArticle, cmsNewsItems, publicationStamp, publishedIds } from "../lib/cms/published-site.ts";
 import { PreviewRejected } from "../lib/cms/preview-site.ts";
 
 // The CMS -> site data bridge is only reachable when someone generated public/cms-published/.
@@ -31,7 +31,7 @@ const article = {
   bodyTh: [1, 2, 3].map((n) => paragraph(n, "ไทย")),
   bodyEn: [1, 2, 3].map((n) => paragraph(n, "English")),
   media: [1, 2, 3, 4, 5].map(media),
-  publishedAt: "2026-10-26T03:05:00.000Z",
+  publishedAt: "2026-10-26T18:16:32.000Z",
 };
 
 function withSite(payload, run) {
@@ -51,8 +51,10 @@ test("a published article renders in both languages with its gallery", () => {
     const thai = cmsArticle("th", "staging-real-20261027", dir);
     assert.equal(thai.title, article.titleTh);
     assert.deepEqual(thai.body, article.bodyTh);
-    // The CMS publication date, not the moment the copy was taken.
-    assert.equal(thai.date, "2026-10-26");
+    // The CMS publication instant, not the moment the copy was taken: 18:16 UTC is already the
+    // 27th in Bangkok, so the label is the office's day and the ISO stamp stays UTC.
+    assert.equal(thai.date, "27 ตุลาคม 2569");
+    assert.equal(thai.dateIso, "2026-10-26T18:16:32.000Z");
     assert.equal(thai.gallery.length, 5);
     assert.deepEqual(thai.gallery[0], {
       src: article.media[0].url,
@@ -62,6 +64,8 @@ test("a published article renders in both languages with its gallery", () => {
 
     const english = cmsArticle("en", "staging-real-20261027", dir);
     assert.equal(english.title, article.titleEn);
+    assert.equal(english.date, "27 October 2026");
+    assert.equal(english.dateIso, article.publishedAt);
     assert.deepEqual(english.body, article.bodyEn);
     assert.equal(english.gallery.length, 5);
     assert.deepEqual(english.gallery[4], {
@@ -103,6 +107,16 @@ test("a draft can never reach a page, even if it is in the data file", () => {
   });
 });
 
+test("a published date shows a Bangkok label and keeps the full ISO stamp for the JSON-LD", () => {
+  withSite({ generatedAt: "2026-10-27T03:00:00.000Z", articles: [article] }, (dir) => {
+    const cms = cmsArticle("th", article.id, dir);
+    const stamp = publicationStamp(cms.date, cms.dateIso);
+    assert.deepEqual(stamp, { date: "27 ตุลาคม 2569", datePublished: "2026-10-26T18:16:32.000Z" });
+    // Exactly what the page serialises: the label is formatted, datePublished is not.
+    assert.equal(JSON.stringify({ datePublished: stamp.datePublished }), '{"datePublished":"2026-10-26T18:16:32.000Z"}');
+  });
+});
+
 test("an export without a publication date leaves the date off instead of inventing one", () => {
   const undated = { ...article };
   delete undated.publishedAt;
@@ -112,9 +126,15 @@ test("an export without a publication date leaves the date off instead of invent
     assert.equal(thai.dateIso, "");
     assert.equal(cmsNewsItems("en", dir)[0].date, "");
     assert.equal(thai.gallery.length, 5, "the rest of the article still renders");
+    // No label at all — not an empty one — and no `datePublished` key once serialised.
+    assert.equal(publicationStamp(thai.date, thai.dateIso), null);
+    assert.equal(JSON.stringify({ datePublished: publicationStamp(thai.date, thai.dateIso)?.datePublished }), "{}");
   });
   withSite({ articles: [{ ...article, publishedAt: "published yesterday" }] }, (dir) => {
     assert.throws(() => cmsArticle("th", article.id, dir), /malformed publishedAt/);
+  });
+  withSite({ articles: [{ ...article, publishedAt: "2026-13-45T00:00:00.000Z" }] }, (dir) => {
+    assert.throws(() => cmsArticle("en", article.id, dir), /malformed publishedAt/);
   });
 });
 
