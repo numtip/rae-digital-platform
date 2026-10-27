@@ -144,6 +144,25 @@ public อ่านอย่างเดียว (read-only projection), admin 
 - ไม่ commit ความลับ (key/token/รหัส) — เก็บในไฟล์สิทธิ์ 0600 บนโฮสต์เท่านั้น
 - required check `build` ต้องรายงาน **ทุก** PR — PR ที่เป็นเอกสารล้วนให้ข้ามเฉพาะ step ของแอป ไม่ใช่ข้าม workflow
 
+## CMS → เว็บสาธารณะ (auto-sync)
+
+ข่าวที่เผยแพร่ใน CMS ขึ้นเว็บเองโดยไม่มีใครคัดลอกไฟล์ — CMS รันบน host เดียวกันแบบ loopback (127.0.0.1)
+และ **ไม่ถูกเปิดสู่สาธารณะ**; สิ่งที่เข้า git มีเพียงไฟล์ข้อมูลที่สร้างออกมา
+
+1. `node scripts/cms-sync.mjs` (หรือ `RAE_CMS_OUT=... node scripts/cms-sync.mjs`) — ดึง `GET /v1/export`,
+   ตรวจทุกบทความด้วย gate ตัวเดียวกับ preview (`lib/cms/preview-site.ts`), ย่อรูปเป็น WebP 900px พร้อม
+   ความกว้างการ์ด 320/640 แล้วเขียน `public/cms-published/` — **ข้อมูลและรูปถูก commit** เพราะ GitHub Pages
+   เสิร์ฟไฟล์ static (ผู้ build จึงต้องมีไฟล์อยู่ก่อน CI รัน). payload ที่เป็น draft, แปลไม่ครบ หรือ id
+   ไม่ปลอดภัย จะ exit ไม่เป็นศูนย์และไม่เขียนอะไรเลย
+2. `scripts/cms-sync-gh.sh` — รัน sync ใน worktree ชั่วคราว, commit เฉพาะไฟล์ใต้ `public/cms-published/`,
+   push branch `cms/auto-sync` (force-with-lease) และเปิด/อัปเดต PR ใบเดียวชื่อ
+   `chore(cms): sync published articles` (branch protection ห้าม push เข้า `main`). ถ้าไม่มีอะไรเปลี่ยน
+   จะ exit 0 โดยไม่ commit และไม่แตะ PR
+
+token อ่านจาก `RAE_CMS_TOKEN_FILE` (path ของไฟล์สิทธิ์ 0600) หรือ `RAE_CMS_TOKEN` เท่านั้น — ห้าม commit
+token หรือชื่อ host ลง repo. รูปย่อด้วย CLI ของเครื่อง (`magick`/`convert`/`ffmpeg`) ที่ตรวจตอนรัน;
+ถ้าเครื่องไม่มี จะ commit รูปเต็มขนาดแทน (การ์ดยังทำงาน แต่หนักกว่า)
+
 ## Nightly development
 
 แผน: ทำงานอัตโนมัติช่วง 01:00 และสรุปรายงานทาง Telegram 07:00 (Asia/Bangkok)

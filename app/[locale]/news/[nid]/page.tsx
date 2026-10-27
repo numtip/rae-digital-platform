@@ -11,8 +11,8 @@ import { SITE_URL, getContent, getNews, isLocale } from "@/lib/i18n";
 // English route shows that Thai text and says so, rather than pretending to have
 // a translation (ADR-0005).
 //
-// An item published through the CMS carries a real English body, and only exists in the
-// build when someone generated `public/cms-published/` locally — see lib/cms/published-site.ts.
+// An item published through the CMS carries a real English body, and exists in the build because
+// `scripts/cms-sync.mjs` commits it into `public/cms-published/` — see lib/cms/published-site.ts.
 
 type Props = { params: Promise<{ locale: string; nid: string }> };
 
@@ -177,7 +177,7 @@ export default async function NewsItemPage({ params }: Props) {
               <div className="mt-4 grid gap-6 sm:grid-cols-2">
                 {view.gallery.map((photo) => (
                   <figure key={photo.src}>
-                    {/* eslint-disable-next-line @next/next/no-img-element -- NewsImage's srcset points at pre-resized WebP variants these uploads do not have */}
+                    {/* eslint-disable-next-line @next/next/no-img-element -- the gallery is a fixed two-column grid, so one file per photo is enough here */}
                     <img alt={photo.alt} className="w-full rounded-lg object-cover shadow-sm" src={asset(photo.src)} />
                     <figcaption className="mt-2 text-sm text-neutral-600">{photo.caption}</figcaption>
                   </figure>

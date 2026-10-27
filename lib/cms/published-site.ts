@@ -1,13 +1,15 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { NewsItem } from "../../content/th/news.ts";
-import { PREVIEW_DATA_DIR } from "./build-guard.ts";
 import { articlesFromExport, PreviewRejected, type PreviewArticle } from "./preview-site.ts";
+import { PUBLISHED_SITE_DIR } from "./site-data.ts";
 
-// The bridge from a locally generated copy of the CMS export to the real news templates.
-// `scripts/cms-preview.mjs --site-data` writes `public/cms-published/`, which is git-ignored:
-// in CI the directory does not exist, so every function here returns nothing and the site
-// renders exactly the archive it always did. Nothing here can publish anything.
+// The bridge from the syndicated CMS export to the real news templates. `scripts/cms-sync.mjs`
+// writes `public/cms-published/`, which is committed: the CMS is not reachable from CI, so the
+// data has to be in the tree when the build runs. The file is validated again here, so a draft,
+// an unsafe id or a half-translated article stops the build instead of reaching a page.
+
+export { PUBLISHED_SITE_DIR };
 
 export type Locale = "th" | "en";
 
@@ -22,8 +24,6 @@ export type PublishedArticle = {
   body: string[];
   gallery: PublishedGalleryItem[];
 };
-
-export const PUBLISHED_SITE_DIR = PREVIEW_DATA_DIR;
 
 // Only files this project's own generator can have written: the id folder plus the runtime's
 // `NN-xxxxxxxx.ext` name. Anything else in the JSON is not something to put in an <img src>.
@@ -71,7 +71,7 @@ export function publishedIds(dir?: string): string[] {
   return readSite(dir).map((article) => article.id);
 }
 
-// One rule for every image the bridge emits: the export's media paths are the generator's own
+// One rule for every image the bridge emits: the export's media paths are the sync's own
 // `/cms-published/<id>/NN-xxxxxxxx.ext`, so anything else is not something to put in an <img src>.
 function photoSrc(article: PreviewArticle, url: string): string {
   if (!MEDIA_SRC.test(url)) throw new PreviewRejected(`${article.id} points an image outside ${PUBLISHED_SITE_DIR}`);
@@ -88,10 +88,8 @@ function toItem(locale: Locale, article: PreviewArticle): NewsItem {
     dateIso,
     type: "",
     body: locale === "th" ? article.bodyTh : article.bodyEn,
-    // The card shows the article's own lead photo. It is a single file, so lib/assets.ts hands it
-    // to the card without a srcset rather than naming widths that were never built.
-    // shortcut: the card loads the uploaded file at full size — no resized copy exists. Acceptable
-    // because this data never reaches a production build; resize when syndication becomes real.
+    // The sync publishes the lead photo at the same widths as the site's own photos (900px
+    // `.webp` plus its `-320`/`-640` copies), so the card is the shared NewsImage, not a fork.
     image: first ? { src: photoSrc(article, first.url), alt: locale === "th" ? first.altTh : first.altEn } : null,
   };
 }

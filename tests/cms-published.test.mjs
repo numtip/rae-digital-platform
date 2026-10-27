@@ -1,16 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { assertNoPreviewDataOnBuild } from "../lib/cms/build-guard.ts";
 import { cmsArticle, cmsNewsItems, publicationStamp, publishedIds } from "../lib/cms/published-site.ts";
 import { PreviewRejected } from "../lib/cms/preview-site.ts";
 
-// The CMS -> site data bridge is only reachable when someone generated public/cms-published/.
-// These checks are about the two cases that matter: the file is there and both languages render
-// with the gallery, and the file is absent so the site is exactly what CI builds.
+// The CMS -> site data bridge reads whatever `scripts/cms-sync.mjs` committed under
+// public/cms-published/. These checks are about the two cases that matter: the file is there and
+// both languages render with the gallery, and the file is absent so the site is what it always was.
 
 const paragraph = (n, lang) => `${lang} paragraph ${n}`;
 
@@ -78,11 +77,14 @@ test("a published article renders in both languages with its gallery", () => {
     const thaiItems = cmsNewsItems("th", dir);
     assert.equal(thaiItems[0].nid, "staging-real-20261027");
     assert.equal(thaiItems[0].title, article.titleTh);
+    // The card carries the article's own lead photo, which the sync publishes with the same
+    // `-320`/`-640` widths as the site's own news photos.
     assert.equal(thaiItems[0].image.src, article.media[0].url);
     assert.equal(thaiItems[0].image.alt, article.media[0].altTh);
-    // The card carries the first photo only; the gallery stays on the detail page.
+    // The gallery stays on the detail page.
     assert.equal(cmsNewsItems("en", dir)[0].image.alt, article.media[0].altEn);
     assert.equal(cmsNewsItems("en", dir)[0].title, article.titleEn);
+    assert.equal(cmsNewsItems("en", dir)[0].image.alt, article.media[0].altEn);
     assert.equal(cmsArticle("th", "no-such-id", dir), null);
   });
 });
@@ -151,26 +153,21 @@ test("an export without a publication date leaves the date off instead of invent
   });
 });
 
-test("a production build refuses to run with the local CMS preview data present", () => {
-  const dir = mkdtempSync(join(tmpdir(), "rae-cms-build-guard-"));
-  try {
-    writeFileSync(join(dir, "index.json"), "{}");
-    assert.throws(() => assertNoPreviewDataOnBuild(dir, true), /refusing a production build/);
-    // `next dev` is how the data gets reviewed, so development keeps working.
-    assert.doesNotThrow(() => assertNoPreviewDataOnBuild(dir, false));
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
-  }
-  // Absent folder: the shape of every CI build.
-  assert.doesNotThrow(() => assertNoPreviewDataOnBuild(join(tmpdir(), "rae-cms-build-guard-absent"), true));
-});
-
-test("nothing under public/cms-published can be committed, images included", () => {
+test("the tracked CMS data is exactly what the sync writes", () => {
   const git = (...args) => execFileSync("git", args, { encoding: "utf8" }).trim();
-  assert.equal(git("ls-files", "--", "public/cms-published"), "", "the folder must stay untracked");
-  // A negated (!) rule or a stray .gitkeep would defeat the directory exclude; check the files
-  // the generator actually writes, not only the folder.
-  for (const path of ["public/cms-published/index.json", "public/cms-published/staging-real-20261027/01-a1b2c3d1.jpg"]) {
-    assert.match(git("check-ignore", "-v", path), /^\.gitignore:/, `${path} must be ignored`);
+  const files = git("ls-files", "--", "public/cms-published").split("\n").filter(Boolean);
+  // The folder is committed (Pages serves static files), so the guard moves to the shape of what
+  // may enter it: one index and the sync's own image names, nothing else, ever.
+  for (const path of files) {
+    assert.match(
+      path,
+      /^public\/cms-published\/(index\.json|[a-z0-9][a-z0-9-]{1,63}\/\d{2}-[0-9a-f]{8}(-\d{3})?\.(png|jpg|webp))$/,
+      `${path} is not something the sync writes`,
+    );
   }
+  assert.notEqual(
+    spawnSync("git", ["check-ignore", "public/cms-published/index.json"], { stdio: "ignore" }).status,
+    0,
+    "the data must not be ignored",
+  );
 });

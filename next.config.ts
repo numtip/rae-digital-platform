@@ -1,14 +1,9 @@
 import type { NextConfig } from "next";
-import { assertNoPreviewDataOnBuild } from "./lib/cms/build-guard";
 
 // GitHub Pages preview build: static export served from /<repo>/.
 // Only the pages-preview workflow sets NEXT_PAGES_PREVIEW=1; CI and the future
 // production host build normally (no export), so server features stay available.
 const preview = process.env.NEXT_PAGES_PREVIEW === "1";
-
-// Neither the export nor a normal production build may carry the local CMS preview data:
-// it is git-ignored editorial copy, so its presence in a build is always an accident.
-assertNoPreviewDataOnBuild();
 
 // GitHub Pages keeps the default; VPS staging sets NEXT_PREVIEW_BASE_PATH=/rae-digital-staging.
 const previewBasePath =
