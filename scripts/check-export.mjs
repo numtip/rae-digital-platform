@@ -11,6 +11,9 @@
 //  5. the not-found document carries a <title> and stays noindex (it shipped with
 //     neither, because 404.html is built outside app/[locale]/ and no metadata export
 //     reached it)
+//  6. every control in the site header is a 44px tap target (the utility-bar links
+//     shipped 28x16 and 38x16 at 375px, and the menu button 40x40, while the nav links
+//     beside them were already 44px)
 //
 // Exit code 1 on any failure, so CI fails instead of shipping.
 
@@ -74,6 +77,22 @@ for (const file of htmlFiles) {
     if (href.startsWith("#")) continue; // in-page anchor, checked by the browser
     internalLinks++;
     if (!resolvePath(href)) failures.push(`${page}: broken internal link ${href}`);
+  }
+
+  // Every control in the header is a 44px tap target. The utility-bar search and language
+  // links were 28x16 and 38x16 at 375px — the two controls a phone reader taps first — and
+  // the icon-only menu button was 40x40, while the nav links beside them were already 44px.
+  const header = html.match(/<header[\s\S]*?<\/header>/)?.[0] ?? "";
+  for (const control of header.matchAll(/<(?:a|summary)\b[^>]*>/g)) {
+    if (!/class="[^"]*\bmin-h-11\b/.test(control[0])) {
+      failures.push(`${page}: header control under 44px tall, no min-h-11: ${control[0].slice(0, 90)}`);
+    }
+  }
+  // The menu button carries no visible text, so it needs the width as well as the height.
+  for (const summary of header.matchAll(/<summary\b[^>]*>/g)) {
+    if (!/class="[^"]*\bmin-w-11\b/.test(summary[0])) {
+      failures.push(`${page}: header menu button under 44px wide, no min-w-11`);
+    }
   }
 
   for (const m of html.matchAll(/src="([^"]+)"/g)) {
