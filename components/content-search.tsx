@@ -61,7 +61,8 @@ export function ContentSearch({ entries, labels }: { entries: SearchEntry[]; lab
           const url = new URL(window.location.href);
           if (value) url.searchParams.set("q", value);
           else url.searchParams.delete("q");
-          window.history.replaceState(null, "", url);
+          // Keep the router's own history state instead of clearing it.
+          window.history.replaceState(window.history.state, "", url);
         }}
         placeholder={labels.placeholder}
         type="search"

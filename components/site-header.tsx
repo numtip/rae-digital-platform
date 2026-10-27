@@ -126,7 +126,9 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: SiteC
             // A search word lives in ?q=, which usePathname() cannot see, so the plain
             // href would open an empty search in the other locale. The href stays the
             // prerendered page; the click carries the query string the reader has now.
+            // Modified clicks keep the browser's own behaviour (new tab / window).
             onClick={(event) => {
+              if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
               if (!window.location.search) return;
               event.preventDefault();
               router.push(switchHref + window.location.search);
