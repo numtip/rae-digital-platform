@@ -71,8 +71,16 @@ export function publishedIds(dir?: string): string[] {
   return readSite(dir).map((article) => article.id);
 }
 
+// One rule for every image the bridge emits: the export's media paths are the generator's own
+// `/cms-published/<id>/NN-xxxxxxxx.ext`, so anything else is not something to put in an <img src>.
+function photoSrc(article: PreviewArticle, url: string): string {
+  if (!MEDIA_SRC.test(url)) throw new PreviewRejected(`${article.id} points an image outside ${PUBLISHED_SITE_DIR}`);
+  return url;
+}
+
 function toItem(locale: Locale, article: PreviewArticle): NewsItem {
   const { date, dateIso } = dateOf(locale, article);
+  const first = article.media[0];
   return {
     nid: article.id,
     title: locale === "th" ? article.titleTh : article.titleEn,
@@ -80,9 +88,11 @@ function toItem(locale: Locale, article: PreviewArticle): NewsItem {
     dateIso,
     type: "",
     body: locale === "th" ? article.bodyTh : article.bodyEn,
-    // The news card reuses NewsImage, whose srcset points at pre-resized WebP variants this
-    // gallery does not have, so a published card carries no photo and falls back to the bar.
-    image: null,
+    // The card shows the article's own lead photo. It is a single file, so lib/assets.ts hands it
+    // to the card without a srcset rather than naming widths that were never built.
+    // shortcut: the card loads the uploaded file at full size — no resized copy exists. Acceptable
+    // because this data never reaches a production build; resize when syndication becomes real.
+    image: first ? { src: photoSrc(article, first.url), alt: locale === "th" ? first.altTh : first.altEn } : null,
   };
 }
 
@@ -99,13 +109,10 @@ export function cmsArticle(locale: Locale, id: string, dir?: string): PublishedA
     date,
     dateIso,
     body: locale === "th" ? article.bodyTh : article.bodyEn,
-    gallery: article.media.slice(0, 5).map((media) => {
-      if (!MEDIA_SRC.test(media.url)) throw new PreviewRejected(`${id} points an image outside ${PUBLISHED_SITE_DIR}`);
-      return {
-        src: media.url,
-        alt: locale === "th" ? media.altTh : media.altEn,
-        caption: locale === "th" ? media.captionTh : media.captionEn,
-      };
-    }),
+    gallery: article.media.slice(0, 5).map((media) => ({
+      src: photoSrc(article, media.url),
+      alt: locale === "th" ? media.altTh : media.altEn,
+      caption: locale === "th" ? media.captionTh : media.captionEn,
+    })),
   };
 }
