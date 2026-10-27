@@ -2,6 +2,7 @@ import Link from "next/link";
 import { NewsGrid } from "@/components/news-grid";
 import { Pagination } from "@/components/pagination";
 import { Breadcrumb, CARD, ExternalLink, PageHero, SourceLine } from "@/components/page-shell";
+import { cmsNewsItems } from "@/lib/cms/published-site";
 import { getContent, type Locale, type NewsContent, type NewsItem } from "@/lib/i18n";
 
 // Shared body of the news index: page 1 at /news/ and /news/page/N/ are the same
@@ -22,6 +23,10 @@ export function NewsIndex({
   total: number;
   thaiTitles: Map<string, string>;
 }) {
+  // The intro counts two real collections: the legacy archive the copy was transcribed from, and
+  // the CMS items this build actually loaded. The legacy date range only ever covers the former.
+  const legacyCount = news.items.length;
+  const cmsCount = cmsNewsItems(locale).length;
   return (
     <main id="main-content" tabIndex={-1}>
       <PageHero title={news.hero.title} lead={news.hero.lead} />
@@ -35,7 +40,7 @@ export function NewsIndex({
               { label: news.hero.title },
             ]}
           />
-          <p className="mb-6 text-sm text-neutral-600">{news.snapshotNote}</p>
+          <p className="mb-6 text-sm text-neutral-600">{news.snapshotNote(legacyCount, cmsCount)}</p>
           <p className="mb-6">
             <Link
               className="text-sm font-medium text-brand-600 underline underline-offset-2"

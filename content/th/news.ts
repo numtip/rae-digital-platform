@@ -29,7 +29,12 @@ export const thNews = {
     title: "ข่าวสารและกิจกรรม",
     lead: "รวมข่าวกิจกรรม ข่าวประชาสัมพันธ์ และข่าวประกาศของสำนักวิจัยและบริการวิชาการ เรียงจากใหม่ไปเก่า",
   },
-  snapshotNote: "รายการตั้งแต่วันที่ 13 กรกฎาคม ถึง 6 ตุลาคม 2569 (58 รายการ เรียงใหม่สุดก่อน) — ข่าวใหม่เผยแพร่บนเว็บของหน่วยงานก่อนเสมอ",
+  // The date range belongs to the legacy archive alone. A CMS item is counted separately and
+  // named only when there is at least one, so a build without CMS data reads exactly as before.
+  snapshotNote: (legacyCount: number, cmsCount: number) =>
+    `รายการตั้งแต่วันที่ 13 กรกฎาคม ถึง 6 ตุลาคม 2569 (${legacyCount} รายการ เรียงใหม่สุดก่อน)` +
+    (cmsCount > 0 ? ` และข่าวเพิ่มเติมอีก ${cmsCount} รายการ` : "") +
+    ` — ข่าวใหม่เผยแพร่บนเว็บของหน่วยงานก่อนเสมอ`,
   labels: {
     read: "อ่านรายละเอียด",
     published: "เผยแพร่เมื่อ",
@@ -43,6 +48,7 @@ export const thNews = {
     noOlder: "ไม่มีข่าวเก่ากว่านี้แล้ว",
     noNewer: "นี่คือข่าวล่าสุดแล้ว",
     navLabel: "การนำทางระหว่างข่าว",
+    gallery: "ภาพประกอบข่าว",
     eventsLink: "ดูกิจกรรมทั้งหมด",
   },
   pagination: {

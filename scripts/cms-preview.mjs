@@ -2,9 +2,12 @@
 // Turns the runtime's published-only export into static files you can open in a browser.
 //
 //   RAE_CMS_TOKEN=... node scripts/cms-preview.mjs [--api http://127.0.0.1:3317] [--out out-cms-preview]
+//   RAE_CMS_TOKEN=... node scripts/cms-preview.mjs --site-data public/cms-published
 //
 // The output is git-ignored and nothing here deploys, so no draft and no editorial draft ever
 // reaches GitHub Pages. Images are downloaded beside each article so the pages render offline.
+// `--site-data` additionally writes what the real news templates read at build time: a JSON file
+// plus the images it points at, into a folder the site serves at /cms-published.
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
@@ -19,6 +22,8 @@ const value = (flag, fallback) => {
 
 const api = value("--api", process.env.RAE_CMS_API ?? "http://127.0.0.1:3317");
 const out = resolve(value("--out", process.env.RAE_CMS_PREVIEW_DIR ?? "out-cms-preview"));
+const siteDataArg = value("--site-data", "");
+const siteData = siteDataArg ? resolve(siteDataArg) : null;
 const token = process.env.RAE_CMS_TOKEN ?? "";
 
 if (!token) {
@@ -45,7 +50,13 @@ for (const article of articles) {
     if (!file.ok) throw new Error(`cannot fetch ${media.url}: ${file.status}`);
     const path = join(out, article.id, "images", filename);
     await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, Buffer.from(await file.arrayBuffer()));
+    const bytes = Buffer.from(await file.arrayBuffer());
+    await writeFile(path, bytes);
+    if (siteData) {
+      const local = join(siteData, article.id, filename);
+      await mkdir(dirname(local), { recursive: true });
+      await writeFile(local, bytes);
+    }
     media.url = `images/${filename}`;
     images += 1;
   }
@@ -59,3 +70,20 @@ for (const file of previewFiles(articles)) {
 
 console.log(`cms-preview: ${articles.length} published articles, ${images} images → ${out}`);
 console.log("cms-preview: open index.html; nothing was deployed");
+
+if (siteData) {
+  // Same export, two readers: the offline page opens images beside the article, the running site
+  // loads them from its own root. The file keeps the export's shape so its validation applies.
+  const data = {
+    generatedAt: new Date().toISOString(),
+    articles: articles.map((article) => ({
+      ...article,
+      media: article.media.map((media) => ({
+        ...media,
+        url: `/cms-published/${article.id}/${media.url.split("/").pop()}`,
+      })),
+    })),
+  };
+  await writeFile(join(siteData, "index.json"), JSON.stringify(data, null, 2), "utf8");
+  console.log(`cms-preview: site data → ${siteData} (git-ignored; run the dev server to review it)`);
+}

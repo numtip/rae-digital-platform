@@ -4,7 +4,7 @@
 // on purpose: ADR-0005 says a missing translation is explicit and never
 // machine-guessed, so those items show the Thai headline with a stated notice, and
 // article bodies are always the Thai text as published.
-import { thNews, type NewsContent } from "../th/news";
+import { thNews, type NewsContent } from "../th/news.ts";
 
 // Whether a story has a photo is recorded once, in the Thai source of truth. Deriving
 // it here keeps the two locales from disagreeing — four items have no photo, and the
@@ -32,7 +32,12 @@ export const enNews: NewsContent = {
     title: "News and activities",
     lead: "Activity news, press releases and announcements from the office, newest first.",
   },
-  snapshotNote: "58 items from 2026-07-13 to 2026-10-06, newest first — new items always appear on the office website first.",
+  // The date range belongs to the legacy archive alone; CMS items are counted separately and
+  // named only when there is at least one (see content/th/news.ts).
+  snapshotNote: (legacyCount: number, cmsCount: number) =>
+    `${legacyCount} items from 2026-07-13 to 2026-10-06, newest first` +
+    (cmsCount > 0 ? `, plus ${cmsCount} additional news items` : "") +
+    ` — new items always appear on the office website first.`,
   labels: {
     read: "Read the story",
     published: "Published",
@@ -46,6 +51,7 @@ export const enNews: NewsContent = {
     noOlder: "This is the oldest story in the archive",
     noNewer: "This is the newest story",
     navLabel: "Article navigation",
+    gallery: "Photos from this story",
     eventsLink: "See all events",
   },
   pagination: {

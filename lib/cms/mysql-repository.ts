@@ -63,6 +63,7 @@ type ArticleRow = {
   returned_by: string | null;
   body_th: string | null;
   body_en: string | null;
+  published_at: Date | null;
 };
 
 const paragraphs = (value: string | null) =>
@@ -85,6 +86,7 @@ const toRecord = (row: ArticleRow): NewsRecord => ({
   returnedBy: row.returned_by ?? undefined,
   bodyTh: paragraphs(row.body_th),
   bodyEn: paragraphs(row.body_en),
+  publishedAt: row.published_at ? new Date(row.published_at).toISOString() : undefined,
 });
 
 export type MysqlConfig = {
@@ -163,15 +165,17 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
     },
 
     async saveArticle(article) {
+      // COALESCE on published_at: a save that carries no date must not erase the one publish set.
       await pool.query(
         `INSERT INTO news_articles
-           (id, status, pinned, author_id, reviewer_id, publisher_id, title_th, title_en, source, revision_reason, returned_by, body_th, body_en)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           (id, status, pinned, author_id, reviewer_id, publisher_id, title_th, title_en, source, revision_reason, returned_by, body_th, body_en, published_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            status = VALUES(status), pinned = VALUES(pinned), reviewer_id = VALUES(reviewer_id),
            publisher_id = VALUES(publisher_id), title_th = VALUES(title_th), title_en = VALUES(title_en),
            source = VALUES(source), revision_reason = VALUES(revision_reason), returned_by = VALUES(returned_by),
-           body_th = VALUES(body_th), body_en = VALUES(body_en)`,
+           body_th = VALUES(body_th), body_en = VALUES(body_en),
+           published_at = COALESCE(VALUES(published_at), published_at)`,
         [
           article.id,
           article.status,
@@ -186,6 +190,7 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
           article.returnedBy ?? null,
           (article.bodyTh ?? []).join("\n\n"),
           (article.bodyEn ?? []).join("\n\n"),
+          article.publishedAt ? new Date(article.publishedAt) : null,
         ],
       );
     },

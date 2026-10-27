@@ -171,13 +171,22 @@ test("the whole workflow persists through the HTTP runtime", { skip }, async () 
     assert.equal((await fetch(`${base}/v1/news/${PREFIX}n1/approve`, { method: "POST", headers: auth(reviewer) })).status, 200);
 
     const beforePublish = await (await fetch(`${base}/v1/export`, { headers: auth(reviewer) })).json();
-    assert.deepEqual(beforePublish.articles, [], "an approved item is not published yet");
+    // Scoped to this test's own id: the database may legitimately hold real published articles.
+    assert.deepEqual(
+      beforePublish.articles.filter((item) => item.id === `${PREFIX}n1`),
+      [],
+      "an approved item is not published yet",
+    );
 
     const published = await fetch(`${base}/v1/news/${PREFIX}n1/publish`, { method: "POST", headers: auth(publisher) });
     assert.equal(published.status, 200);
 
     const afterPublish = await (await fetch(`${base}/v1/export`, { headers: auth(reviewer) })).json();
-    assert.deepEqual(afterPublish.articles.map((item) => item.id), [`${PREFIX}n1`], "only the published item is exported");
+    assert.deepEqual(
+      afterPublish.articles.filter((item) => item.id.startsWith(PREFIX)).map((item) => item.id),
+      [`${PREFIX}n1`],
+      "only the published item is exported",
+    );
 
     // The session survives a new server object because it lives in the database.
     const freshRepository = await createMysqlRepository(db);
@@ -188,7 +197,16 @@ test("the whole workflow persists through the HTTP runtime", { skip }, async () 
       const stillIn = await fetch(`${restartedBase}/v1/news`, { headers: auth(officer) });
       assert.equal(stillIn.status, 200, "the session token is still valid after a restart");
       const articles = await (await stillIn.json()).articles;
-      assert.ok(articles.some((item) => item.id === `${PREFIX}n1` && item.status === "published"));
+      // publishedAt survives the pool: it is a column, not something rebuilt on read.
+      assert.ok(
+        articles.some(
+          (item) =>
+            item.id === `${PREFIX}n1` &&
+            item.status === "published" &&
+            /^\d{4}-\d{2}-\d{2}T/.test(item.publishedAt ?? ""),
+        ),
+        "the publication date is persisted",
+      );
     } finally {
       await new Promise((resolve) => restarted.close(resolve));
       await freshRepository.close();

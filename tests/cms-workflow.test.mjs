@@ -60,7 +60,10 @@ test("a reviewer returns an item with a reason and the author resubmits", () => 
 
   const approved = approveNews(resubmitted, reviewer);
   assert.equal(approved.status, "approved");
-  assert.equal(publishNews(approved, publisher).status, "published");
+  const released = publishNews(approved, publisher);
+  assert.equal(released.status, "published");
+  // The date the site shows is stamped when the item is published, never when it was exported.
+  assert.match(released.publishedAt, /^\d{4}-\d{2}-\d{2}T/);
 });
 
 test("returning needs a reason and a review role", () => {
@@ -275,6 +278,8 @@ test("draft, review and returned items never reach the public export", () => {
   ];
   const exported = publishedArticlesForExport(states);
   assert.deepEqual(exported.map((item) => item.id), ["p"]);
+  // A row published before the column existed exports null, not a stand-in date.
+  assert.equal(exported[0].publishedAt, null);
 });
 
 test("a duplicate id is rejected instead of overwriting the existing article", async () => {
