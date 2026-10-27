@@ -16,6 +16,9 @@ export type NewsRecord = {
   titleTh: string;
   titleEn: string;
   source: string;
+  /** Paragraphs, as published. Thai is the source of truth; English is a faithful translation. */
+  bodyTh?: string[];
+  bodyEn?: string[];
 };
 
 export class WorkflowError extends Error {

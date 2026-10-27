@@ -11,6 +11,7 @@ type Article = {
   id: string;
   status: string;
   revisionReason?: string;
+  media?: { filename: string; captionTh: string; captionEn: string; altTh: string; altEn: string }[];
   titleTh: string;
   titleEn: string;
   source: string;
@@ -49,6 +50,17 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
   const [selected, setSelected] = useState<Article | null>(null);
   const [message, setMessage] = useState<string>(copy.empty);
   const [reason, setReason] = useState("");
+  const [media, setMedia] = useState<Article["media"]>([]);
+
+  async function loadMedia(article: Article | null, nextToken = token) {
+    if (!article) {
+      setMedia([]);
+      return;
+    }
+    // The list is only a preview: the files themselves are served from the same loopback API.
+    const result = await api(apiBase, `/v1/news/${article.id}/media`, nextToken);
+    setMedia(result.ok ? (result.payload.media ?? []) : []);
+  }
 
   async function refresh(nextToken = token) {
     const result = await api(apiBase, "/v1/news", nextToken);
@@ -135,7 +147,10 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
               <button
                 className={`min-h-11 w-full rounded-md border px-3 text-left text-sm ${FOCUS}`}
                 type="button"
-                onClick={() => setSelected(item)}
+                onClick={() => {
+                  setSelected(item);
+                  void loadMedia(item);
+                }}
               >
                 {locale === "th" ? item.titleTh : item.titleEn} · {item.status}
               </button>
@@ -200,6 +215,29 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
           <p className="text-sm text-neutral-600">
             {copy.status}: {selected?.status ?? "—"}
           </p>
+          {(media?.length ?? 0) > 0 && (
+            <div className="mt-4">
+              <h4 className="text-sm font-bold" id="gallery">
+                {copy.gallery}
+              </h4>
+              <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3" aria-labelledby="gallery">
+                {(media ?? []).map((item) => (
+                  <li key={item.filename} className="rounded border border-neutral-200 bg-white p-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      alt={(locale === "th" ? item.altTh : item.altEn) || item.captionTh || copy.gallery}
+                      className="h-20 w-full rounded object-cover"
+                      src={`${apiBase}/v1/media/${selected?.id}/${item.filename}`}
+                    />
+                    <p className="mt-1 text-xs text-neutral-600">
+                      {(locale === "th" ? item.captionTh : item.captionEn) || "—"}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {selected?.revisionReason && (
             <p className="mt-2 text-sm text-neutral-700">
               {copy.revisionNote} {selected.revisionReason}

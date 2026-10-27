@@ -22,3 +22,29 @@ export function detectAllowedMedia(header: Uint8Array): (typeof ALLOWED)[number]
   }
   return match.mime;
 }
+
+// Article images: a narrower allow-list than the document registry, because a news gallery is
+// rendered to a browser and never meant to carry a PDF or an archive.
+export const MAX_ARTICLE_IMAGE_BYTES = 8 * 1024 * 1024;
+const IMAGE_MIMES = ["image/png", "image/jpeg", "image/webp"] as const;
+export type ArticleImageMime = (typeof IMAGE_MIMES)[number];
+
+const EXTENSION: Record<ArticleImageMime, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+};
+
+export function assertArticleImage(header: Uint8Array, size: number): ArticleImageMime {
+  if (size <= 0) throw new MediaRejected("the file is empty");
+  if (size > MAX_ARTICLE_IMAGE_BYTES) throw new MediaRejected("the image is larger than 8 MB");
+  const mime = detectAllowedMedia(header);
+  if (!(IMAGE_MIMES as readonly string[]).includes(mime)) {
+    throw new MediaRejected("a news gallery accepts png, jpeg or webp only");
+  }
+  return mime as ArticleImageMime;
+}
+
+export function extensionFor(mime: ArticleImageMime): string {
+  return EXTENSION[mime];
+}
