@@ -21,6 +21,8 @@ export type PreviewArticle = {
   bodyTh: string[];
   bodyEn: string[];
   media: PreviewMedia[];
+  /** When the CMS published it, ISO 8601. Absent while the runtime does not export one. */
+  publishedAt?: string;
 };
 
 export class PreviewRejected extends Error {
@@ -102,6 +104,8 @@ export function articlesFromExport(payload: { articles?: (Partial<PreviewArticle
       bodyTh: article.bodyTh ?? [],
       bodyEn: article.bodyEn ?? [],
       media: article.media ?? [],
+      // Kept absent rather than defaulted: a runtime without the column must not look dated.
+      publishedAt: article.publishedAt ? String(article.publishedAt) : undefined,
     };
     assertPreviewable(item);
     return item;

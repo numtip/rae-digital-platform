@@ -1,8 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { assertNoPreviewDataOnBuild } from "../lib/cms/build-guard.ts";
 import { cmsArticle, cmsNewsItems, publishedIds } from "../lib/cms/published-site.ts";
 import { PreviewRejected } from "../lib/cms/preview-site.ts";
 
@@ -29,6 +31,7 @@ const article = {
   bodyTh: [1, 2, 3].map((n) => paragraph(n, "ไทย")),
   bodyEn: [1, 2, 3].map((n) => paragraph(n, "English")),
   media: [1, 2, 3, 4, 5].map(media),
+  publishedAt: "2026-10-26T03:05:00.000Z",
 };
 
 function withSite(payload, run) {
@@ -48,7 +51,8 @@ test("a published article renders in both languages with its gallery", () => {
     const thai = cmsArticle("th", "staging-real-20261027", dir);
     assert.equal(thai.title, article.titleTh);
     assert.deepEqual(thai.body, article.bodyTh);
-    assert.equal(thai.date, "2026-10-27");
+    // The CMS publication date, not the moment the copy was taken.
+    assert.equal(thai.date, "2026-10-26");
     assert.equal(thai.gallery.length, 5);
     assert.deepEqual(thai.gallery[0], {
       src: article.media[0].url,
@@ -97,4 +101,43 @@ test("a draft can never reach a page, even if it is in the data file", () => {
   withSite({ articles: [{ ...article, media: [{ ...article.media[0], url: "/etc/passwd" }] }] }, (dir) => {
     assert.throws(() => cmsArticle("th", article.id, dir), /outside public\/cms-published|bilingual/);
   });
+});
+
+test("an export without a publication date leaves the date off instead of inventing one", () => {
+  const undated = { ...article };
+  delete undated.publishedAt;
+  withSite({ generatedAt: "2026-10-27T03:00:00.000Z", articles: [undated] }, (dir) => {
+    const thai = cmsArticle("th", article.id, dir);
+    assert.equal(thai.date, "");
+    assert.equal(thai.dateIso, "");
+    assert.equal(cmsNewsItems("en", dir)[0].date, "");
+    assert.equal(thai.gallery.length, 5, "the rest of the article still renders");
+  });
+  withSite({ articles: [{ ...article, publishedAt: "published yesterday" }] }, (dir) => {
+    assert.throws(() => cmsArticle("th", article.id, dir), /malformed publishedAt/);
+  });
+});
+
+test("a production build refuses to run with the local CMS preview data present", () => {
+  const dir = mkdtempSync(join(tmpdir(), "rae-cms-build-guard-"));
+  try {
+    writeFileSync(join(dir, "index.json"), "{}");
+    assert.throws(() => assertNoPreviewDataOnBuild(dir, true), /refusing a production build/);
+    // `next dev` is how the data gets reviewed, so development keeps working.
+    assert.doesNotThrow(() => assertNoPreviewDataOnBuild(dir, false));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+  // Absent folder: the shape of every CI build.
+  assert.doesNotThrow(() => assertNoPreviewDataOnBuild(join(tmpdir(), "rae-cms-build-guard-absent"), true));
+});
+
+test("nothing under public/cms-published can be committed, images included", () => {
+  const git = (...args) => execFileSync("git", args, { encoding: "utf8" }).trim();
+  assert.equal(git("ls-files", "--", "public/cms-published"), "", "the folder must stay untracked");
+  // A negated (!) rule or a stray .gitkeep would defeat the directory exclude; check the files
+  // the generator actually writes, not only the folder.
+  for (const path of ["public/cms-published/index.json", "public/cms-published/staging-real-20261027/01-a1b2c3d1.jpg"]) {
+    assert.match(git("check-ignore", "-v", path), /^\.gitignore:/, `${path} must be ignored`);
+  }
 });

@@ -101,7 +101,7 @@ export default async function NewsItemPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
     headline: view.title || title,
-    datePublished: view.dateIso,
+    datePublished: view.dateIso || undefined,
     inLanguage: cms ? locale : "th",
     mainEntityOfPage: { "@type": "WebPage", "@id": articleUrl },
     url: articleUrl,
@@ -122,9 +122,11 @@ export default async function NewsItemPage({ params }: Props) {
           {!view.title && news.labels.headlineThaiOnly && (
             <p className="mt-2 text-sm text-neutral-300">{news.labels.headlineThaiOnly}</p>
           )}
-          <p className="mt-3 text-neutral-200">
-            {news.labels.published}: {view.date}
-          </p>
+          {view.date ? (
+            <p className="mt-3 text-neutral-200">
+              {news.labels.published}: {view.date}
+            </p>
+          ) : null}
         </div>
       </section>
 
