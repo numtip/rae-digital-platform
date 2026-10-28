@@ -4,30 +4,43 @@ import { notFound } from "next/navigation";
 import { NewsImage } from "@/components/news-image";
 import { Breadcrumb, CARD, SourceLine } from "@/components/page-shell";
 import { asset } from "@/lib/assets";
-import { cmsArticle, publicationStamp, publishedIds } from "@/lib/cms/published-site";
-import { SITE_URL, getContent, getNews, isLocale } from "@/lib/i18n";
+import { liveNews } from "@/lib/cms/live";
+import { publicationStamp, publishedIds } from "@/lib/cms/published-site";
+import { SITE_URL, getContent, getNews, isLocale, type Locale } from "@/lib/i18n";
 
 // One page per published item. Bodies are the office's own text (Thai); the
 // English route shows that Thai text and says so, rather than pretending to have
 // a translation (ADR-0005).
 //
-// An item published through the CMS carries a real English body, and exists in the build because
-// `scripts/cms-sync.mjs` commits it into `public/cms-published/` — see lib/cms/published-site.ts.
+// Two kinds of id meet here: the transcribed archive in content/, and a story published through
+// the CMS. A CMS story can be published after this build ran, so `dynamicParams` stays at its
+// default — an id the build never saw renders on its first request. `revalidate` is the safety
+// net; the publish hook drops the cached render immediately.
+
+// Next reads segment config by static analysis, so this is the literal: it is NEWS_WINDOW.
+export const revalidate = 30;
 
 type Props = { params: Promise<{ locale: string; nid: string }> };
 
-export const dynamicParams = false;
-
 export function generateStaticParams() {
+  // The ids the site already holds are prerendered either way (the Pages preview cannot render on
+  // demand at all); on a server the list is not a closed set.
   const nids = new Set(getNews("th").items.map((item) => item.nid));
   for (const id of publishedIds()) nids.add(id);
   return [...nids].map((nid) => ({ nid }));
 }
 
+// The CMS is authoritative while it answers; the committed copy — minus the ids the publish hook
+// reported withdrawn — only stands in during an outage. An archive id is never in the CMS.
+async function publishedItem(locale: Locale, nid: string) {
+  const { items } = await liveNews(locale);
+  return items.find((item) => item.nid === nid) ?? null;
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, nid } = await params;
   if (!isLocale(locale)) notFound();
-  const cms = cmsArticle(locale, nid);
+  const cms = await publishedItem(locale, nid);
   const item = getNews(locale).items.find((entry) => entry.nid === nid);
   if (!cms && !item) notFound();
   const title = cms?.title ?? item?.title ?? nid;
@@ -57,7 +70,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function NewsItemPage({ params }: Props) {
   const { locale, nid } = await params;
   if (!isLocale(locale)) notFound();
-  const cms = cmsArticle(locale, nid);
+  const cms = await publishedItem(locale, nid);
   const news = getNews(locale);
   const item = cms ? undefined : news.items.find((entry) => entry.nid === nid);
   if (!cms && !item) notFound();

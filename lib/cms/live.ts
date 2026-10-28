@@ -1,6 +1,7 @@
 import { request as httpRequest } from "node:http";
 import type { NewsItem } from "../../content/th/news.ts";
-import { foldForSearch } from "../search-text.ts";
+import { SAFE_ID } from "./media.ts";
+import { isWithdrawn } from "./withdrawn.ts";
 import { articlesFromExport, type PreviewArticle } from "./preview-site.ts";
 import {
   articleView,
@@ -14,15 +15,21 @@ import {
 // import it: the pages and route handlers that call it run on the server, and the token is never
 // put in a response.
 //
-// The pilot's whole point: read the published set at request time from the runtime on loopback,
-// instead of a file that has to be committed and rebuilt. Every conversion rule (ids, image paths,
-// dates, bilingual copy) is the one lib/cms/published-site.ts already applies, so the live page
-// and the rebuilt page cannot disagree.
+// The point: read the published set at request time from the runtime on loopback, instead of a file
+// that has to be committed and rebuilt. Every conversion rule (ids, image paths, dates, bilingual
+// copy) is the one lib/cms/published-site.ts already applies, so the live page and the rebuilt page
+// cannot disagree.
+//
+// What is authoritative: the CMS. The committed copy under public/cms-published/ is a snapshot from
+// the last sync and is only a stand-in for an outage — which is why lib/cms/withdrawn.ts exists: a
+// story the office took down lives on in that snapshot, and the tombstone is what stops it coming
+// back. Every path below (list, detail, sitemap, the app's own media proxy) reads the set from here,
+// so filtering it here filters all of them.
 
-// One revalidation window for the whole pilot: the pages' `revalidate` and the CMS read's cache
-// entry. Publishing purges the tag, so a new article never waits the window out.
+// One revalidation window for the whole news surface: the pages' `revalidate` and the CMS read's
+// cache entry. Publishing purges the tag, so a new article never waits the window out.
 export const NEWS_WINDOW = 30;
-export const NEWS_TAG = "news-live";
+export const NEWS_TAG = "cms-news";
 
 /** The runtime answered nothing usable. Callers fall back to the last committed copy. */
 export class CmsUnavailable extends Error {
@@ -129,7 +136,13 @@ function toLive(locale: Locale, article: PreviewArticle): LiveNews {
 const newestFirst = (a: PreviewArticle, b: PreviewArticle) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
 
 function live(items: PreviewArticle[], locale: Locale): LiveNews[] {
-  return items.sort(newestFirst).map((article) => toLive(locale, publicArticle(article)));
+  // The tombstone is an instruction from the office, not a guess about the CMS: the export can
+  // still carry a story the hook already reported taken down, and it must not be rendered while
+  // that is true. Both readers (the live set and the committed fallback) pass through here.
+  return items
+    .filter((article) => !isWithdrawn(article.id))
+    .sort(newestFirst)
+    .map((article) => toLive(locale, publicArticle(article)));
 }
 
 /**
@@ -146,7 +159,7 @@ export async function publishedNews(locale: Locale): Promise<LiveNews[]> {
   }
 }
 
-/** The last committed export — what the rebuild path ships. The pilot's outage fallback. */
+/** The last committed export — what the rebuild path ships. The outage fallback. */
 export function cachedNews(locale: Locale): LiveNews[] {
   return live(siteArticles(), locale);
 }
@@ -165,15 +178,15 @@ export async function liveNews(locale: Locale): Promise<{ items: LiveNews[]; sta
   }
 }
 
-// Fresh search over the same live read. JSON only, so no query ever reaches markup.
-export const SEARCH_LIMIT = 20;
-
-export function searchNews(items: LiveNews[], query: string): LiveNews[] {
-  const needle = foldForSearch(query.trim());
-  if (!needle) return [];
-  return items
-    .filter((item) => foldForSearch(`${item.title} ${item.body.join(" ")}`).includes(needle))
-    .slice(0, SEARCH_LIMIT);
+/**
+ * The canonical list: the archive and the published set, one card per id, newest first. A live
+ * item wins a collision — the CMS is what the office actually published — and the archive keeps
+ * its own order among itself because both sides arrive newest-first.
+ */
+export function mergedNews(archive: NewsItem[], live: NewsItem[]): NewsItem[] {
+  const byId = new Map<string, NewsItem>();
+  for (const item of [...live, ...archive]) if (!byId.has(item.nid)) byId.set(item.nid, item);
+  return [...byId.values()].sort((a, b) => b.dateIso.localeCompare(a.dateIso));
 }
 
 /**
@@ -185,37 +198,55 @@ export function revalidateAuthorized(header: string | null, secret = process.env
 }
 
 /**
+ * The hook's optional body, `{withdrawn:[ids]}`. No body is a valid "something changed" ping;
+ * anything else that is not that shape is refused whole rather than half-applied, because a
+ * malformed withdrawal notice is the one thing that must never be guessed at.
+ */
+export function readWithdrawn(raw: string): { ok: true; ids: string[] } | { ok: false } {
+  if (!raw.trim()) return { ok: true, ids: [] };
+  let body: unknown;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    return { ok: false };
+  }
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return { ok: false };
+  const value = (body as { withdrawn?: unknown }).withdrawn;
+  if (value === undefined) return { ok: true, ids: [] };
+  // A publish hook names a story or two; a hundred ids in one call is not a withdrawal notice.
+  if (!Array.isArray(value) || value.length > 100) return { ok: false };
+  if (!value.every((id) => typeof id === "string" && SAFE_ID.test(id))) return { ok: false };
+  return { ok: true, ids: value as string[] };
+}
+
+/**
  * The GitHub Pages preview is a static export (`next.config.ts`), so it cannot run a route handler
  * on demand: each live route renders once there, against no runtime, and the pages it would serve
  * do not exist on Pages. Read at build time, not per request.
  */
 export const staticExportOnly = process.env.NEXT_PAGES_PREVIEW === "1";
 
-const xmlEscape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
 /**
- * The dynamic sitemap's body: both languages of every id, each naming the other — the same pair the
- * page head declares. `siteUrl` is passed in so this stays importable without the content layer.
+ * Sitemap entries for the published ids the archive does not already list, in both languages — the
+ * same pair the page head declares. `siteUrl` is passed in so this stays importable without the
+ * content layer, and the caller passes whatever `liveNews` gave it, so an outage lists the
+ * committed copy (minus tombstones) instead of an empty news section.
  */
-export function sitemapXml(items: Pick<LiveNews, "nid" | "dateIso">[], siteUrl: string): string {
-  const loc = (locale: Locale, nid: string) => `${siteUrl}/${locale}/news-live/${nid}/`;
-  const alternates = (nid: string) =>
-    `<xhtml:link rel="alternate" hreflang="th" href="${xmlEscape(loc("th", nid))}"/>` +
-    `<xhtml:link rel="alternate" hreflang="en" href="${xmlEscape(loc("en", nid))}"/>` +
-    `<xhtml:link rel="alternate" hreflang="x-default" href="${xmlEscape(loc("th", nid))}"/>`;
-  const entries = items
-    .flatMap((item) =>
-      (["th", "en"] as const).map(
-        (locale) =>
-          `<url><loc>${xmlEscape(loc(locale, item.nid))}</loc>` +
-          (item.dateIso ? `<lastmod>${xmlEscape(item.dateIso)}</lastmod>` : "") +
-          `${alternates(item.nid)}</url>`,
-      ),
-    )
-    .join("");
-  return (
-    `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">` +
-    `${entries}</urlset>`
-  );
+export function liveSitemap(items: Pick<LiveNews, "nid" | "dateIso">[], listed: Set<string>, siteUrl: string) {
+  return items
+    .filter((item) => !listed.has(item.nid))
+    .flatMap((item) => {
+      const languages = {
+        th: `${siteUrl}/th/news/${item.nid}/`,
+        en: `${siteUrl}/en/news/${item.nid}/`,
+        "x-default": `${siteUrl}/th/news/${item.nid}/`,
+      };
+      return (["th", "en"] as const).map((locale) => ({
+        url: languages[locale],
+        lastModified: item.dateIso || undefined,
+        changeFrequency: "yearly" as const,
+        priority: 0.4,
+        alternates: { languages },
+      }));
+    });
 }

@@ -1,9 +1,14 @@
 import { cmsBase, staticExportOnly } from "@/lib/cms/live";
 import { SAFE_ID, SAFE_MEDIA_FILE } from "@/lib/cms/media";
+import { isWithdrawn } from "@/lib/cms/withdrawn";
 
 // The browser cannot reach the CMS on loopback, so a published article's photo is read from the
 // runtime here and handed on. A published article's images need no token (the runtime only gates a
 // draft's), so this route carries none and a draft id cannot be fetched through it.
+//
+// A withdrawn story's photos are refused here as well as on its page: the CMS may still answer for
+// a file it has not deleted, and an image client that was left open would otherwise keep loading
+// the story it belongs to after the page is gone.
 //
 // shortcut: the bytes are proxied on every cache miss; put a CDN or a local cache in front when the
 // pilot goes past a handful of readers.
@@ -22,6 +27,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ nid
   const { nid, file } = await params;
   // Both are re-checked here: a path segment reaching the runtime is a trust boundary.
   if (!SAFE_ID.test(nid) || !SAFE_MEDIA_FILE.test(file)) return new Response(null, { status: 404 });
+  // Same 404 as a file that does not exist, so the answer says nothing about why.
+  if (isWithdrawn(nid)) return new Response(null, { status: 404 });
 
   let upstream: Response;
   try {

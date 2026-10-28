@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { NewsItem } from "../../content/th/news.ts";
 import { articlesFromExport, PreviewRejected, type PreviewArticle } from "./preview-site.ts";
 import { PUBLISHED_SITE_DIR } from "./site-data.ts";
+import { isWithdrawn } from "./withdrawn.ts";
 
 // The bridge from the syndicated CMS export to the real news templates. `scripts/cms-sync.mjs`
 // writes `public/cms-published/`, which is committed: the CMS is not reachable from CI, so the
@@ -35,14 +36,17 @@ type SiteData = { articles?: (Partial<PreviewArticle> & { status?: string })[] }
 
 const siteDir = (override?: string) => override ?? join(process.cwd(), PUBLISHED_SITE_DIR);
 
-/** The committed export, validated. The live pilot's fallback copy is the same list. */
+/** The committed export, validated. The live read's outage fallback is the same list. */
 export function siteArticles(override?: string): PreviewArticle[] {
   const file = join(siteDir(override), "index.json");
   if (!existsSync(file)) return [];
   const payload = JSON.parse(readFileSync(file, "utf8")) as SiteData;
   // The export's own gate runs over the file: a draft, an unsafe id or a half-translated
   // article throws here instead of reaching a page.
-  return articlesFromExport(payload);
+  // The committed file is a snapshot from the last sync, so it can still hold a story the CMS has
+  // since withdrawn. The tombstone is what keeps that copy from serving it again; filtering here
+  // means every reader of the file (list, detail, static params, outage fallback) obeys it.
+  return articlesFromExport(payload).filter((article) => !isWithdrawn(article.id));
 }
 
 // The export carries the publication instant in UTC, and it stays UTC — only the label is
@@ -81,7 +85,7 @@ function photoSrc(article: PreviewArticle, url: string): string {
   return url;
 }
 
-/** One article's list card. Shared by the committed copy and the live pilot. */
+/** One article's list card. Shared by the committed copy and the live read. */
 export function newsItemFrom(locale: Locale, article: PreviewArticle): NewsItem {
   const { date, dateIso } = dateOf(locale, article);
   const first = article.media[0];

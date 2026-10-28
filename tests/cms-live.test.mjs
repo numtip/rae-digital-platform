@@ -1,14 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import {
-  CmsUnavailable,
-  SEARCH_LIMIT,
-  publishedNews,
-  revalidateAuthorized,
-  searchNews,
-  sitemapXml,
-} from "../lib/cms/live.ts";
+import { CmsUnavailable, publishedNews, revalidateAuthorized } from "../lib/cms/live.ts";
 
 // The live pilot's two failure modes are the ones worth pinning down: a session that expires mid-run
 // (one re-login, never a loop) and a runtime that is simply not there (a typed error the page can
@@ -168,38 +161,4 @@ test("the revalidate hook only accepts the configured secret", () => {
   // No secret configured: nothing passes, not even an empty header.
   assert.equal(revalidateAuthorized("", ""), false);
   assert.equal(revalidateAuthorized(null, undefined), false);
-});
-
-test("the sitemap lists both languages for every published id", () => {
-  const xml = sitemapXml(
-    [
-      { nid: "live-pilot-20261028", dateIso: "2026-10-27T18:16:32.000Z" },
-      { nid: "live-pilot-20261020", dateIso: "2026-10-20T03:00:00.000Z" },
-    ],
-    "https://example.org/site",
-  );
-  for (const nid of ["live-pilot-20261028", "live-pilot-20261020"]) {
-    for (const locale of ["th", "en"]) {
-      assert.ok(xml.includes(`<loc>https://example.org/site/${locale}/news-live/${nid}/</loc>`), `${locale}/${nid} missing`);
-    }
-    assert.ok(xml.includes(`hreflang="x-default" href="https://example.org/site/th/news-live/${nid}/"`));
-  }
-  assert.equal(xml.match(/<url>/g).length, 4);
-  // Well-formed enough for a crawler: one root element, closed once.
-  assert.ok(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?><urlset'));
-  assert.ok(xml.endsWith("</urlset>"));
-});
-
-test("search matches the live set and stops at the cap", () => {
-  const items = Array.from({ length: SEARCH_LIMIT + 5 }, (_, index) => ({
-    nid: `item-${index}`,
-    title: `ประกาศทุนวิจัย ${index}`,
-    body: ["เนื้อหา"],
-  }));
-  const hits = searchNews(items, "ทุนวิจัย");
-  assert.equal(hits.length, SEARCH_LIMIT);
-  assert.equal(searchNews(items, "").length, 0);
-  // Case folded both ways, and a query that matches nothing is empty rather than everything.
-  assert.equal(searchNews([{ nid: "a", title: "Hearing on Quality", body: [] }], "QUALITY").length, 1);
-  assert.equal(searchNews(items, "ไม่มีคำนี้").length, 0);
 });

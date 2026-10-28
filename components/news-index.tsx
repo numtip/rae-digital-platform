@@ -15,6 +15,8 @@ export function NewsIndex({
   current,
   total,
   thaiTitles,
+  cmsCount: pageCmsCount,
+  stale,
 }: {
   locale: Locale;
   news: NewsContent;
@@ -22,11 +24,15 @@ export function NewsIndex({
   current: number;
   total: number;
   thaiTitles: Map<string, string>;
+  /** Items on this page that came from the CMS; the default is the committed copy's own count. */
+  cmsCount?: number;
+  /** The CMS could not be reached and this page shows the newest copy the site already holds. */
+  stale?: boolean;
 }) {
   // The intro counts two real collections: the legacy archive the copy was transcribed from, and
-  // the CMS items this build actually loaded. The legacy date range only ever covers the former.
+  // the CMS items this render actually loaded. The legacy date range only ever covers the former.
   const legacyCount = news.items.length;
-  const cmsCount = cmsNewsItems(locale).length;
+  const cmsCount = pageCmsCount ?? cmsNewsItems(locale).length;
   return (
     <main id="main-content" tabIndex={-1}>
       <PageHero title={news.hero.title} lead={news.hero.lead} />
@@ -41,6 +47,7 @@ export function NewsIndex({
             ]}
           />
           <p className="mb-6 text-sm text-neutral-600">{news.snapshotNote(legacyCount, cmsCount)}</p>
+          {stale ? <p className="mb-6 text-sm text-neutral-600">{news.labels.liveStale}</p> : null}
           <p className="mb-6">
             <Link
               className="text-sm font-medium text-brand-600 underline underline-offset-2"

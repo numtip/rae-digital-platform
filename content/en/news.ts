@@ -53,10 +53,9 @@ export const enNews: NewsContent = {
     navLabel: "Article navigation",
     gallery: "Photos from this story",
     eventsLink: "See all events",
-    // The live pilot (app/[locale]/news-live/): published straight from the CMS at request time.
-    liveNote: "This page lists the stories published in the CMS and asks it for the latest set every 30 seconds — no rebuild.",
+    // /news/ lists the stories published in the CMS as well as the archive. Only shown when the
+    // CMS could not be reached and the page is serving the newest copy the site already holds.
     liveStale: "The CMS cannot be reached right now, so this is the newest copy the site already holds.",
-    liveEmpty: "No story has been published in the CMS yet",
   },
   pagination: {
     label: "Pagination",

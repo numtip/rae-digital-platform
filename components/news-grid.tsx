@@ -10,14 +10,11 @@ export function NewsGrid({
   locale,
   labels,
   thaiTitles,
-  section = "news",
 }: {
   items: NewsItem[];
   locale: Locale;
   labels: NewsContent["labels"];
   thaiTitles: Map<string, string>;
-  /** The URL segment the cards link under; the live pilot lists the same cards at /news-live/. */
-  section?: "news" | "news-live";
 }) {
   return (
     <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -25,7 +22,7 @@ export function NewsGrid({
         const title = item.title || thaiTitles.get(item.nid) || item.nid;
         return (
           <li key={item.nid} className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
-            <Link className="group block" href={`/${locale}/${section}/${item.nid}`}>
+            <Link className="group block" href={`/${locale}/news/${item.nid}`}>
               {item.image ? (
                 <NewsImage
                   alt={item.image.alt || title}
