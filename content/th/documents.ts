@@ -39,7 +39,7 @@ export const thDocuments = {
       links: [
         { label: "คู่มือ", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=1925" },
         { label: "แบบฟอร์มศูนย์ความเป็นเลิศ", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=2605" },
-        { label: "แบบฟอร์มงานบริการวิชาการ", url: "https://rae.mju.ac.th/wtms_webpageAdminDetail.aspx?wID=2660" },
+        { label: "แบบฟอร์มงานบริการวิชาการ", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=2660" },
         { label: "แบบฟอร์มแหล่งทุนภายนอก", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=1930" },
         { label: "แบบฟอร์มงานคลินิคเทคโนโลยี", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=1931" },
       ],

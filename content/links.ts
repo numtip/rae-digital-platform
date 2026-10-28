@@ -2,6 +2,10 @@
 // https://rae.mju.ac.th/wtms_index.aspx?lang=th-TH on 2026-10-26.
 // Only HTTPS URLs that answered in that read-only check are published.
 // Labels live in content/<locale>/directory.ts (keyed by id). Do not duplicate hrefs in JSX.
+//
+// The Organic Agriculture Centre tile is deliberately absent: its only published address
+// (researchex.mju.ac.th/organicmju, still linked from the office's own index) answers 404 as of
+// 2026-10-29. Restore the tile when the office publishes a working address.
 
 export type LinkGroup = "systems" | "units" | "media" | "director" | "internal" | "knowledge" | "rooms" | "other";
 
@@ -24,7 +28,6 @@ export const LINKS: RegistryLink[] = [
   { id: "green-office", href: "https://goffice.mju.ac.th", group: "systems", featured: true, retrieved: "2026-10-26", source: "https://rae.mju.ac.th/wtms_index.aspx?lang=th-TH" },
   { id: "rspg", href: "https://rspg.mju.ac.th", group: "units", retrieved: "2026-10-26", source: "https://rae.mju.ac.th/wtms_index.aspx?lang=th-TH" },
   { id: "irb", href: "https://irb.mju.ac.th/", group: "units", retrieved: "2026-10-26", source: "https://rae.mju.ac.th/wtms_index.aspx?lang=th-TH" },
-  { id: "organic", href: "https://researchex.mju.ac.th/organicmju", group: "units", retrieved: "2026-10-26", source: "https://rae.mju.ac.th/wtms_index.aspx?lang=th-TH" },
   { id: "royal", href: "https://royal.mju.ac.th/wtms_index.aspx?lang=th-TH", group: "units", retrieved: "2026-10-26", source: "https://rae.mju.ac.th/wtms_index.aspx?lang=th-TH" },
   { id: "clinic", href: "https://www.facebook.com/clinic.MJU2022/", group: "units", retrieved: "2026-10-26", source: "https://rae.mju.ac.th/wtms_index.aspx?lang=th-TH" },
   { id: "maejo-vision", href: "https://maejovision.mju.ac.th/?cat=197", group: "media", retrieved: "2026-10-26", source: "https://rae.mju.ac.th/wtms_index.aspx?lang=th-TH" },

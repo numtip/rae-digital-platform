@@ -16,6 +16,14 @@ test("featured systems stay in the compact range", () => {
   assert.ok(featured >= 6 && featured <= 8, `featured=${featured}`);
 });
 
+// The documents page once published wtms_webpageAdminDetail.aspx, which exists only to
+// redirect to the public page — an admin path on a public site and one hop too many.
+test("no published outbound link uses an admin page path", () => {
+  for (const file of ["content/links.ts", "content/th/documents.ts", "content/en/documents.ts"]) {
+    assert.doesNotMatch(readFileSync(file, "utf8"), /AdminDetail\.aspx/, file);
+  }
+});
+
 test("staging_compose shifts arguments before docker compose", () => {
   const src = readFileSync("scripts/staging/lib/common.sh", "utf8");
   const fn = src.slice(src.indexOf("staging_compose()"));

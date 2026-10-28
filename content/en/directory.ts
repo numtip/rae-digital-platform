@@ -46,7 +46,6 @@ export const enDirectory: DirectoryContent = {
     "green-office": "Green Office",
     rspg: "RSPG Maejo",
     irb: "Research ethics committee (IRB)",
-    organic: "Organic Agriculture Centre",
     royal: "Royal initiative projects",
     clinic: "Technology clinic",
     "maejo-vision": "Maejo Vision Online",
