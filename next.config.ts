@@ -45,6 +45,11 @@ const nextConfig: NextConfig = {
             : [];
         },
       }),
+  // `trailingSlash` would answer every `/cms-api/...` call with a 308 first. Browsers keep the
+  // method and body across a 308, but the hop doubles every API call and any client that does not
+  // follow 308 for POST silently sees the redirect instead of the answer. Only the desk
+  // deployment (proxy configured) turns the normalisation off; the site's own builds keep it.
+  ...(cmsApiProxy ? { skipTrailingSlashRedirect: true } : {}),
   env: { NEXT_PUBLIC_BASE_PATH: basePath },
 };
 
