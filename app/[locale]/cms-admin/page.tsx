@@ -32,12 +32,10 @@ export default async function CmsAdmin({ params }: Props) {
           <h1 className="text-3xl font-bold text-neutral-800">{copy.title}</h1>
           <p className="mt-2 text-neutral-700">{copy.lead}</p>
         </header>
-        <section aria-labelledby="news-desk" className="rounded-lg border border-neutral-200 bg-white p-6">
-          <h2 className="mb-4 text-xl font-bold" id="news-desk">
-            {copy.news}
-          </h2>
-          <NewsDesk apiBase={process.env.NEXT_PUBLIC_CMS_API ?? "http://127.0.0.1:3317"} locale={locale} />
-        </section>
+        {/* The desk owns its own container: a login card before a session exists, the news desk
+            after. Wrapping it in a titled section put an empty editor on screen next to the login
+            form. */}
+        <NewsDesk apiBase={process.env.NEXT_PUBLIC_CMS_API ?? "http://127.0.0.1:3317"} locale={locale} />
       </div>
     </main>
   );
