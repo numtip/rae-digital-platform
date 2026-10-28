@@ -14,6 +14,8 @@
 //  6. every control in the site header is a 44px tap target (the utility-bar links
 //     shipped 28x16 and 38x16 at 375px, and the menu button 40x40, while the nav links
 //     beside them were already 44px)
+//  7. the search index does not index a document category as an item at /documents
+//     (it did, so the row appeared twice and the documents chip counted each twice)
 //
 // Exit code 1 on any failure, so CI fails instead of shipping.
 
@@ -164,6 +166,20 @@ for (const loc of sitemapLocs) {
   if (!ogTitle || !title.startsWith(ogTitle)) failures.push(`${loc}: og:title "${ogTitle}" is not this page's title`);
   if (!twitterTitle || !title.startsWith(twitterTitle))
     failures.push(`${loc}: twitter:title "${twitterTitle || "(missing)"}" is not this page's title`);
+}
+
+// The search index is serialised into the search page, and a document category was once
+// indexed twice: at its own page and again as an item at /documents, which duplicated the
+// row in the results and doubled the documents chip. Only "href" and "kind" are read —
+// "text" arrives as a flight reference, so the entries cannot be parsed as JSON.
+for (const locale of ["th", "en"]) {
+  const file = join(OUT, locale, "search", "index.html");
+  if (!existsSync(file)) continue;
+  const html = readFileSync(file, "utf8").replaceAll('\\"', '"');
+  const hubItems = html.match(new RegExp(`"href":"/${locale}/documents","kind":"item"`, "g")) ?? [];
+  if (hubItems.length > 0) {
+    failures.push(`/${locale}/search/: ${hubItems.length} search entries are items at /documents, not at their category page`);
+  }
 }
 
 // The not-found document is generated outside app/[locale]/, so no per-page check covers it.
