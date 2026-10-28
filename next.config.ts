@@ -10,6 +10,13 @@ const previewBasePath =
   process.env.NEXT_PREVIEW_BASE_PATH?.replace(/\/$/, "") || "/rae-digital-platform";
 const basePath = preview ? previewBasePath : "";
 
+// A server deployment can put the whole desk behind one hostname and let this process proxy the CMS
+// API on the same origin: NEXT_CMS_API_PROXY=http://127.0.0.1:13317 turns `/cms-api/*` into
+// `/v1/*` on the loopback runtime. Then the browser talks to one origin (no CORS), the API needs no
+// public hostname of its own, and one access policy covers the desk and the API together. Unset —
+// as in CI and on Pages — this adds nothing.
+const cmsApiProxy = process.env.NEXT_CMS_API_PROXY?.replace(/\/$/, "");
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   // `/th/` and `/en/` are the canonical form (issue #17), so `/th` redirects to
@@ -31,6 +38,11 @@ const nextConfig: NextConfig = {
             // browsers cache a permanent redirect hard.
             { source: "/", destination: "/th/", permanent: false },
           ];
+        },
+        async rewrites() {
+          return cmsApiProxy
+            ? [{ source: "/cms-api/:path*", destination: `${cmsApiProxy}/:path*` }]
+            : [];
         },
       }),
   env: { NEXT_PUBLIC_BASE_PATH: basePath },
