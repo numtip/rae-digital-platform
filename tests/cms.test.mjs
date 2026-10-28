@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import { createAuditLog } from "../lib/cms/audit.ts";
 import { assertSharePointFileUrl, DocumentLinkError } from "../lib/cms/documents.ts";
@@ -96,4 +97,24 @@ test("admin page is noindex and is not linked from the public home", () => {
   const home = readFileSync("app/[locale]/page.tsx", "utf8");
   assert.match(page, /index:\s*false/);
   assert.equal(home.includes("cms-admin"), false);
+});
+
+test("a fresh schema accepts a user: 002 relaxes users.email and nothing tightens it again", () => {
+  // The runtime inserts NULL for email (lib/cms/mysql-repository.ts) while 001 declares the column
+  // NOT NULL, so 002 is what makes a database built from the migrations able to hold a user. Losing
+  // it breaks every login on a fresh install, silently, which is why it is pinned here as text.
+  const dir = "cms-runtime/migrations";
+  const files = readdirSync(dir).filter((name) => name.endsWith(".sql")).sort();
+  assert.match(
+    readFileSync(join(dir, "002_runtime_alignment.sql"), "utf8"),
+    /ALTER TABLE users\s+MODIFY email VARCHAR\(255\) NULL/,
+    "002 must keep the ALTER that makes users.email nullable",
+  );
+  for (const name of files.filter((entry) => entry > "002_runtime_alignment.sql")) {
+    assert.doesNotMatch(
+      readFileSync(join(dir, name), "utf8"),
+      /email VARCHAR\(255\) NOT NULL/,
+      `${name} must not make users.email required again`,
+    );
+  }
 });

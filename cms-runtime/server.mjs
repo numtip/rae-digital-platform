@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { assertArticleImage, extensionFor, MediaRejected, SAFE_ID, SAFE_MEDIA_FILE } from "../lib/cms/media.ts";
 import { submitForReview, approveNews, publishNews, returnForRevision } from "../lib/cms/news-workflow.ts";
 import { publishedArticlesForExport } from "../lib/cms/publish.ts";
-import { requirePermission } from "../lib/cms/permissions.ts";
+import { hasPermission, requirePermission } from "../lib/cms/permissions.ts";
 import { hashSessionToken, isSessionExpired, openSession } from "../lib/cms/session.ts";
 import { FAILURE_WINDOW_MS, createLoginThrottle } from "../lib/cms/login-throttle.ts";
 import { createMysqlRepository } from "../lib/cms/mysql-repository.ts";
@@ -317,7 +317,13 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
       if (!actor) return send(response, 401, { error: "UNAUTHORIZED" }, origin);
 
       if (request.method === "GET" && url.pathname === "/v1/news") {
-        return send(response, 200, { articles: await repo.listArticles() }, origin);
+        const articles = await repo.listArticles();
+        // Drafts are the desk's working set. A caller without news:draft — the viewer role is
+        // the one that exists for this — gets exactly what the site shows, nothing more.
+        const visible = hasPermission(actor.role, "news:draft")
+          ? articles
+          : articles.filter((article) => article.status === "published");
+        return send(response, 200, { articles: visible }, origin);
       }
 
       if (request.method === "POST" && url.pathname === "/v1/news") {
