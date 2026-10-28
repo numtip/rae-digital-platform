@@ -4,7 +4,7 @@
 The committed `public/cms-published/` data carries one article, `quality-assurance-public-hearing-2026`;
 the earlier `staging-real-20261027` record is retired.
 
-## The open stack, in merge order (all draft, all CLEAN, waiting on the owner)
+## The open CMS stack, in merge order (all draft, all CLEAN, waiting on the owner)
 
 | PR | Branch | What it carries |
 |---|---|---|
@@ -24,14 +24,17 @@ without a rebuild.
 - The desk: the login card comes first, then the editor (#85); `/cms-api/*` is proxied on the
   desk's own origin (#83) with `skipTrailingSlashRedirect` gated on `NEXT_CMS_API_PROXY` (#84).
 - Syndication is live, not a proposal: the user crontab on 237 runs `~/bin/rae-cms-sync-cron.sh`
-  every 5 minutes, which lands regenerated `public/cms-published/` data as the reused
-  `cms/auto-sync` PR and merges it itself (#78, #79, #82; the runner compares against
-  `origin/main` and reuses a PR only while it is open — #81). `scripts/cms-preview.mjs` is now
+  every 5 minutes (that wrapper is on the host, not in this repo). The in-repo
+  `scripts/cms-sync-gh.sh` only lands regenerated `public/cms-published/` data as the reused
+  `cms/auto-sync` PR; the wrapper polls `build` and squash-merges that PR, which is why #79 and
+  #82 show `numtip` as the merger (#78, #81 changed the runner). `scripts/cms-preview.mjs` is now
   only a local eyeballing tool.
 - Search: one index entry per document category, at its own page (this branch). Before, every
-  category was also indexed against `/documents`, so a category search answered with a page that
-  does not list it ("งานวิจัย" returned 30 rows, one of them a dead end) and the documents chip
-  counted each category twice. Now 29 rows, chip 1.
+  category was also indexed against `/documents`: the same row appeared twice and its second copy
+  left the reader on the documents hub instead of the category page, while the documents section
+  counted 7 entries for 4 destinations. `งานวิจัย` returned 30 rows on the Pages build, 29 after;
+  the index carries 79 entries per locale before, 76 after (both locales always agreed — an
+  earlier count of 73/78 was an artefact of reading the flight payload as text).
 - Share cards: `og:image` carries the basePath once (#80).
 
 ## Next useful steps, in order
@@ -41,6 +44,4 @@ without a rebuild.
    runtime that writes the new columns.
 3. The desk still has no real staff accounts; one officer cannot walk draft → review → publish.
    The owner supplies names and roles — do not invent a roster.
-4. `lib/cms/build-guard.ts` has no importer left since the published data was committed. Deleting
-   it is safe once no open PR needs the module.
-5. Re-run `node scripts/qa-live.mjs` against the Pages origin after any merge that touches routes.
+4. Re-run `node scripts/qa-live.mjs` against the Pages origin after any merge that touches routes.
