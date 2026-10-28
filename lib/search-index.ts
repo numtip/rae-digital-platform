@@ -103,16 +103,12 @@ export function buildSearchIndex(locale: Locale): SearchEntry[] {
 
   const documents = getDocuments(locale);
   page(`${base}/documents`, documents.hero.title, join(documents.hero.lead, documents.note));
+  // One entry per category, at its own page: a second entry under the same title
+  // pointing at /documents answered a category search with a page that does not
+  // list it, and counted the category twice in the documents chip.
   documents.groups.forEach((group) =>
     page(`${base}/documents/category/${group.slug}`, group.title, join(group.links.map((link) => link.label))),
   );
-  documents.groups.forEach((group) => {
-    item(
-      `${base}/documents`,
-      group.title,
-      join(group.links.map((link) => link.label)),
-    );
-  });
 
   const knowledge = getKnowledge(locale);
   page(
