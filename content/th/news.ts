@@ -50,6 +50,10 @@ export const thNews = {
     navLabel: "การนำทางระหว่างข่าว",
     gallery: "ภาพประกอบข่าว",
     eventsLink: "ดูกิจกรรมทั้งหมด",
+    // The live pilot (app/[locale]/news-live/): published straight from the CMS at request time.
+    liveNote: "หน้านี้แสดงข่าวที่เผยแพร่แล้วจากระบบจัดการเนื้อหา โดยดึงข้อมูลใหม่ทุก 30 วินาที ไม่ต้องสร้างเว็บใหม่",
+    liveStale: "ขณะนี้ติดต่อระบบจัดการเนื้อหาไม่ได้ จึงแสดงสำเนาข่าวชุดล่าสุดที่เว็บมีอยู่",
+    liveEmpty: "ยังไม่มีข่าวที่เผยแพร่แล้วในระบบ",
   },
   pagination: {
     label: "การแบ่งหน้า",

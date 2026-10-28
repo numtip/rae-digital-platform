@@ -22,9 +22,9 @@ const sarabun = localFont({
 });
 
 // Only th/en exist: any other first segment 404s instead of rendering a
-// half-translated page (issue #17).
-export const dynamicParams = false;
-
+// half-translated page (issue #17). The guard is `isLocale` in this layout and in every page, not a
+// closed param tuple: `dynamicParams = false` here also closed it for every page beneath, and the
+// live news pilot (app/[locale]/news-live/) has to render an article id the build never saw.
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
 }
