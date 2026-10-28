@@ -16,7 +16,7 @@ export const enDirectory: DirectoryContent = {
   },
   units: {
     title: "Units under the office",
-    subtitle: "Units named on the current office homepage",
+    subtitle: "Units named on the office homepage (live destinations only)",
   },
   media: {
     title: "Electronic media",

@@ -3,9 +3,9 @@
 // Only HTTPS URLs that answered in that read-only check are published.
 // Labels live in content/<locale>/directory.ts (keyed by id). Do not duplicate hrefs in JSX.
 //
-// The Organic Agriculture Centre tile is deliberately absent: its only published address
-// (researchex.mju.ac.th/organicmju, still linked from the office's own index) answers 404 as of
-// 2026-10-29. Restore the tile when the office publishes a working address.
+// The Organic Agriculture Centre tile is deliberately absent: the address the office index still
+// links, researchex.mju.ac.th/organicmju, answers 301 -> /organicmju/ and that answers 404
+// (2026-10-29, three probes). Restore the tile when the office publishes a working address.
 
 export type LinkGroup = "systems" | "units" | "media" | "director" | "internal" | "knowledge" | "rooms" | "other";
 

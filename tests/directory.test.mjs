@@ -16,11 +16,21 @@ test("featured systems stay in the compact range", () => {
   assert.ok(featured >= 6 && featured <= 8, `featured=${featured}`);
 });
 
-// The documents page once published wtms_webpageAdminDetail.aspx, which exists only to
-// redirect to the public page — an admin path on a public site and one hop too many.
-test("no published outbound link uses an admin page path", () => {
-  for (const file of ["content/links.ts", "content/th/documents.ts", "content/en/documents.ts"]) {
-    assert.doesNotMatch(readFileSync(file, "utf8"), /AdminDetail\.aspx/, file);
+// The documents page once published wtms_webpageAdminDetail.aspx — an admin path on a public
+// site. The guard for that lives in tests/content.test.mjs, which already walks every content
+// file, so a new content type is covered without editing a list of paths.
+
+// The unit/media tile renders its icon aria-hidden and its label from the locale file, so an id
+// without a label is a link with no accessible name. TypeScript cannot see this: the label lookup
+// casts the id. Keep the two lists equal instead.
+test("every registry id has a label in both locales", () => {
+  const ids = [...links.matchAll(/\{ id: "([^"]+)"/g)].map((m) => m[1]).sort();
+  for (const locale of ["th", "en"]) {
+    const src = readFileSync(`content/${locale}/directory.ts`, "utf8");
+    const start = src.indexOf("  labels: {") + "  labels: {".length;
+    const body = src.slice(start, src.indexOf("\n  },", start));
+    const labelIds = [...body.matchAll(/^\s+"?([a-z][a-z-]*)"?:/gm)].map((m) => m[1]).sort();
+    assert.deepEqual(labelIds, ids, `${locale}/directory.ts labels do not match content/links.ts`);
   }
 });
 

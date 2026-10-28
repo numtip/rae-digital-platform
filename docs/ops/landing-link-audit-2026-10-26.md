@@ -10,6 +10,11 @@ See `content/links.ts`. Featured systems: 7. Units: 5. Media: 3. Director form: 
 
 `https://researchex.mju.ac.th/organicmju` — responded 301.
 
+**Correction 2026-10-29:** that address now answers `301 → /organicmju/` and the target answers **404**
+on three probes; its last archived render is July 2025 and the office index still links it, so no
+working replacement exists to publish. The tile was withdrawn from `content/links.ts` and from both
+label maps — **units are now 4**, not 5. Restore it when the office publishes a live address.
+
 ## Withheld (not published as live links)
 
 | Item | Reason |
