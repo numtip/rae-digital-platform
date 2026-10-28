@@ -5,11 +5,13 @@ import {
   approveNews,
   publishNews,
   returnForRevision,
+  revisePublished,
   submitForReview,
+  unpublishNews,
 } from "../lib/cms/news-workflow.ts";
 import { SESSION_ABSOLUTE_MS, SESSION_IDLE_MS, isSessionExpired, openSession } from "../lib/cms/session.ts";
 import { MAX_FAILURES, createLoginThrottle } from "../lib/cms/login-throttle.ts";
-import { addUser, createCmsServer, resetRuntime, startRuntime } from "../cms-runtime/server.mjs";
+import { addUser, createCmsServer, memoryRepository, resetRuntime, startRuntime } from "../cms-runtime/server.mjs";
 
 // Four workflow defects fixed in one place, each asserted here: an officer can hand over
 // their own draft, nobody can approve or publish it themselves, a reviewer can send it back
@@ -103,11 +105,13 @@ async function withServer(run, { nowRef }) {
   addUser({ id: "officer", role: "officer", password: "officer-password-12" });
   addUser({ id: "reviewer", role: "editor", password: "reviewer-password-12" });
   addUser({ id: "publisher", role: "publisher", password: "publisher-password-12" });
-  const server = createCmsServer({ now: () => nowRef.t });
+  // The repository is handed to the test so it can read the audit rows the routes write.
+  const repository = memoryRepository();
+  const server = createCmsServer({ now: () => nowRef.t, repository });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const { port } = server.address();
   try {
-    await run(`http://127.0.0.1:${port}`, nowRef);
+    await run(`http://127.0.0.1:${port}`, nowRef, repository);
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }
@@ -341,4 +345,283 @@ test("the listener is loopback unless the environment says otherwise", async () 
   // startRuntime() without a database never reaches the listener, so this is the guarantee the
   // container relies on: the published port, not the bind address, keeps it private.
   await assert.rejects(() => startRuntime({ RAE_CMS_API_BIND: "0.0.0.0" }), /RAE_CMS_DB_HOST is required/);
+});
+
+// ---- editorial lifecycle: taking a story down, and correcting one that is already live ----
+//
+// A published article can be withdrawn — out of the export, with a reason, one audit row — or
+// reopened as a revision: it leaves the export only when the corrected text is published, and
+// until then the site keeps reading the state frozen at the previous publication.
+
+const publishedFixture = (overrides = {}) => ({
+  ...draftFixture(),
+  status: "published",
+  reviewerId: "reviewer",
+  publisherId: "publisher",
+  revisionNo: 1,
+  publishedAt: "2026-10-01T09:00:00.000Z",
+  bodyTh: ["เนื้อหาที่เผยแพร่แล้ว"],
+  bodyEn: ["The published body"],
+  publishedSnapshot: {
+    titleTh: "ข่าว",
+    titleEn: "News",
+    source: "https://rae.mju.ac.th/example",
+    bodyTh: ["เนื้อหาที่เผยแพร่แล้ว"],
+    bodyEn: ["The published body"],
+    publishedAt: "2026-10-01T09:00:00.000Z",
+  },
+  ...overrides,
+});
+
+const PASSWORDS = {
+  officer: "officer-password-12",
+  reviewer: "reviewer-password-12",
+  publisher: "publisher-password-12",
+};
+
+async function signIn(base, userId) {
+  const response = await fetch(`${base}/v1/login`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ userId, password: PASSWORDS[userId] }),
+  });
+  return (await response.json()).token;
+}
+
+/** Runs the five existing transitions, so a test starts from a story that is really live. */
+async function publishedThroughDesk(base, id, bodyTh = ["เนื้อหาเดิม"]) {
+  const officer = await signIn(base, "officer");
+  const reviewer = await signIn(base, "reviewer");
+  const publisher = await signIn(base, "publisher");
+  const created = await fetch(`${base}/v1/news`, {
+    method: "POST",
+    headers: auth(officer),
+    body: JSON.stringify({ id, titleTh: "ข่าว", titleEn: "News", source: "https://rae.mju.ac.th/example", bodyTh }),
+  });
+  assert.equal(created.status, 201);
+  for (const [step, token] of [["submit", officer], ["approve", reviewer], ["publish", publisher]]) {
+    const response = await fetch(`${base}/v1/news/${id}/${step}`, { method: "POST", headers: auth(token) });
+    assert.equal(response.status, 200, `${step} must succeed on a fresh story`);
+  }
+  return { officer, reviewer, publisher };
+}
+
+const exportedArticles = async (base, token) =>
+  (await (await fetch(`${base}/v1/export`, { headers: auth(token) })).json()).articles;
+
+test("a publisher withdraws a published item with a reason and the row keeps what was live", () => {
+  const withdrawn = unpublishNews(publishedFixture(), roles.publisher, "  ข้อความคลาดเคลื่อน  ");
+  assert.equal(withdrawn.status, "withdrawn");
+  assert.equal(withdrawn.withdrawalReason, "ข้อความคลาดเคลื่อน");
+  assert.equal(withdrawn.withdrawnBy, "publisher");
+  assert.match(withdrawn.withdrawnAt, /^\d{4}-\d{2}-\d{2}T/);
+  // Nothing is deleted: the body it was published with stays on the row for the audit's sake.
+  assert.deepEqual(withdrawn.bodyTh, ["เนื้อหาที่เผยแพร่แล้ว"]);
+  assert.deepEqual(withdrawn.publishedSnapshot.bodyTh, ["เนื้อหาที่เผยแพร่แล้ว"]);
+});
+
+test("withdrawing needs publish rights, a published item and a reason", () => {
+  assert.throws(() => unpublishNews(publishedFixture(), roles.officer, "แก้"), /missing permission news:publish/);
+  assert.throws(() => unpublishNews(publishedFixture(), roles.reviewer, "แก้"), /missing permission news:publish/);
+  assert.throws(
+    () => unpublishNews(publishedFixture({ status: "draft" }), roles.publisher, "แก้"),
+    /only a published item/,
+  );
+  assert.throws(() => unpublishNews(publishedFixture(), roles.publisher, "   "), /reason is required/);
+  const withdrawn = unpublishNews(publishedFixture(), roles.publisher, "แก้");
+  assert.throws(() => unpublishNews(withdrawn, roles.publisher, "แก้"), /only a published item/);
+});
+
+test("a published item is revised, re-approved and republished, bumping revision_no once", () => {
+  const original = publishedFixture();
+  const revised = revisePublished(original, roles.officer);
+  assert.equal(revised.status, "revision");
+  assert.equal(revised.reviewerId, undefined, "the earlier approval does not carry over");
+  assert.equal(revised.publisherId, undefined);
+  assert.equal(revised.withdrawnAt, undefined, "a revision is not a withdrawal");
+  assert.deepEqual(revised.publishedSnapshot, original.publishedSnapshot, "the live version is untouched");
+
+  // The author edits the row; the export still serves the published text while it is open.
+  const edited = { ...revised, bodyTh: ["เนื้อหาที่แก้ไข"], bodyEn: ["The corrected body"] };
+  assert.deepEqual(publishedArticlesForExport([edited])[0].bodyTh, ["เนื้อหาที่เผยแพร่แล้ว"]);
+
+  const review = submitForReview(edited, roles.officer);
+  assert.equal(review.status, "review");
+  const approved = approveNews(review, roles.reviewer);
+  assert.equal(approved.status, "approved");
+  assert.equal(approved.revisionNo, 1, "approval is not a publication");
+  const republished = publishNews(approved, roles.publisher);
+  assert.equal(republished.status, "published");
+  assert.equal(republished.revisionNo, 2, "exactly one bump per republication");
+  assert.deepEqual(publishedArticlesForExport([republished])[0].bodyTh, ["เนื้อหาที่แก้ไข"]);
+});
+
+test("only the author or a reviewer opens a revision, and only on a published item", () => {
+  // An officer editing someone else's live story needs review rights, exactly as when submitting.
+  assert.throws(
+    () => revisePublished(publishedFixture({ authorId: "someone-else" }), roles.officer),
+    /missing permission news:review/,
+  );
+  assert.throws(() => revisePublished(publishedFixture({ status: "draft" }), roles.officer), /only a published item/);
+  assert.throws(
+    () => revisePublished(publishedFixture({ status: "withdrawn" }), roles.publisher),
+    /only a published item/,
+  );
+  const theirs = revisePublished(publishedFixture({ authorId: "someone-else" }), roles.reviewer);
+  assert.equal(theirs.status, "revision");
+});
+
+test("withdrawn items leave the export and a revision still exports the last published body", () => {
+  const base = publishedFixture();
+  const exported = publishedArticlesForExport([
+    { ...base, id: "live" },
+    { ...base, id: "open", status: "revision", bodyTh: ["ยังไม่อนุมัติ"] },
+    // A revision that a reviewer sent back is still the published story until it is re-released.
+    { ...base, id: "sent-back", status: "draft", revisionReason: "ขอแก้ตัวเลข", bodyTh: ["ยังไม่อนุมัติ"] },
+    { ...base, id: "gone", status: "withdrawn", withdrawalReason: "ถอน" },
+  ]);
+  assert.deepEqual(exported.map((item) => item.id), ["live", "open", "sent-back"]);
+  assert.deepEqual(exported[1].bodyTh, ["เนื้อหาที่เผยแพร่แล้ว"], "the approved version is what is live");
+  assert.equal(exported[1].publishedAt, "2026-10-01T09:00:00.000Z", "a revision does not restate the date");
+  assert.deepEqual(exported[2].bodyTh, ["เนื้อหาที่เผยแพร่แล้ว"]);
+  // A row that was never published has no live version to serve, whatever state it is in.
+  assert.deepEqual(
+    publishedArticlesForExport([
+      { ...base, id: "orphan", status: "revision", publishedSnapshot: undefined },
+      { ...base, id: "fresh", status: "review", publishedSnapshot: undefined, revisionNo: 0 },
+    ]),
+    [],
+  );
+});
+
+test("over the API a publisher withdraws a story, it leaves the export, and the audit says so", async () => {
+  const nowRef = { t: 1_700_200_000_000 };
+  await withServer(async (base, _now, repository) => {
+    const { officer, publisher } = await publishedThroughDesk(base, "w1");
+    assert.deepEqual((await exportedArticles(base, officer)).map((item) => item.id), ["w1"]);
+
+    const refused = await fetch(`${base}/v1/news/w1/unpublish`, {
+      method: "POST",
+      headers: auth(officer),
+      body: JSON.stringify({ reason: "คลาดเคลื่อน" }),
+    });
+    assert.equal(refused.status, 403, "an officer holds no publish right");
+
+    const withdrawn = await fetch(`${base}/v1/news/w1/unpublish`, {
+      method: "POST",
+      headers: auth(publisher),
+      body: JSON.stringify({ reason: "  ข้อความคลาดเคลื่อน  " }),
+    });
+    assert.equal(withdrawn.status, 200);
+    const record = await withdrawn.json();
+    assert.equal(record.status, "withdrawn");
+    assert.equal(record.withdrawalReason, "ข้อความคลาดเคลื่อน");
+    assert.equal(record.withdrawnBy, "publisher");
+
+    assert.deepEqual(await exportedArticles(base, officer), [], "a withdrawn story is not served");
+
+    const rows = (await repository.listAudit()).filter((row) => row.entityId === "w1");
+    assert.deepEqual(rows.map((row) => row.action), ["news.draft", "news.submit", "news.approve", "news.publish", "news.unpublish"]);
+    const last = rows.at(-1);
+    assert.deepEqual(last.before, { status: "published" });
+    assert.deepEqual(last.after, { status: "withdrawn", reason: "ข้อความคลาดเคลื่อน" });
+    assert.equal(last.actorId, "publisher");
+  }, { nowRef });
+});
+
+test("over the API a revision keeps the published body exported until it is published", async () => {
+  const nowRef = { t: 1_700_300_000_000 };
+  await withServer(async (base, _now, repository) => {
+    const { officer, reviewer, publisher } = await publishedThroughDesk(base, "r1", ["เนื้อหาเดิม"]);
+    const [firstRelease] = await exportedArticles(base, officer);
+
+    const revised = await fetch(`${base}/v1/news/r1/revise`, { method: "POST", headers: auth(officer) });
+    assert.equal(revised.status, 200);
+    assert.equal((await revised.json()).status, "revision");
+
+    const edited = await fetch(`${base}/v1/news/r1`, {
+      method: "PATCH",
+      headers: auth(officer),
+      body: JSON.stringify({ bodyTh: ["เนื้อหาใหม่"], bodyEn: ["The corrected body"] }),
+    });
+    assert.equal(edited.status, 200, "the author edits the revision like a draft");
+
+    const whileOpen = await exportedArticles(base, officer);
+    assert.deepEqual(whileOpen, [firstRelease], "the live story is unchanged while the revision is open");
+
+    assert.equal((await fetch(`${base}/v1/news/r1/submit`, { method: "POST", headers: auth(officer) })).status, 200);
+    assert.equal((await fetch(`${base}/v1/news/r1/approve`, { method: "POST", headers: auth(reviewer) })).status, 200);
+
+    const stillOld = await exportedArticles(base, officer);
+    assert.deepEqual(stillOld[0].bodyTh, ["เนื้อหาเดิม"], "approval alone does not change the site");
+
+    const republished = await fetch(`${base}/v1/news/r1/publish`, { method: "POST", headers: auth(publisher) });
+    assert.equal(republished.status, 200);
+    assert.equal((await republished.json()).revisionNo, 2);
+
+    const afterRepublish = await exportedArticles(base, officer);
+    assert.deepEqual(afterRepublish[0].bodyTh, ["เนื้อหาใหม่"]);
+
+    // One row per request: opening the revision, then the republish, both recorded as revisions.
+    const revisions = (await repository.listAudit())
+      .filter((row) => row.entityId === "r1" && row.action === "news.revise")
+      .map((row) => [row.before.status, row.after.status]);
+    assert.deepEqual(revisions, [["published", "revision"], ["approved", "published"]]);
+  }, { nowRef });
+});
+
+test("the runtime refuses a revise or an unpublish the workflow does not allow", async () => {
+  const nowRef = { t: 1_700_400_000_000 };
+  await withServer(async (base) => {
+    const { officer, reviewer, publisher } = await publishedThroughDesk(base, "x1");
+
+    const noReason = await fetch(`${base}/v1/news/x1/unpublish`, {
+      method: "POST",
+      headers: auth(publisher),
+      body: JSON.stringify({ reason: "  " }),
+    });
+    assert.equal(noReason.status, 400, "a withdrawal without a reason is refused");
+
+    const stillPublished = await (await fetch(`${base}/v1/news`, { headers: auth(officer) })).json();
+    assert.equal(stillPublished.articles.find((item) => item.id === "x1").status, "published");
+
+    const notPublished = await fetch(`${base}/v1/news/x1/unpublish`, {
+      method: "POST",
+      headers: auth(publisher),
+      body: JSON.stringify({ reason: "แก้" }),
+    });
+    assert.equal(notPublished.status, 200);
+    const again = await fetch(`${base}/v1/news/x1/unpublish`, {
+      method: "POST",
+      headers: auth(publisher),
+      body: JSON.stringify({ reason: "แก้" }),
+    });
+    assert.equal(again.status, 400, "a withdrawn item cannot be withdrawn twice");
+
+    // A draft cannot be revised, and a published item cannot be edited in place.
+    const draft = await fetch(`${base}/v1/news`, {
+      method: "POST",
+      headers: auth(officer),
+      body: JSON.stringify({ id: "x2", titleTh: "ข่าว", titleEn: "News", source: "https://rae.mju.ac.th/x2" }),
+    });
+    assert.equal(draft.status, 201);
+    assert.equal((await fetch(`${base}/v1/news/x2/revise`, { method: "POST", headers: auth(officer) })).status, 400);
+
+    const locked = await fetch(`${base}/v1/news/x1`, {
+      method: "PATCH",
+      headers: auth(officer),
+      body: JSON.stringify({ titleEn: "Edited in place" }),
+    });
+    assert.equal(locked.status, 400);
+
+    // A revision belongs to its author: a reviewer may open one but not type into it.
+    await publishedThroughDesk(base, "x3");
+    assert.equal((await fetch(`${base}/v1/news/x3/revise`, { method: "POST", headers: auth(reviewer) })).status, 200);
+    const foreignEdit = await fetch(`${base}/v1/news/x3`, {
+      method: "PATCH",
+      headers: auth(reviewer),
+      body: JSON.stringify({ titleEn: "Not mine" }),
+    });
+    assert.equal(foreignEdit.status, 403);
+  }, { nowRef });
 });
