@@ -56,7 +56,7 @@ export default function GlobalNotFound() {
             src={asset("/images/brand/mju-emblem-192.png")}
             width={192}
           />
-          <p className="mt-6 text-sm font-semibold text-gold-600">404</p>
+          <p className="mt-6 text-sm font-semibold text-brand-600">404</p>
           <h1 className="mt-2 text-2xl font-bold text-neutral-800 md:text-3xl">{primary.notFound.title}</h1>
           <p className="mt-3 text-neutral-600">{primary.notFound.body}</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">

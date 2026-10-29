@@ -217,7 +217,7 @@ export default async function NewsItemPage({ params }: Props) {
                   </span>
                 </Link>
               ) : (
-                <span className="rounded-md border border-dashed border-neutral-200 p-4 text-sm text-neutral-500">
+                <span className="rounded-md border border-dashed border-neutral-200 p-4 text-sm text-neutral-600">
                   {news.labels.noNewer}
                 </span>
               )}
@@ -235,7 +235,7 @@ export default async function NewsItemPage({ params }: Props) {
                   </span>
                 </Link>
               ) : (
-                <span className="rounded-md border border-dashed border-neutral-200 p-4 text-sm text-neutral-500 sm:col-start-2 sm:text-right">
+                <span className="rounded-md border border-dashed border-neutral-200 p-4 text-sm text-neutral-600 sm:col-start-2 sm:text-right">
                   {news.labels.noOlder}
                 </span>
               )}

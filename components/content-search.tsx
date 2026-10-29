@@ -141,7 +141,9 @@ export function ContentSearch({ entries, labels }: { entries: SearchEntry[]; lab
       <ul className="mt-4 space-y-3">
         {results.map((entry) => (
           <li key={`${entry.href}-${entry.title}`} className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gold-600">
+            {/* brand-600, not gold: gold-600 on white is 2.76:1. This label only exists after a
+                query, so check-contrast (which reads the exported HTML) cannot see it. */}
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
               {entry.kind === "page" ? labels.kindPage : labels.kindItem}
             </p>
             <Link className="mt-1 block text-lg font-semibold text-brand-700 underline underline-offset-2" href={entry.href}>

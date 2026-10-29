@@ -23,7 +23,7 @@ Legend — **Status**: ✅ implemented · 🟡 partial · ⬜ not started · ⛔
 | M05 | Events & calendar | BUILD | M14 | ⬜ | no event route, no event data | — |
 | M06 | Global search | BUILD | M03, M04, M12, M14 | 🟡 | `/search` + `lib/search-index.ts` + `components/content-search.tsx`, header form, indexes document categories and contact; `WebSite`+`SearchAction` JSON-LD now advertises it; still no personnel (M12 absent) | #29, #34, #40 |
 | M07 | Contact & FAQ | BUILD | M15, M20 | 🟡 | `/contact` renders the verified address/phone and the **single official email `researchmju@mju.ac.th`**; **no form** (needs SMTP + PDPA basis) and no FAQ copy | #34, #38 |
-| M08 | SEO, analytics, accessibility | BUILD | M01 | 🟡 | `app/sitemap.ts` (146 URLs incl. paginated news and document categories), `app/robots.ts`, Organization JSON-LD, per-page canonical/hreflang, `NewsArticle` JSON-LD on news pages; no analytics, no automated axe/contrast gate | #30 |
+| M08 | SEO, analytics, accessibility | BUILD | M01 | 🟡 | `app/sitemap.ts` (146 URLs incl. paginated news and document categories), `app/robots.ts`, Organization JSON-LD, per-page canonical/hreflang, `NewsArticle` JSON-LD on news pages, `scripts/check-contrast.mjs` measures WCAG AA on every exported page (4.5:1 body / 3:1 heading, tokens read from `globals.css`); no analytics, no axe run (browser-only checks stay manual) | #30 |
 | M14 | News (data shape + detail pages) | BUILD | M15, M10 | 🟡 | 58 news items (title, date, type, body, image) back to 13 Jul 2026, `/news/[nid]` × 2 locales, index paginated 12/page with real URLs, 58/58 English headlines, no machine-translated bodies; no authoring workflow or revisions (needs M10/M15) | #30, #32, #33, #37 |
 
 ## Deferred / blocked modules
