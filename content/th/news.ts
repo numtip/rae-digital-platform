@@ -50,6 +50,9 @@ export const thNews = {
     navLabel: "การนำทางระหว่างข่าว",
     gallery: "ภาพประกอบข่าว",
     eventsLink: "ดูกิจกรรมทั้งหมด",
+    // /news/ lists the stories published in the CMS as well as the archive. Only shown when the
+    // CMS could not be reached and the page is serving the newest copy the site already holds.
+    liveStale: "ขณะนี้ติดต่อระบบจัดการเนื้อหาไม่ได้ จึงแสดงสำเนาข่าวชุดล่าสุดที่เว็บมีอยู่",
   },
   pagination: {
     label: "การแบ่งหน้า",

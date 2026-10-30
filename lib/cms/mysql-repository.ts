@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import mysql from "mysql2/promise";
-import type { NewsRecord } from "./news-workflow.ts";
+import type { NewsRecord, PublishedSnapshot } from "./news-workflow.ts";
 import type { RoleName } from "./permissions.ts";
 import type { Session } from "./session.ts";
 
@@ -28,6 +28,9 @@ export type AuditRecord = {
   action: string;
   entityId: string;
   entityType: string;
+  /** The state before and after the transition, as JSON-able objects. */
+  before?: unknown;
+  after?: unknown;
   createdAt: string;
 };
 
@@ -64,6 +67,11 @@ type ArticleRow = {
   body_th: string | null;
   body_en: string | null;
   published_at: Date | null;
+  withdrawn_at: Date | null;
+  withdrawn_by: string | null;
+  withdrawal_reason: string | null;
+  revision_no: number | null;
+  published_snapshot: string | null;
 };
 
 const paragraphs = (value: string | null) =>
@@ -71,6 +79,20 @@ const paragraphs = (value: string | null) =>
     .split("\n\n")
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
+
+// A snapshot this repository wrote is JSON by construction; one that is not is a bug worth
+// failing on rather than a published article that quietly disappears from the export.
+const snapshot = (value: string | null): PublishedSnapshot | undefined =>
+  value ? (JSON.parse(value) as PublishedSnapshot) : undefined;
+
+// Audit rows written before this table carried state hold '' or plain text rather than JSON.
+const parseJson = (value: string) => {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+};
 
 const toRecord = (row: ArticleRow): NewsRecord => ({
   id: row.id,
@@ -87,6 +109,11 @@ const toRecord = (row: ArticleRow): NewsRecord => ({
   bodyTh: paragraphs(row.body_th),
   bodyEn: paragraphs(row.body_en),
   publishedAt: row.published_at ? new Date(row.published_at).toISOString() : undefined,
+  withdrawnAt: row.withdrawn_at ? new Date(row.withdrawn_at).toISOString() : undefined,
+  withdrawnBy: row.withdrawn_by ?? undefined,
+  withdrawalReason: row.withdrawal_reason ?? undefined,
+  revisionNo: row.revision_no ?? 0,
+  publishedSnapshot: snapshot(row.published_snapshot),
 });
 
 export type MysqlConfig = {
@@ -165,17 +192,24 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
     },
 
     async saveArticle(article) {
-      // COALESCE on published_at: a save that carries no date must not erase the one publish set.
+      // COALESCE keeps what an earlier write set: a save that carries no publication date must not
+      // erase the one publish stamped, and one that carries no snapshot must not erase the live
+      // version a revision is being edited against.
       await pool.query(
         `INSERT INTO news_articles
-           (id, status, pinned, author_id, reviewer_id, publisher_id, title_th, title_en, source, revision_reason, returned_by, body_th, body_en, published_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           (id, status, pinned, author_id, reviewer_id, publisher_id, title_th, title_en, source, revision_reason, returned_by, body_th, body_en, published_at, withdrawn_at, withdrawn_by, withdrawal_reason, revision_no, published_snapshot)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            status = VALUES(status), pinned = VALUES(pinned), reviewer_id = VALUES(reviewer_id),
            publisher_id = VALUES(publisher_id), title_th = VALUES(title_th), title_en = VALUES(title_en),
            source = VALUES(source), revision_reason = VALUES(revision_reason), returned_by = VALUES(returned_by),
            body_th = VALUES(body_th), body_en = VALUES(body_en),
-           published_at = COALESCE(VALUES(published_at), published_at)`,
+           published_at = COALESCE(VALUES(published_at), published_at),
+           withdrawn_at = COALESCE(VALUES(withdrawn_at), withdrawn_at),
+           withdrawn_by = COALESCE(VALUES(withdrawn_by), withdrawn_by),
+           withdrawal_reason = COALESCE(VALUES(withdrawal_reason), withdrawal_reason),
+           revision_no = VALUES(revision_no),
+           published_snapshot = COALESCE(VALUES(published_snapshot), published_snapshot)`,
         [
           article.id,
           article.status,
@@ -191,6 +225,11 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
           (article.bodyTh ?? []).join("\n\n"),
           (article.bodyEn ?? []).join("\n\n"),
           article.publishedAt ? new Date(article.publishedAt) : null,
+          article.withdrawnAt ? new Date(article.withdrawnAt) : null,
+          article.withdrawnBy ?? null,
+          article.withdrawalReason ?? null,
+          article.revisionNo ?? 0,
+          article.publishedSnapshot ? JSON.stringify(article.publishedSnapshot) : null,
         ],
       );
     },
@@ -244,24 +283,36 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
 
     async appendAudit(record) {
       await pool.query(
-        "INSERT INTO audit_logs (id, actor_id, action, entity_type, entity_id, before_json, after_json) VALUES (?, ?, ?, ?, ?, '{}', '{}')",
-        [randomUUID(), record.actorId, record.action, record.entityType, record.entityId],
+        "INSERT INTO audit_logs (id, actor_id, action, entity_type, entity_id, before_json, after_json) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [
+          randomUUID(),
+          record.actorId,
+          record.action,
+          record.entityType,
+          record.entityId,
+          JSON.stringify(record.before ?? {}),
+          JSON.stringify(record.after ?? {}),
+        ],
       );
     },
 
     async listAudit() {
       const [rows] = await pool.query(
-        "SELECT actor_id, action, entity_type, entity_id, created_at FROM audit_logs ORDER BY created_at",
+        "SELECT actor_id, action, entity_type, entity_id, before_json, after_json, created_at FROM audit_logs ORDER BY created_at",
       );
-      return (rows as { actor_id: string; action: string; entity_type: string; entity_id: string; created_at: Date }[]).map(
-        (row) => ({
-          actorId: row.actor_id,
-          action: row.action,
-          entityType: row.entity_type,
-          entityId: row.entity_id,
-          createdAt: new Date(row.created_at).toISOString(),
-        }),
-      );
+      return (rows as {
+        actor_id: string; action: string; entity_type: string; entity_id: string;
+        before_json: string; after_json: string; created_at: Date;
+      }[]).map((row) => ({
+        actorId: row.actor_id,
+        action: row.action,
+        entityType: row.entity_type,
+        entityId: row.entity_id,
+        // Rows written before the lifecycle work carry '' rather than JSON; hand those back as text.
+        before: parseJson(row.before_json),
+        after: parseJson(row.after_json),
+        createdAt: new Date(row.created_at).toISOString(),
+      }));
     },
 
     async close() {

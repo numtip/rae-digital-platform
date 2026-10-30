@@ -1,8 +1,16 @@
 import type { MetadataRoute } from "next";
+import { liveNews, liveSitemap } from "@/lib/cms/live";
 import { LOCALES, PAGES, SITE_URL, getDocuments, getNews, getNewsPages } from "@/lib/i18n";
 
-// Static export (GitHub Pages preview) needs an explicit static route.
-export const dynamic = "force-static";
+// Two builds share this file. A server revalidates it (`revalidate`), so a story published a
+// minute ago is listed without a rebuild and the publish hook drops it sooner. The GitHub Pages
+// export has no server to ask — `output: "export"` renders the sitemap once at build time — and
+// there the committed copy is exactly what the site serves, so the same read is correct.
+//
+// Deliberately no `dynamic = "force-static"`: with NEXT_PAGES_PREVIEW=1 the export is static
+// anyway, and on a server that line would freeze the live ids out of the file forever.
+// Literal, not NEWS_WINDOW: Next only accepts a statically analysed segment config.
+export const revalidate = 30;
 
 // Same alternates as the page head, x-default included — the sitemap and the
 // <link rel="alternate"> block must not disagree.
@@ -15,7 +23,7 @@ function languagesFor(path: string) {
   };
 }
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const home = LOCALES.map((locale) => ({
     url: `${SITE_URL}/${locale}/`,
     changeFrequency: "weekly" as const,
@@ -73,5 +81,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
       })),
     );
 
-  return [...home, ...pages, ...events, ...newsItems, ...docCategories, ...newsIndexPages];
+  // The published set: the ids the archive does not already list, in both locales. Read at render
+  // time (ISR on a server, the committed copy at build on Pages), so a story published without a
+  // rebuild is still listed — and one the hook reported withdrawn is not, even during an outage.
+  const { items: published } = await liveNews("th");
+  const liveItems = liveSitemap(published, new Set(getNews("th").items.map((item) => item.nid)), SITE_URL);
+
+  return [
+    ...home,
+    ...pages,
+    ...events,
+    ...newsItems,
+    ...docCategories,
+    ...newsIndexPages,
+    ...liveItems,
+  ];
 }

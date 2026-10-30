@@ -53,6 +53,9 @@ export const enNews: NewsContent = {
     navLabel: "Article navigation",
     gallery: "Photos from this story",
     eventsLink: "See all events",
+    // /news/ lists the stories published in the CMS as well as the archive. Only shown when the
+    // CMS could not be reached and the page is serving the newest copy the site already holds.
+    liveStale: "The CMS cannot be reached right now, so this is the newest copy the site already holds.",
   },
   pagination: {
     label: "Pagination",

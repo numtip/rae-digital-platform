@@ -23,6 +23,9 @@ node_modules/
 /out/
 # Local CMS media when RAE_CMS_MEDIA_DIR is unset (tests use their own temp dir)
 .cms-media/
+# Runtime state the CMS cannot rebuild: the ids the publish hook reported withdrawn. Never
+# committed — a deployment keeps it on a volume so a tombstone survives a restart.
+.cms-data/
 # Static preview of published CMS articles (generated, never deployed)
 out-cms-preview/
 # Site data for CMS-published news, written by `scripts/cms-sync.mjs` and committed on purpose:
