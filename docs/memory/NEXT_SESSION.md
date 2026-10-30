@@ -42,7 +42,7 @@ were each proven with a mutated export (`fr_FR`, a second `og:site_name`) before
 
 ## Checks that passed on #95 (this host)
 
-`npm test` 132 tests — 129 pass / 0 fail / 3 skipped (database-only) · typecheck clean · lint
+`npm test` 133 tests — 130 pass / 0 fail / 3 skipped (database-only) · typecheck clean · lint
 0 errors (9 pre-existing warnings) · `build:export` 159 html files, 158 routes · `check:export`
 OK — 9,232 internal refs, 926 external links, 154 share cards · `check:contrast` OK, 159 pages.
 
