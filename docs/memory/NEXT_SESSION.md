@@ -1,47 +1,55 @@
-# Next session — RAE digital platform (2026-10-29, 02:30 +07)
+# Next session — RAE digital platform (2026-10-31, companion run 02:30 +07)
 
-`main` is `4c79b58`. The Pages site is clean at 152 URLs (`node scripts/qa-live.mjs` → 0 problems).
-The committed `public/cms-published/` data carries one article, `quality-assurance-public-hearing-2026`;
-the earlier `staging-real-20261027` record is retired.
+`main` is `2ad5f1a`. CI and the Pages deploy for that commit are green, and the live site
+serves the #94 build (measured on the public origin: `/th/news/37912/` description 154 chars).
 
-## The open CMS stack, in merge order (all draft, all CLEAN, waiting on the owner)
+## Open on GitHub — the owner's call, nothing merged tonight
 
-| PR | Branch | What it carries |
-|---|---|---|
-| #86 | `feat/cms-live-news-pilot` | render published news from the live API |
-| #87 | `feat/cms-viewer-role` | a viewer role reads published news and nothing else |
-| #88 | `feat/cms-editorial-lifecycle` | withdraw a published article, revise one without taking it down |
-| #89 | `feat/cms-live-news-canonical` | `/news` becomes the canonical news route |
-| #90 | `integration/preprod` | the four above merged into one tree, gated as one system |
+- **#86, #87, #88, #89 are superseded.** All four are still open drafts and read `DIRTY`, but
+  #90 ("integration: fast CMS publication hardening") merged exactly those four branches into
+  `main` on 30 Oct 00:08 UTC — its own body lists them in dependency order. Closing them is the
+  honest end; rebasing them would replay work that already shipped, and the next run that reads
+  "4 open CMS PRs" will otherwise plan around a phantom stack.
+- After any runtime deploy that writes the lifecycle columns, apply
+  `cms-runtime/migrations/007_editorial_lifecycle.sql` first.
+- The desk still has no real staff accounts: one `officer` cannot walk draft → review →
+  publish. Names and roles are an owner-supplied decision — never invent a roster.
+- Syndication is unchanged and live: the 237 crontab runs `~/bin/rae-cms-sync-cron.sh` every 5
+  minutes; `scripts/cms-sync-gh.sh` lands regenerated `public/cms-published/` data as the reused
+  `cms/auto-sync` PR and merges it itself after polling `build`.
 
-No `--admin` merge has been used and branch protection is untouched. #86 and #89 are the pair that
-opens the build-time tuple (`generateStaticParams` + `dynamicParams = false`, a `force-static`
-sitemap, a build-time search index) — that pair is what makes a newly published story appear
-without a rebuild.
+## What this run changed (#95)
 
-## On main now
+A page that sets its own `openGraph` replaces the layout's object whole; Next does not merge the
+two. The news detail page sets one, so **all 116 article pages shipped without `og:site_name`,
+`og:locale` and `og:locale:alternate`** while the homepage kept them — every shared article card
+named no site and no language.
 
-- The desk: the login card comes first, then the editor (#85); `/cms-api/*` is proxied on the
-  desk's own origin (#83) with `skipTrailingSlashRedirect` gated on `NEXT_CMS_API_PROXY` (#84).
-- Syndication is live, not a proposal: the user crontab on 237 runs `~/bin/rae-cms-sync-cron.sh`
-  every 5 minutes (that wrapper is on the host, not in this repo). The in-repo
-  `scripts/cms-sync-gh.sh` only lands regenerated `public/cms-published/` data as the reused
-  `cms/auto-sync` PR; the wrapper polls `build` and squash-merges that PR, which is why #79 and
-  #82 show `numtip` as the merger (#78, #81 changed the runner). `scripts/cms-preview.mjs` is now
-  only a local eyeballing tool.
-- Search: one index entry per document category, at its own page (this branch). Before, every
-  category was also indexed against `/documents`: the same row appeared twice and its second copy
-  left the reader on the documents hub instead of the category page, while the documents section
-  counted 7 entries for 4 destinations. `งานวิจัย` returned 30 rows on the Pages build, 29 after;
-  the index carries 79 entries per locale before, 76 after (both locales always agreed — an
-  earlier count of 73/78 was an artefact of reading the flight payload as text).
-- Share cards: `og:image` carries the basePath once (#80).
+- `lib/seo.ts` now owns `openGraphSite(orgFull, locale)`; the locale layout and the news detail
+  page both spread it. The office name is passed in, so `lib/seo.ts` keeps only a type-only
+  import and `tests/seo.test.mjs` still loads it under Node's type stripping.
+- `scripts/check-export.mjs` now asserts, for every URL in the sitemap, that `og:site_name`
+  exists, that `og:locale` matches the route's own locale, that `og:locale:alternate` names the
+  other one, and that a locale does not invent a second site name. It already runs in CI.
+
+Measured on the export: **og:site_name 38/159 pages before → 156/159 after** (the three without
+it are the 404 documents: `noindex`, built outside the locale layout). News detail 0/116 →
+116/116. The new gate reported 354 problems against a rebuild of the unfixed tree and passes on
+this one — it has been seen red.
+
+## Checks that passed on #95 (this host)
+
+`npm test` 132 tests — 129 pass / 0 fail / 3 skipped (database-only) · typecheck clean · lint
+0 errors (9 pre-existing warnings) · `build:export` 159 html files, 158 routes · `check:export`
+OK — 9,232 internal refs, 926 external links, 154 share cards · `check:contrast` OK, 159 pages.
 
 ## Next useful steps, in order
 
-1. Owner: review and merge the stack in the order above, #90 last.
-2. After #88 lands: apply `cms-runtime/migrations/007_editorial_lifecycle.sql` before deploying a
-   runtime that writes the new columns.
-3. The desk still has no real staff accounts; one officer cannot walk draft → review → publish.
-   The owner supplies names and roles — do not invent a roster.
-4. Re-run `node scripts/qa-live.mjs` against the Pages origin after any merge that touches routes.
+1. Review and merge #95 (metadata only; a merge deploys the Pages preview, never the VPS runtime).
+2. Close #86–#89 as superseded by #90.
+3. Carried over, still unresolved: the old organisation name survives inside imported news bodies
+   (TH 10 / EN 25 places) and the owner has not decided whether published text may be rewritten;
+   `/en/contact/` keeps a 172-character description on purpose; news index pages 2–4 reuse page
+   1's description because a different one needs new approved copy.
+4. Outbound links rot silently and nothing in CI probes them — re-probe `content/links.ts` and
+   `content/*/documents.ts` before repeating the "live destinations only" claim.

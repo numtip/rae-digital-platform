@@ -7,7 +7,7 @@ import { asset } from "@/lib/assets";
 import { liveNews } from "@/lib/cms/live";
 import { publicationStamp, publishedIds } from "@/lib/cms/published-site";
 import { SITE_URL, getContent, getNews, isLocale, type Locale } from "@/lib/i18n";
-import { metaDescription } from "@/lib/seo";
+import { metaDescription, openGraphSite } from "@/lib/seo";
 
 // One page per published item. Bodies are the office's own text (Thai); the
 // English route shows that Thai text and says so, rather than pretending to have
@@ -59,6 +59,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       type: "article",
+      // This block replaces the layout's whole openGraph object, so the site-wide fields come
+      // back in explicitly; without them every article card lost the site name and locale.
+      ...openGraphSite(getContent(locale).header.orgFull, locale),
       // Resolves to this article's own canonical, not the locale home.
       url: "./",
       // metadataBase already carries the Pages basePath, so pass the gallery's own path: routing it

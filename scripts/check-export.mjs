@@ -150,6 +150,9 @@ const routes = [...pages].length;
 const sitemapLocs = [...readFileSync(join(OUT, "sitemap.xml"), "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map(
   (m) => m[1],
 );
+// One site name per locale, not one per page: each locale uses the office's own name from
+// `content/<locale>`, and a page that writes its own value shows up as a second entry.
+const siteNames = { th: new Set(), en: new Set() };
 for (const loc of sitemapLocs) {
   const path = new URL(loc).pathname.replace(BASE, "").replace(/^\/|\/$/g, "");
   const file = join(OUT, path, "index.html");
@@ -166,6 +169,22 @@ for (const loc of sitemapLocs) {
   if (!ogTitle || !title.startsWith(ogTitle)) failures.push(`${loc}: og:title "${ogTitle}" is not this page's title`);
   if (!twitterTitle || !title.startsWith(twitterTitle))
     failures.push(`${loc}: twitter:title "${twitterTitle || "(missing)"}" is not this page's title`);
+  // A page that sets its own openGraph replaces the layout's object, so the site-wide fields
+  // have to be asserted per page: the news detail page dropped all three from every article
+  // card while the homepage kept them, which no other check could see.
+  const siteName = (html.match(/<meta property="og:site_name" content="([^"]*)"/) || [])[1];
+  const ogLocale = (html.match(/<meta property="og:locale" content="([^"]*)"/) || [])[1];
+  const alternate = (html.match(/<meta property="og:locale:alternate" content="([^"]*)"/) || [])[1];
+  const language = path === "en" || path.startsWith("en/") ? "en" : "th";
+  if (!siteName) failures.push(`${loc}: no og:site_name`);
+  else siteNames[language].add(siteName);
+  const expected = language === "en" ? "en_US" : "th_TH";
+  if (ogLocale !== expected) failures.push(`${loc}: og:locale is ${ogLocale ?? "(missing)"}, expected ${expected}`);
+  if (!alternate || alternate === ogLocale)
+    failures.push(`${loc}: og:locale:alternate is ${alternate ?? "(missing)"}`);
+}
+for (const [language, names] of Object.entries(siteNames)) {
+  if (names.size > 1) failures.push(`og:site_name has ${names.size} ${language} values: ${[...names].join(" | ")}`);
 }
 
 // The search index is serialised into the search page, and a document category was once
