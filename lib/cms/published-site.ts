@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { NewsItem } from "../../content/th/news.ts";
 import { articlesFromExport, PreviewRejected, type PreviewArticle } from "./preview-site.ts";
 import { PUBLISHED_SITE_DIR } from "./site-data.ts";
+import { isWithdrawn } from "./withdrawn.ts";
 
 // The bridge from the syndicated CMS export to the real news templates. `scripts/cms-sync.mjs`
 // writes `public/cms-published/`, which is committed: the CMS is not reachable from CI, so the
@@ -27,19 +28,25 @@ export type PublishedArticle = {
 
 // Only files this project's own generator can have written: the id folder plus the runtime's
 // `NN-xxxxxxxx.ext` name. Anything else in the JSON is not something to put in an <img src>.
-const MEDIA_SRC = /^\/cms-published\/[a-z0-9][a-z0-9-]{1,63}\/\d{2}-[0-9a-f]{8}\.(png|jpg|webp)$/;
+// The second root is `lib/cms/live.ts`, which serves the same rules' images through the app
+// because the browser cannot reach the loopback runtime.
+const MEDIA_SRC = /^(?:\/cms-published|\/api\/news-live\/media)\/[a-z0-9][a-z0-9-]{1,63}\/\d{2}-[0-9a-f]{8}\.(png|jpg|webp)$/;
 
 type SiteData = { articles?: (Partial<PreviewArticle> & { status?: string })[] };
 
 const siteDir = (override?: string) => override ?? join(process.cwd(), PUBLISHED_SITE_DIR);
 
-function readSite(override?: string): PreviewArticle[] {
+/** The committed export, validated. The live read's outage fallback is the same list. */
+export function siteArticles(override?: string): PreviewArticle[] {
   const file = join(siteDir(override), "index.json");
   if (!existsSync(file)) return [];
   const payload = JSON.parse(readFileSync(file, "utf8")) as SiteData;
   // The export's own gate runs over the file: a draft, an unsafe id or a half-translated
   // article throws here instead of reaching a page.
-  return articlesFromExport(payload);
+  // The committed file is a snapshot from the last sync, so it can still hold a story the CMS has
+  // since withdrawn. The tombstone is what keeps that copy from serving it again; filtering here
+  // means every reader of the file (list, detail, static params, outage fallback) obeys it.
+  return articlesFromExport(payload).filter((article) => !isWithdrawn(article.id));
 }
 
 // The export carries the publication instant in UTC, and it stays UTC — only the label is
@@ -68,7 +75,7 @@ export function publicationStamp(date: string, dateIso: string) {
 }
 
 export function publishedIds(dir?: string): string[] {
-  return readSite(dir).map((article) => article.id);
+  return siteArticles(dir).map((article) => article.id);
 }
 
 // One rule for every image the bridge emits: the export's media paths are the sync's own
@@ -78,7 +85,8 @@ function photoSrc(article: PreviewArticle, url: string): string {
   return url;
 }
 
-function toItem(locale: Locale, article: PreviewArticle): NewsItem {
+/** One article's list card. Shared by the committed copy and the live read. */
+export function newsItemFrom(locale: Locale, article: PreviewArticle): NewsItem {
   const { date, dateIso } = dateOf(locale, article);
   const first = article.media[0];
   return {
@@ -94,13 +102,8 @@ function toItem(locale: Locale, article: PreviewArticle): NewsItem {
   };
 }
 
-export function cmsNewsItems(locale: Locale, dir?: string): NewsItem[] {
-  return readSite(dir).map((article) => toItem(locale, article));
-}
-
-export function cmsArticle(locale: Locale, id: string, dir?: string): PublishedArticle | null {
-  const article = readSite(dir).find((entry) => entry.id === id);
-  if (!article) return null;
+/** One article's detail view: date label, body and the gallery, in the reader's language. */
+export function articleView(locale: Locale, article: PreviewArticle): PublishedArticle {
   const { date, dateIso } = dateOf(locale, article);
   return {
     title: locale === "th" ? article.titleTh : article.titleEn,
@@ -113,4 +116,13 @@ export function cmsArticle(locale: Locale, id: string, dir?: string): PublishedA
       caption: locale === "th" ? media.captionTh : media.captionEn,
     })),
   };
+}
+
+export function cmsNewsItems(locale: Locale, dir?: string): NewsItem[] {
+  return siteArticles(dir).map((article) => newsItemFrom(locale, article));
+}
+
+export function cmsArticle(locale: Locale, id: string, dir?: string): PublishedArticle | null {
+  const article = siteArticles(dir).find((entry) => entry.id === id);
+  return article ? articleView(locale, article) : null;
 }

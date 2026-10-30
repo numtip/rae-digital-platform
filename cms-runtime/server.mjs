@@ -3,9 +3,16 @@ import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypt
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { assertArticleImage, extensionFor, MediaRejected, SAFE_ID, SAFE_MEDIA_FILE } from "../lib/cms/media.ts";
-import { submitForReview, approveNews, publishNews, returnForRevision } from "../lib/cms/news-workflow.ts";
-import { publishedArticlesForExport } from "../lib/cms/publish.ts";
-import { requirePermission } from "../lib/cms/permissions.ts";
+import {
+  submitForReview,
+  approveNews,
+  publishNews,
+  returnForRevision,
+  revisePublished,
+  unpublishNews,
+} from "../lib/cms/news-workflow.ts";
+import { publishedArticlesForExport, publishedSnapshotOf } from "../lib/cms/publish.ts";
+import { hasPermission, requirePermission } from "../lib/cms/permissions.ts";
 import { hashSessionToken, isSessionExpired, openSession } from "../lib/cms/session.ts";
 import { FAILURE_WINDOW_MS, createLoginThrottle } from "../lib/cms/login-throttle.ts";
 import { createMysqlRepository } from "../lib/cms/mysql-repository.ts";
@@ -43,8 +50,8 @@ export async function addUserToRepository(repository, { id, role, password }) {
   await repository.addUser({ id, role, passwordHash: hashPassword(password) });
 }
 
-/** The shape `createCmsServer` needs, backed by the module maps. */
-function memoryRepository() {
+/** The in-memory repository over the module maps — the default, and what tests inspect. */
+export function memoryRepository() {
   return {
     async findUser(id) {
       return users.get(id) ?? null;
@@ -285,8 +292,9 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         const owner = mediaArticleId ? await repo.getArticle(mediaArticleId) : null;
         if (!owner || !mediaFile || !SAFE_MEDIA_FILE.test(mediaFile)) return send(response, 404, { error: "NOT_FOUND" }, origin);
         // A draft's images stay behind authentication; a published article's images are what the
-        // preview page and, later, the static import need.
-        if (owner.status !== "published" && !(await actorFrom(request, now(), repo))) {
+        // preview page and, later, the static import need — including while the row is a revision,
+        // because the export still serves the last published version with them.
+        if (owner.status !== "published" && owner.status !== "revision" && !(await actorFrom(request, now(), repo))) {
           return send(response, 404, { error: "NOT_FOUND" }, origin);
         }
         const files = await repo.listMedia(mediaArticleId);
@@ -317,7 +325,13 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
       if (!actor) return send(response, 401, { error: "UNAUTHORIZED" }, origin);
 
       if (request.method === "GET" && url.pathname === "/v1/news") {
-        return send(response, 200, { articles: await repo.listArticles() }, origin);
+        const articles = await repo.listArticles();
+        // Drafts are the desk's working set. A caller without news:draft — the viewer role is
+        // the one that exists for this — gets exactly what the site shows, nothing more.
+        const visible = hasPermission(actor.role, "news:draft")
+          ? articles
+          : articles.filter((article) => article.status === "published");
+        return send(response, 200, { articles: visible }, origin);
       }
 
       if (request.method === "POST" && url.pathname === "/v1/news") {
@@ -353,7 +367,11 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
       if (request.method === "PATCH" && url.pathname === `/v1/news/${id}`) {
         requirePermission(actor.role, "news:draft");
         if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
-        if (current.status !== "draft") return send(response, 400, { error: "LOCKED" }, origin);
+        // A revision is editable for the same reason a draft is: the live version it will replace
+        // is held in its snapshot, not in these fields.
+        if (current.status !== "draft" && current.status !== "revision") {
+          return send(response, 400, { error: "LOCKED" }, origin);
+        }
         if (current.authorId !== actor.id) {
           return send(response, 403, { error: "PermissionDenied", message: "only the author can edit this draft" }, origin);
         }
@@ -400,9 +418,55 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
       if (request.method === "POST" && url.pathname === `/v1/news/${id}/publish`) {
         if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
         const published = publishNews(current, actor);
-        await repo.saveArticle(published);
-        await repo.appendAudit({ actorId: actor.id, action: "news.publish", entityType: "news", entityId: id });
-        return send(response, 200, published, origin);
+        // The live version is frozen here: while a later revision is being edited, the export keeps
+        // serving this snapshot, so an unapproved correction cannot reach the site.
+        const record = { ...published, publishedSnapshot: publishedSnapshotOf(published) };
+        await repo.saveArticle(record);
+        // A republish replaces a story that was already live, which the trail must show as a
+        // revision of it; the first release of an item is a plain publish.
+        await repo.appendAudit({
+          actorId: actor.id,
+          action: current.revisionNo ? "news.revise" : "news.publish",
+          entityType: "news",
+          entityId: id,
+          before: { status: current.status, revisionNo: current.revisionNo ?? 0 },
+          after: { status: record.status, revisionNo: record.revisionNo },
+        });
+        return send(response, 200, record, origin);
+      }
+
+      if (request.method === "POST" && url.pathname === `/v1/news/${id}/revise`) {
+        if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        const revised = revisePublished(current, actor);
+        // Rows published before the snapshot column existed have none; freeze their live body now
+        // so the story stays exported for as long as the revision is open.
+        const record = { ...revised, publishedSnapshot: revised.publishedSnapshot ?? publishedSnapshotOf(current) };
+        await repo.saveArticle(record);
+        await repo.appendAudit({
+          actorId: actor.id,
+          action: "news.revise",
+          entityType: "news",
+          entityId: id,
+          before: { status: current.status, revisionNo: current.revisionNo ?? 0 },
+          after: { status: record.status, revisionNo: record.revisionNo ?? 0 },
+        });
+        return send(response, 200, record, origin);
+      }
+
+      if (request.method === "POST" && url.pathname === `/v1/news/${id}/unpublish`) {
+        if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        const body = await readBody(request);
+        const withdrawn = unpublishNews(current, actor, String(body.reason ?? ""));
+        await repo.saveArticle(withdrawn);
+        await repo.appendAudit({
+          actorId: actor.id,
+          action: "news.unpublish",
+          entityType: "news",
+          entityId: id,
+          before: { status: current.status },
+          after: { status: withdrawn.status, reason: withdrawn.withdrawalReason },
+        });
+        return send(response, 200, withdrawn, origin);
       }
 
       // ---- media: ordered images for one article (author uploads, everyone reads) ----

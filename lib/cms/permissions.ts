@@ -7,9 +7,12 @@ export type Permission =
   | "audit:read"
   | "user:assign_role";
 
-export type RoleName = "officer" | "editor" | "publisher" | "admin";
+export type RoleName = "viewer" | "officer" | "editor" | "publisher" | "admin";
 
 export const ROLE_PERMISSIONS: Record<RoleName, readonly Permission[]> = {
+  // A consumer of the published site: it reads, so it needs no permission at all, and every
+  // write route refuses it. The read endpoints filter on news:draft instead of on this key.
+  viewer: [],
   officer: ["news:draft", "media:upload", "document:register"],
   editor: ["news:draft", "news:review", "media:upload", "document:register"],
   publisher: ["news:draft", "news:review", "news:publish", "media:upload", "document:register"],
