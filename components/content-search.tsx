@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { sectionOf, type SearchEntry, type SearchSection } from "@/lib/search-index";
-import { foldForSearch } from "@/lib/search-text";
+import { matchesQuery } from "@/lib/search-text";
 import type { SearchContent } from "@/lib/i18n";
 
 // Filtering runs in the browser over the index the page passes in, so the search
@@ -23,9 +23,9 @@ export function ContentSearch({ entries, labels }: { entries: SearchEntry[]; lab
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [section, setSection] = useState<SearchSection | "all">("all");
 
-  const needle = foldForSearch(query.trim());
+  const needle = query.trim();
   const matched = needle
-    ? entries.filter((entry) => foldForSearch(`${entry.title} ${entry.text}`).includes(needle))
+    ? entries.filter((entry) => matchesQuery(`${entry.title} ${entry.text}`, needle))
     : [];
 
   // Counts come from the same list the results come from — the matched set once a word
