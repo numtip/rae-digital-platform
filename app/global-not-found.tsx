@@ -21,8 +21,8 @@ function LocaleBlock({ locale }: { locale: Locale }) {
   const content = getContent(locale);
   return (
     <div lang={locale}>
-      <h2 className="text-xl font-bold text-neutral-800">{content.notFound.title}</h2>
-      <p className="mt-2 text-neutral-600">{content.notFound.body}</p>
+      <h2 className="text-xl font-bold text-neutral-800 dark:text-neutral-100">{content.notFound.title}</h2>
+      <p className="mt-2 text-neutral-600 dark:text-neutral-300">{content.notFound.body}</p>
       <div className="mt-4 flex flex-wrap justify-center gap-3">
         <Link
           className={`rounded-md bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700 ${FOCUS}`}
@@ -31,7 +31,7 @@ function LocaleBlock({ locale }: { locale: Locale }) {
           {content.notFound.back}
         </Link>
         <Link
-          className={`rounded-md border border-brand-600 px-5 py-2.5 font-medium text-brand-700 hover:bg-brand-50 ${FOCUS}`}
+          className={`rounded-md border border-brand-600 px-5 py-2.5 font-medium text-brand-700 dark:border-neutral-400 dark:text-neutral-100 hover:bg-brand-50 ${FOCUS}`}
           href={`/${locale}/search`}
         >
           {content.notFound.search}
@@ -56,9 +56,9 @@ export default function GlobalNotFound() {
             src={asset("/images/brand/mju-emblem-192.png")}
             width={192}
           />
-          <p className="mt-6 text-sm font-semibold text-gold-600">404</p>
-          <h1 className="mt-2 text-2xl font-bold text-neutral-800 md:text-3xl">{primary.notFound.title}</h1>
-          <p className="mt-3 text-neutral-600">{primary.notFound.body}</p>
+          <p className="mt-6 text-sm font-semibold text-brand-600 dark:text-gold-500">404</p>
+          <h1 className="mt-2 text-2xl font-bold text-neutral-800 dark:text-neutral-100 md:text-3xl">{primary.notFound.title}</h1>
+          <p className="mt-3 text-neutral-600 dark:text-neutral-300">{primary.notFound.body}</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
               className={`rounded-md bg-brand-600 px-6 py-2.5 font-medium text-white hover:bg-brand-700 ${FOCUS}`}
@@ -67,7 +67,7 @@ export default function GlobalNotFound() {
               {primary.notFound.back}
             </Link>
             <Link
-              className={`rounded-md border border-brand-600 px-6 py-2.5 font-medium text-brand-700 hover:bg-brand-50 ${FOCUS}`}
+              className={`rounded-md border border-brand-600 px-6 py-2.5 font-medium text-brand-700 dark:border-neutral-400 dark:text-neutral-100 hover:bg-brand-50 ${FOCUS}`}
               href={`/${DEFAULT_LOCALE}/search`}
             >
               {primary.notFound.search}
