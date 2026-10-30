@@ -5,11 +5,11 @@ serves the #94 build (measured on the public origin: `/th/news/37912/` descripti
 
 ## Open on GitHub — the owner's call, nothing merged tonight
 
-- **#86, #87, #88, #89 are superseded.** All four are still open drafts and read `DIRTY`, but
-  #90 ("integration: fast CMS publication hardening") merged exactly those four branches into
-  `main` on 30 Oct 00:08 UTC — its own body lists them in dependency order. Closing them is the
-  honest end; rebasing them would replay work that already shipped, and the next run that reads
-  "4 open CMS PRs" will otherwise plan around a phantom stack.
+- **#86, #87, #88, #89 are superseded.** All four are still open drafts (#88, #87, #86 read
+  `DIRTY`, #89 `CLEAN`), but #90 ("integration: fast CMS publication hardening") merged exactly
+  those four branches into `main` on 30 Oct 00:08 UTC — its own body lists them in dependency
+  order. Closing them is the honest end; rebasing them would replay work that already shipped,
+  and the next run that reads "4 open CMS PRs" will otherwise plan around a phantom stack.
 - After any runtime deploy that writes the lifecycle columns, apply
   `cms-runtime/migrations/007_editorial_lifecycle.sql` first.
 - The desk still has no real staff accounts: one `officer` cannot walk draft → review →
@@ -21,21 +21,24 @@ serves the #94 build (measured on the public origin: `/th/news/37912/` descripti
 ## What this run changed (#95)
 
 A page that sets its own `openGraph` replaces the layout's object whole; Next does not merge the
-two. The news detail page sets one, so **all 116 article pages shipped without `og:site_name`,
-`og:locale` and `og:locale:alternate`** while the homepage kept them — every shared article card
-named no site and no language.
+two. The news detail page sets one, so **all 118 article pages shipped without `og:site_name`,
+`og:locale` and `og:locale:alternate`** (116 from the archive, 2 published through the CMS)
+while the homepage kept them — every shared article card named no site and no language.
 
 - `lib/seo.ts` now owns `openGraphSite(orgFull, locale)`; the locale layout and the news detail
   page both spread it. The office name is passed in, so `lib/seo.ts` keeps only a type-only
   import and `tests/seo.test.mjs` still loads it under Node's type stripping.
-- `scripts/check-export.mjs` now asserts, for every URL in the sitemap, that `og:site_name`
-  exists, that `og:locale` matches the route's own locale, that `og:locale:alternate` names the
-  other one, and that a locale does not invent a second site name. It already runs in CI.
+- `scripts/check-export.mjs` now asserts, for every URL in the sitemap, that `og:site_name`,
+  `og:locale` and `og:locale:alternate` each appear exactly once, that `og:locale` matches the
+  route's own locale, that the alternate is the site's other locale (`th_TH` ⇄ `en_US`, not
+  merely something different), and that a locale does not invent a second site name. It already
+  runs in CI.
 
 Measured on the export: **og:site_name 38/159 pages before → 156/159 after** (the three without
-it are the 404 documents: `noindex`, built outside the locale layout). News detail 0/116 →
-116/116. The new gate reported 354 problems against a rebuild of the unfixed tree and passes on
-this one — it has been seen red.
+it are the 404 documents: `noindex`, built outside the locale layout). Article pages 0/118 →
+118/118. The new gate reported 354 problems (118 × 3) against a rebuild of the unfixed tree and
+passes on this one — it has been seen red, and the alternate-locale and duplicate-tag assertions
+were each proven with a mutated export (`fr_FR`, a second `og:site_name`) before being trusted.
 
 ## Checks that passed on #95 (this host)
 

@@ -16,6 +16,9 @@
 //     beside them were already 44px)
 //  7. the search index does not index a document category as an item at /documents
 //     (it did, so the row appeared twice and the documents chip counted each twice)
+//  8. every URL in the sitemap carries the site-wide share-card fields, once each, with the
+//     locale tags matching the page's own locale (the news detail page's own openGraph block
+//     replaced the layout's, so all 118 article pages shipped without og:site_name)
 //
 // Exit code 1 on any failure, so CI fails instead of shipping.
 
@@ -172,16 +175,27 @@ for (const loc of sitemapLocs) {
   // A page that sets its own openGraph replaces the layout's object, so the site-wide fields
   // have to be asserted per page: the news detail page dropped all three from every article
   // card while the homepage kept them, which no other check could see.
-  const siteName = (html.match(/<meta property="og:site_name" content="([^"]*)"/) || [])[1];
-  const ogLocale = (html.match(/<meta property="og:locale" content="([^"]*)"/) || [])[1];
-  const alternate = (html.match(/<meta property="og:locale:alternate" content="([^"]*)"/) || [])[1];
   const language = path === "en" || path.startsWith("en/") ? "en" : "th";
-  if (!siteName) failures.push(`${loc}: no og:site_name`);
-  else siteNames[language].add(siteName);
   const expected = language === "en" ? "en_US" : "th_TH";
-  if (ogLocale !== expected) failures.push(`${loc}: og:locale is ${ogLocale ?? "(missing)"}, expected ${expected}`);
-  if (!alternate || alternate === ogLocale)
-    failures.push(`${loc}: og:locale:alternate is ${alternate ?? "(missing)"}`);
+  // Exactly one of each: a second tag of the same name means two metadata sources, and a
+  // reader of the HTML cannot tell which one a crawler keeps.
+  const only = (property) => {
+    const values = [...html.matchAll(new RegExp(`<meta property="${property}" content="([^"]*)"`, "g"))].map(
+      (m) => m[1],
+    );
+    if (values.length !== 1) failures.push(`${loc}: ${property} appears ${values.length} time(s), expected once`);
+    return values[0];
+  };
+  const siteName = only("og:site_name");
+  if (siteName) siteNames[language].add(siteName);
+  const ogLocale = only("og:locale");
+  if (ogLocale !== undefined && ogLocale !== expected)
+    failures.push(`${loc}: og:locale is ${ogLocale}, expected ${expected}`);
+  // Not merely "different from og:locale": the pair is the two locales this site publishes in.
+  const alternate = only("og:locale:alternate");
+  const other = language === "en" ? "th_TH" : "en_US";
+  if (alternate !== undefined && alternate !== other)
+    failures.push(`${loc}: og:locale:alternate is ${alternate}, expected ${other}`);
 }
 for (const [language, names] of Object.entries(siteNames)) {
   if (names.size > 1) failures.push(`og:site_name has ${names.size} ${language} values: ${[...names].join(" | ")}`);

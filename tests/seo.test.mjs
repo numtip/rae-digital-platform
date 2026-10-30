@@ -117,3 +117,12 @@ test("the site-wide openGraph fields follow the locale and name the office", () 
     alternateLocale: ["th_TH"],
   });
 });
+
+// Same rule as metaDescription above: the helper must be called by the pages that carry an
+// openGraph block of their own, or it is a definition nothing reads.
+test("the pages that set their own openGraph spread the site-wide fields", () => {
+  for (const file of ["app/[locale]/layout.tsx", "app/[locale]/news/[nid]/page.tsx"]) {
+    const source = readFileSync(file, "utf8");
+    assert.match(source, /\.\.\.openGraphSite\(/, `${file} sets an openGraph block without the site-wide fields`);
+  }
+});
