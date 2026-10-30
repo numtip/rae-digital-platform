@@ -16,7 +16,7 @@ export const enDirectory: DirectoryContent = {
   },
   units: {
     title: "Units under the office",
-    subtitle: "Units named on the current office homepage",
+    subtitle: "Units named on the office homepage (live destinations only)",
   },
   media: {
     title: "Electronic media",
@@ -46,7 +46,6 @@ export const enDirectory: DirectoryContent = {
     "green-office": "Green Office",
     rspg: "RSPG Maejo",
     irb: "Research ethics committee (IRB)",
-    organic: "Organic Agriculture Centre",
     royal: "Royal initiative projects",
     clinic: "Technology clinic",
     "maejo-vision": "Maejo Vision Online",

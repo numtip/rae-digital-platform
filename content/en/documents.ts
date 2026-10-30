@@ -39,7 +39,7 @@ export const enDocuments: DocumentsContent = {
       links: [
         { label: "Manuals", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=1925" },
         { label: "Centre of excellence forms", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=2605" },
-        { label: "Academic service forms", url: "https://rae.mju.ac.th/wtms_webpageAdminDetail.aspx?wID=2660" },
+        { label: "Academic service forms", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=2660" },
         { label: "External funding source forms", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=1930" },
         { label: "Technology clinic forms", url: "https://rae.mju.ac.th/wtms_webpageDetail.aspx?wID=1931" },
       ],

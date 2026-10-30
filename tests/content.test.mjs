@@ -44,6 +44,13 @@ test("every url in content is https", () => {
   assert.deepEqual(bad, [], `non-https urls:\n${bad.join("\n")}`);
 });
 
+// A public page once shipped wtms_webpageAdminDetail.aspx, which exists only to redirect to the
+// public page: an admin path on a public site, plus one hop. Case-insensitive — IIS is.
+test("no published outbound link uses an admin page path", () => {
+  const bad = files.filter((file) => /admindetail\.aspx/i.test(read(file))).map(rel);
+  assert.deepEqual(bad, [], `admin page paths in content:\n${bad.join("\n")}`);
+});
+
 test("every source block names when it was retrieved", () => {
   // Check ALL blocks in a file, not just the first: a page with two sources is legal.
   const missing = [];
