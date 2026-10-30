@@ -103,16 +103,12 @@ export function buildSearchIndex(locale: Locale): SearchEntry[] {
 
   const documents = getDocuments(locale);
   page(`${base}/documents`, documents.hero.title, join(documents.hero.lead, documents.note));
+  // One entry per category, at its own page. A second entry under the same title
+  // pointing at /documents duplicated the result and dropped the reader on the hub
+  // instead of the category page they had searched for.
   documents.groups.forEach((group) =>
     page(`${base}/documents/category/${group.slug}`, group.title, join(group.links.map((link) => link.label))),
   );
-  documents.groups.forEach((group) => {
-    item(
-      `${base}/documents`,
-      group.title,
-      join(group.links.map((link) => link.label)),
-    );
-  });
 
   const knowledge = getKnowledge(locale);
   page(

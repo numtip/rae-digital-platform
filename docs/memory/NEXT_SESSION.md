@@ -1,54 +1,47 @@
-# Next session — RAE digital platform (2026-10-28, 02:30 +07)
+# Next session — RAE digital platform (2026-10-29, 02:30 +07)
 
-`main` is `87f92d9`. PRs #57–#74 are merged. The public site on Pages is unchanged tonight, and the
-editorial system is still **staging only** on VPS 190, bound to `127.0.0.1:3317`.
+`main` is `4c79b58`. The Pages site is clean at 152 URLs (`node scripts/qa-live.mjs` → 0 problems).
+The committed `public/cms-published/` data carries one article, `quality-assurance-public-hearing-2026`;
+the earlier `staging-real-20261027` record is retired.
 
-## Waiting for the owner (nothing merged, nothing deployed)
+## The open CMS stack, in merge order (all draft, all CLEAN, waiting on the owner)
 
-| PR | What it carries | State |
+| PR | Branch | What it carries |
 |---|---|---|
-| [#75](https://github.com/numtip/rae-digital-platform/pull/75) | the language switcher keeps the search word (`/th/search/?q=…` → `/en/search/?q=…`) | draft, awaiting approval |
-| `nightly/2026-10-28-b` | a CMS-published article shows its own photo on the news card; a news page's JSON-LD image is the same URL as `og:image` | draft, awaiting approval |
+| #86 | `feat/cms-live-news-pilot` | render published news from the live API |
+| #87 | `feat/cms-viewer-role` | a viewer role reads published news and nothing else |
+| #88 | `feat/cms-editorial-lifecycle` | withdraw a published article, revise one without taking it down |
+| #89 | `feat/cms-live-news-canonical` | `/news` becomes the canonical news route |
+| #90 | `integration/preprod` | the four above merged into one tree, gated as one system |
 
-## What this night proved (real runs on this machine)
+No `--admin` merge has been used and branch protection is untouched. #86 and #89 are the pair that
+opens the build-time tuple (`generateStaticParams` + `dynamicParams = false`, a `force-static`
+sitemap, a build-time search index) — that pair is what makes a newly published story appear
+without a rebuild.
 
-- `npm test` — 67 pass / 0 fail / 3 skipped (the three that need a database).
-- typecheck clean; lint 0 errors (9 pre-existing warnings); `build:export` 156 routes; `check-export`
-  OK — 157 files, 9,106 internal refs, 152 share cards.
-- Live sweep of the Pages preview (`scripts/qa-live.mjs`) — 152/152 URLs, lang/canonical/hreflang/h1
-  on all, 382 images, **0 problems**.
-- The CMS card was rendered in `next dev` with a local fixture: before the change the card drew the
-  grey bar and no `<img>`; after, it renders the article's own photo with the locale's alt text, and
-  an archive card still emits its three-width `srcSet`.
-- The structured-data defect was proven red before it was fixed: on **108** pages the JSON-LD image
-  was `…/rae-digital-platform/rae-digital-platform/images/…` while `og:image` named the right URL.
-  `check-export` now asserts the two agree; after the fix it reports 0.
+## On main now
 
-## Still true from earlier nights
-
-- Staging article `staging-real-20261027` (published, the owner's five photos of the 26 Oct 2026
-  public hearing, bilingual captions and alt text): `ssh -L 13317:127.0.0.1:3317 vps190`.
-- Guards on 190: `../../etc/passwd` as an id → 400, `passwd.jpg` → 404, a 13 MB upload → 413 with no
-  file written, a draft's image → 404 without a token, `/v1/export` without a token → 401.
-- Backups verify with `sha256sum -c`, and a restore into a disposable database yields the published
-  article with its five media rows and five files.
-
-## Deliberately not done
-
-- **Nothing reaches GitHub Pages from the CMS.** Syndication is still an owner decision (scheduled
-  import from `/v1/export`, or by hand). `scripts/cms-preview.mjs` remains the only bridge, and a
-  production build refuses to run while `public/cms-published/` exists.
-- The CMS card loads the uploaded photo at full size — no resized copy exists. Fine while this path
-  stays local; it needs resizing the day syndication is approved.
-- Reviewer nits left alone: `MEDIA_SRC` duplicates the runtime's `SAFE_MEDIA_FILE`, and
-  `lib/cms/preview-site.ts` validates no media URL (a missing `altTh` throws a `TypeError`).
-- M13/M15 (storage), M12 (PDPA), M17 (announcements) and the desk login path stay blocked on owner
-  decisions — see `MODULE-COMPLETION-MATRIX.md`.
+- The desk: the login card comes first, then the editor (#85); `/cms-api/*` is proxied on the
+  desk's own origin (#83) with `skipTrailingSlashRedirect` gated on `NEXT_CMS_API_PROXY` (#84).
+- Syndication is live, not a proposal: the user crontab on 237 runs `~/bin/rae-cms-sync-cron.sh`
+  every 5 minutes (that wrapper is on the host, not in this repo). The in-repo
+  `scripts/cms-sync-gh.sh` only lands regenerated `public/cms-published/` data as the reused
+  `cms/auto-sync` PR; the wrapper polls `build` and squash-merges that PR, which is why #79 and
+  #82 show `numtip` as the merger (#78, #81 changed the runner). `scripts/cms-preview.mjs` is now
+  only a local eyeballing tool.
+- Search: one index entry per document category, at its own page (this branch). Before, every
+  category was also indexed against `/documents`: the same row appeared twice and its second copy
+  left the reader on the documents hub instead of the category page, while the documents section
+  counted 7 entries for 4 destinations. `งานวิจัย` returned 30 rows on the Pages build, 29 after;
+  the index carries 79 entries per locale before, 76 after (both locales always agreed — an
+  earlier count of 73/78 was an artefact of reading the flight payload as text).
+- Share cards: `og:image` carries the basePath once (#80).
 
 ## Next useful steps, in order
 
-1. Review and merge #75, then `nightly/2026-10-28-b`. `main` still requires the `build` check; the
-   owner merges.
-2. Decide the published-news syndication path (scheduled import or manual).
-3. When the owner is done reviewing the staging article: delete `staging-real-20261027` and its
-   media, then retire the four `test-*` accounts (keep the audit rows).
+1. Owner: review and merge the stack in the order above, #90 last.
+2. After #88 lands: apply `cms-runtime/migrations/007_editorial_lifecycle.sql` before deploying a
+   runtime that writes the new columns.
+3. The desk still has no real staff accounts; one officer cannot walk draft → review → publish.
+   The owner supplies names and roles — do not invent a roster.
+4. Re-run `node scripts/qa-live.mjs` against the Pages origin after any merge that touches routes.
