@@ -7,6 +7,7 @@ import { asset } from "@/lib/assets";
 import { liveNews } from "@/lib/cms/live";
 import { publicationStamp, publishedIds } from "@/lib/cms/published-site";
 import { SITE_URL, getContent, getNews, isLocale, type Locale } from "@/lib/i18n";
+import { metaDescription } from "@/lib/seo";
 
 // One page per published item. Bodies are the office's own text (Thai); the
 // English route shows that Thai text and says so, rather than pretending to have
@@ -46,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = cms?.title ?? item?.title ?? nid;
   return {
     title: `${title} — ${getContent(locale).header.orgFull}`,
-    description: cms?.body[0] ?? item?.body[0] ?? title,
+    description: metaDescription(cms?.body[0] ?? item?.body[0] ?? "", title),
     alternates: {
       canonical: `/${locale}/news/${nid}/`,
       languages: {

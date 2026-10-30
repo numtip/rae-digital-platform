@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumb, CARD, PageHero, SourceLine } from "@/components/page-shell";
 import { SITE_URL, getContent, getDocuments, isLocale } from "@/lib/i18n";
+import { metaDescription } from "@/lib/seo";
 
 // One page per document category. Slugs are stable and identical in both locales so
 // a shared link keeps working when the reader switches language.
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!group) notFound();
   return {
     title: `${group.title} — ${getContent(locale).header.orgFull}`,
-    description: `${group.title}: ${group.links.map((link) => link.label).join(", ")}`,
+    description: metaDescription(`${group.title}: ${group.links.map((link) => link.label).join(", ")}`, group.title),
     alternates: {
       canonical: `/${locale}/documents/category/${slug}/`,
       languages: {
