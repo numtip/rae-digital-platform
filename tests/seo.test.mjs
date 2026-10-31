@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { metaDescription } from "../lib/seo.ts";
+import { metaDescription, openGraphSite } from "../lib/seo.ts";
 
 // The news pages hand a body paragraph to `description`, and those paragraphs run to
-// 1,045 characters. Imported as a .ts module: lib/seo.ts has no imports of its own, so
+// 1,045 characters. Imported as a .ts module: lib/seo.ts carries only a type-only import, so
 // Node's type stripping loads it without the Next alias resolver or a build.
 //
 // The crafted fixtures below put the raw cut at character 158 on purpose — a fixture whose
@@ -98,5 +98,31 @@ test("the pages that derive a description from data route it through metaDescrip
   ]) {
     const source = readFileSync(file, "utf8");
     assert.match(source, /description: metaDescription\(/, `${file} builds its own description`);
+  }
+});
+
+// Sharing a page must name the site and the locale it is in. The locale tags are the pairs
+// Facebook and LinkedIn read, and a page that sets its own openGraph has to carry them.
+test("the site-wide openGraph fields follow the locale and name the office", () => {
+  const th = openGraphSite("สำนักวิจัยและบริการวิชาการ", "th");
+  const en = openGraphSite("The Office of Research and Academic Services", "en");
+  assert.deepEqual(th, {
+    siteName: "สำนักวิจัยและบริการวิชาการ",
+    locale: "th_TH",
+    alternateLocale: ["en_US"],
+  });
+  assert.deepEqual(en, {
+    siteName: "The Office of Research and Academic Services",
+    locale: "en_US",
+    alternateLocale: ["th_TH"],
+  });
+});
+
+// Same rule as metaDescription above: the helper must be called by the pages that carry an
+// openGraph block of their own, or it is a definition nothing reads.
+test("the pages that set their own openGraph spread the site-wide fields", () => {
+  for (const file of ["app/[locale]/layout.tsx", "app/[locale]/news/[nid]/page.tsx"]) {
+    const source = readFileSync(file, "utf8");
+    assert.match(source, /\.\.\.openGraphSite\(/, `${file} sets an openGraph block without the site-wide fields`);
   }
 });

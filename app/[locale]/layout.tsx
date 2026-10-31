@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { LOCALES, SITE_URL, getContent, isLocale } from "@/lib/i18n";
+import { openGraphSite } from "@/lib/seo";
 import "../globals.css";
 
 // WOFF2 files committed under assets/fonts/sarabun (SIL OFL 1.1; provenance, conversion
@@ -49,10 +50,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // metadata, and a hard-coded url here made every subpage advertise the locale home.
     openGraph: {
       type: "website",
-      siteName: content.header.orgFull,
+      ...openGraphSite(content.header.orgFull, locale),
       url: "./",
-      locale: locale === "th" ? "th_TH" : "en_US",
-      alternateLocale: locale === "th" ? ["en_US"] : ["th_TH"],
     },
     // Card title, description and image must follow the page too. Next fills them from
     // each page's openGraph (falling back to its title/description), so only the parts

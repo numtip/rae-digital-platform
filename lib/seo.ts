@@ -1,3 +1,8 @@
+// Type-only: lib/seo.ts stays free of runtime imports so `tests/seo.test.mjs` can load it
+// under Node's type stripping, without the Next alias resolver or a build.
+import type { Metadata } from "next";
+import type { Locale } from "@/lib/i18n";
+
 // A meta description is a snippet, not the article. A search engine shows roughly
 // 155–160 characters and cuts the rest wherever it likes; these pages handed it the first
 // body paragraph verbatim (up to 1,045 characters on the imported news), so what a reader
@@ -29,4 +34,20 @@ export function metaDescription(text: string, fallback: string): string {
   if (space > cut.length - 30) cut = cut.slice(0, space);
   while (THAI_BROKEN.test(cut)) cut = cut.slice(0, -1);
   return cut.trimEnd().replace(/[,;:.·—-]+$/u, "") + ELLIPSIS;
+}
+
+// The parts of an `openGraph` block that are true of every page. A page that sets its own
+// `openGraph` replaces the layout's object whole — Next does not merge the two — so the news
+// detail page dropped og:site_name, og:locale and og:locale:alternate from all 118 article
+// cards (116 from the archive, 2 published through the CMS). The defaults live here so the next
+// page that sets its own block cannot lose them.
+//
+// `satisfies` is what makes a typo here a type error: spread into a metadata object, a
+// misspelled key is silently dropped, which is the same failure this helper exists to end.
+export function openGraphSite(orgFull: string, locale: Locale) {
+  return {
+    siteName: orgFull,
+    locale: locale === "th" ? "th_TH" : "en_US",
+    alternateLocale: locale === "th" ? ["en_US"] : ["th_TH"],
+  } satisfies Pick<NonNullable<Metadata["openGraph"]>, "siteName" | "locale" | "alternateLocale">;
 }
