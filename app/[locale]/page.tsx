@@ -66,7 +66,15 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   return (
     <main id="main-content" tabIndex={-1}>
       {/* Hero photograph is the office's own building (see public/README.md).
-          brand-700 stays underneath so the text is readable before the image loads. */}
+          brand-700 stays underneath so the text is readable before the image loads.
+          The scrim is directional, not flat, and it is responsive because the copy's
+          width is: at 390px the Thai lines run to ~93% of the band, so the right end has
+          to stay dense there (0.75); from xl the headline column stops around 68%, and
+          only that empty right-hand area can open to 0.30. One alpha for every viewport
+          would either wash the photo out on desktop or drop the gold accent below AA on
+          a phone — measured at 390/768/1024/1440, see §4.5.1 of
+          DESIGN_SYSTEM_RECONCILIATION.md. The flat 0.75 it replaces left the gold at
+          2.45:1 over the photograph's bright pixels. */}
       <section className="relative flex min-h-[560px] items-center bg-brand-700 md:min-h-[600px]">
         <Image
           src={asset("/images/about/office-building.webp")}
@@ -76,16 +84,23 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           sizes="100vw"
           className="object-cover"
         />
-        <div aria-hidden="true" className="absolute inset-0 bg-brand-700/75" />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-linear-to-r from-brand-700/95 via-brand-700/90 to-brand-700/75 lg:to-brand-700/60 xl:to-brand-700/30 xl:via-70%"
+        />
         <div className="relative mx-auto w-full max-w-7xl px-4 py-16">
           <div className="text-white">
-            <h1 className="mb-4 max-w-2xl text-3xl font-bold leading-tight sm:text-4xl md:text-5xl lg:max-w-4xl lg:text-6xl">
+            {/* hero-fade animates opacity only, and only when the reader has not asked
+                for reduced motion — the finished state is the base state. */}
+            <h1 className="hero-fade mb-4 max-w-2xl text-3xl font-bold leading-tight sm:text-4xl md:text-5xl lg:max-w-4xl lg:text-6xl">
               {hero.title}
               <br />
               <span className="text-gold-500">{hero.titleAccent}</span>
             </h1>
-            <p className="mb-8 max-w-2xl text-base text-neutral-100 sm:text-lg md:text-xl">{hero.description}</p>
-            <div className="flex flex-wrap gap-4">
+            <p className="hero-fade hero-fade-2 mb-8 max-w-2xl text-base text-neutral-100 sm:text-lg md:text-xl">
+              {hero.description}
+            </p>
+            <div className="hero-fade hero-fade-3 flex flex-wrap gap-4">
               <Link
                 className={`rounded-md bg-brand-500 px-6 py-3 font-medium text-white shadow-lg hover:bg-brand-600 sm:px-8 ${FOCUS}`}
                 href={href("/about")}
