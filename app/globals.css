@@ -18,8 +18,47 @@
 
 :root {
   color-scheme: light dark;
+  /* Hero reveal timing. 640 ms sits inside the §4.5 reveal band (600–1200 ms),
+     not the 120/200/320 ms micro-interaction tokens, and the curve is the design
+     system's own ease. One place to change both. */
+  --hero-fade-duration: 640ms;
+  --hero-fade-ease: cubic-bezier(.2, 0, .2, 1);
 }
 
 body {
   @apply bg-surface-50 text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
+}
+
+/* Hero reveal — the canonical reduced-motion pattern for this codebase
+   (DESIGN_SYSTEM_RECONCILIATION.md §4.5). Two rules make it safe:
+
+   1. It animates opacity only. No transform, so it cannot shift layout or
+      contribute to CLS, and no filter, which is not on the §4.5 allow-list.
+   2. The base state is the finished state. The animation is ADDED only when the
+      reader has not asked for reduced motion, so `prefers-reduced-motion: reduce`,
+      a browser that does not know the query, and a stylesheet that fails to load
+      all leave the hero fully visible. Never invert this (start at opacity 0 and
+      animate up) — that turns a failed asset into a blank hero. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-fade {
+    animation: hero-fade var(--hero-fade-duration) var(--hero-fade-ease) both;
+  }
+
+  /* Stagger for the headline → paragraph → CTA order. */
+  .hero-fade-2 {
+    animation-delay: 80ms;
+  }
+
+  .hero-fade-3 {
+    animation-delay: 160ms;
+  }
+}
+
+@keyframes hero-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

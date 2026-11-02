@@ -142,6 +142,46 @@ Family: `--font-th: "Sarabun", "Noto Sans Thai", system-ui, sans-serif`. Weights
 
 `.card-hover` from Stitch (translateY −5 px / 300 ms) is kept but gated behind the reduced-motion query.
 
+#### 4.5.1 Canonical reduced-motion pattern
+
+Every animation in this codebase follows one shape. Copy it; do not invent a second one.
+
+1. **Animate opacity (or a transform) only.** No `filter: blur()`: it is not on the
+   allow-list above, and a blurred element inside a `priority` hero delays the LCP
+   paint for no accessible gain.
+2. **The base state is the finished state.** Declare the element visible, then *add* the
+   animation inside `@media (prefers-reduced-motion: no-preference)`. Never start at
+   `opacity: 0` and animate up: under `reduce`, in a browser that does not understand
+   the query, or when a stylesheet fails to load, the content would stay invisible.
+3. **No transform on above-the-fold content, and no animation on the LCP element's
+   critical path.** Opacity-only keyframes cannot contribute to CLS.
+4. **Durations come from §4.5**, not from a literal invented per component: micro
+   interactions 120/200/320 ms; reveals 600–1200 ms.
+
+Reference implementation — `app/globals.css`, used by the landing hero:
+
+```css
+@media (prefers-reduced-motion: no-preference) {
+  .hero-fade { animation: hero-fade var(--hero-fade-duration) var(--hero-fade-ease) both; }
+  .hero-fade-2 { animation-delay: 80ms; }  /* stagger: headline → lead → CTAs */
+  .hero-fade-3 { animation-delay: 160ms; }
+}
+
+@keyframes hero-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+```
+
+**Review check:** the animation must appear *inside* the `no-preference` query. An
+animation declared outside it and cancelled by a `reduce` override is rejected — the
+inverted default is exactly the failure mode this rule exists to prevent.
+
+**Also verify by hand:** the contrast gate (`scripts/check-contrast.mjs`) cannot read
+alpha background layers, so an overlay such as the hero scrim is invisible to CI. Any
+change to an overlay over a photograph needs a measured pixel sample of the text boxes,
+not an estimate from the class name.
+
 ### 4.6 Z-index scale
 
 `--z-base 0` · `--z-sticky 10` · `--z-header 40` · `--z-drawer 60` · `--z-modal 80` · `--z-toast 100` · `--z-skip 110`.
