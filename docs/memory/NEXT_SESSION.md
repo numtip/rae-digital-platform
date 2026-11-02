@@ -1,58 +1,94 @@
-# Next session — RAE digital platform (2026-10-31, companion run 02:30 +07)
+# Next session — RAE digital platform (2026-11-02 closeout, 16:25 +07)
 
-`main` is `2ad5f1a`. CI and the Pages deploy for that commit are green, and the live site
-serves the #94 build (measured on the public origin: `/th/news/37912/` description 154 chars).
+`main` is `4cbf233` (last move 2026-10-31 14:47 +07). Today's only commit is `0dc4f54`,
+and it is **not on `main`** — it sits on `feat/hero-fade-scrim` behind **PR #97, open,
+CI `build` green, `mergeStateStatus` CLEAN, not merged, not deployed**. The Pages preview
+still serves the #96 build, because nothing landed on `main` today.
 
-## Open on GitHub — the owner's call, nothing merged tonight
+## What PR #97 does
 
-- **#86, #87, #88, #89 are superseded.** All four are still open drafts (#88, #87, #86 read
-  `DIRTY`, #89 `CLEAN`), but #90 ("integration: fast CMS publication hardening") merged exactly
-  those four branches into `main` on 30 Oct 00:08 UTC — its own body lists them in dependency
-  order. Closing them is the honest end; rebasing them would replay work that already shipped,
-  and the next run that reads "4 open CMS PRs" will otherwise plan around a phantom stack.
-- After any runtime deploy that writes the lifecycle columns, apply
-  `cms-runtime/migrations/007_editorial_lifecycle.sql` first.
-- The desk still has no real staff accounts: one `officer` cannot walk draft → review →
-  publish. Names and roles are an owner-supplied decision — never invent a roster.
-- Syndication is unchanged and live: the 237 crontab runs `~/bin/rae-cms-sync-cron.sh` every 5
-  minutes; `scripts/cms-sync-gh.sh` lands regenerated `public/cms-published/` data as the reused
-  `cms/auto-sync` PR and merges it itself after polling `build`.
+The landing hero washed a flat `bg-brand-700/75` over the office photograph. It hid most of the
+building and still left the gold accent line below the 3:1 WCAG 2.2 AA threshold for large text.
 
-## What this run changed (#95)
+- **Scrim** — flat wash becomes a directional gradient, and it is *responsive*:
+  `from-brand-700/95 via-brand-700/90 to-brand-700/75 lg:to-brand-700/60 xl:to-brand-700/30 xl:via-70%`.
+- **Reveal** — CSS-only opacity fade, 640 ms, staggered 0/80/160 ms across headline → lead → CTAs.
+  No JS, no client component, no dependency.
+- Files: `app/[locale]/page.tsx`, `app/globals.css`,
+  `docs/architecture/DESIGN_SYSTEM_RECONCILIATION.md` (§4.5.1). +99 / −5, three files.
 
-A page that sets its own `openGraph` replaces the layout's object whole; Next does not merge the
-two. The news detail page sets one, so **all 118 article pages shipped without `og:site_name`,
-`og:locale` and `og:locale:alternate`** (116 from the archive, 2 published through the CMS)
-while the homepage kept them — every shared article card named no site and no language.
+## Decision that mattered: the audited alpha was wrong for small viewports
 
-- `lib/seo.ts` now owns `openGraphSite(orgFull, locale)`; the locale layout and the news detail
-  page both spread it. The office name is passed in, so `lib/seo.ts` keeps only a type-only
-  import and `tests/seo.test.mjs` still loads it under Node's type stripping.
-- `scripts/check-export.mjs` now asserts, for every URL in the sitemap, that `og:site_name`,
-  `og:locale` and `og:locale:alternate` each appear exactly once, that `og:locale` matches the
-  route's own locale, that the alternate is the site's other locale (`th_TH` ⇄ `en_US`, not
-  merely something different), and that a locale does not invent a second site name. It already
-  runs in CI.
+The approved audit specified one gradient (`0.95 → 0.90 → 0.30`) and justified `0.30` on the
+grounds that copy occupies the left ~70%. It does not, on a phone. Measured, the Thai headline at
+390 px runs to **93%** of the band, where `0.30` yields **1.75:1** — worse than the flat `0.75` it
+replaces. At 1280 EN the accent reaches 71% and `0.30` gives **2.70:1**. So the right end is held at
+`0.75` until `lg`, `0.60` from `lg`, and opens to `0.30` only from `xl`, where the falloff also
+starts at `70%` instead of `50%` so it begins after the text rather than through it.
 
-Measured on the export: **og:site_name 38/159 pages before → 156/159 after** (the three without
-it are the 404 documents: `noindex`, built outside the locale layout). Article pages 0/118 →
-118/118. The new gate reported 354 problems (118 × 3) against a rebuild of the unfixed tree and
-passes on this one — it has been seen red, and the alternate-locale and duplicate-tag assertions
-were each proven with a mutated export (`fr_FR`, a second `og:site_name`) before being trusted.
+A desktop-only check would have passed this and shipped a mobile regression. **Do not flatten the
+scrim back to a single alpha** without re-running the measurement below.
 
-## Checks that passed on #95 (this host)
+## Measured evidence (10 combinations, all pass)
 
-`npm test` 133 tests — 130 pass / 0 fail / 3 skipped (database-only) · typecheck clean · lint
-0 errors (9 pre-existing warnings) · `build:export` 159 html files, 158 routes · `check:export`
-OK — 9,232 internal refs, 926 external links, 154 share cards · `check:contrast` OK, 159 pages.
+Worst pixel behind each glyph, compositing the real photograph and the real rendered gradient.
+These are *not* from CI — the gate cannot see an alpha layer, see the next section.
+
+| viewport | locale | gold (≥3:1) | white h1 (≥3:1) | lead (≥4.5:1) |
+|---|---|---|---|---|
+| 1440 | TH | 4.33 | 9.79 | 9.40 |
+| 1440 | EN | 4.33 | 9.23 | 9.52 |
+| 1280 | TH | 4.32 | 9.80 | 9.45 |
+| 1280 | EN | 4.28 | 9.19 | 9.69 |
+| 1024 | TH | 3.59 | 5.82 | 8.91 |
+| 1024 | EN | **3.21** ← tightest | 5.58 | 8.84 |
+| 768 | TH | 4.21 | 8.71 | 8.16 |
+| 768 | EN | 3.53 | 7.52 | 8.10 |
+| 390 | TH | 3.45 | 8.09 | 8.69 |
+| 390 | EN | 4.04 | 7.19 | 8.32 |
+
+Gold was 2.45:1 under the flat scrim. Minimum now **3.21:1 (EN, 1024)** — passing but thin, so any
+copy change to the hero must be re-measured.
+
+Performance, static export served the way Pages serves it: **LCP 124 ms**, element unchanged
+(`IMG office-building.webp`, so the fade never delays it) · **CLS 0.0000**, zero shift entries ·
+hero height 600 px desktop / 560 px mobile, unchanged · `overflow-x: 0` at every width.
+`prefers-reduced-motion: reduce` → `animation-name: none`, all three nodes `opacity: 1`.
+
+## Standing lesson: CI cannot grade an alpha overlay
+
+`scripts/check-contrast.mjs` reads computed backgrounds. An overlay at alpha is invisible to it,
+which is exactly how the 2.45:1 defect survived a "contrast gate OK" for weeks. Any change to a
+scrim, tint or glass layer needs a **pixel sample of the composited result**, not a gate pass.
+Recorded in §4.5.1. Making that sample a script is the obvious follow-up (below).
+
+## Gates, this host, this PR
+
+`npm test` 133 tests — 133 pass / 1 fail / 3 skipped. The failure is **pre-existing and
+reproduced on pristine `main`**: `tests/content.test.mjs` builds paths with `/` and cannot resolve
+`content/th` in a Windows worktree. Not caused by #97, and not fixed today.
+Lint 0 errors (9 pre-existing warnings, `docs/research/tools`) · typecheck clean · build clean ·
+`NEXT_PAGES_PREVIEW=1` export 159 html / 158 routes · `check:export` OK (9,232 internal refs) ·
+`check:contrast` OK (9,006 nodes).
+
+## Carried over, still unresolved — owner decisions
+
+- The old organisation name survives inside imported news bodies (TH 10 / EN 25 places). Owner has
+  not decided whether published text may be rewritten. Unverified this run.
+- `/en/contact/` keeps a 172-character description on purpose; news index pages 2–4 reuse page 1's
+  description because a different one needs new approved copy.
+- Outbound links rot silently and nothing in CI probes them — re-probe `content/links.ts` and
+  `content/*/documents.ts` before repeating the "live destinations only" claim.
+- The Windows-only `tests/content.test.mjs` failure above: known, environment-specific, fixable
+  with `path.join`/`path.sep`, not touched today (no code work in a closeout run).
+
+Resolved since the 2026-10-31 handoff: #86–#89 are closed (superseded by #90), #94–#96 merged.
 
 ## Next useful steps, in order
 
-1. Review and merge #95 (metadata only; a merge deploys the Pages preview, never the VPS runtime).
-2. Close #86–#89 as superseded by #90.
-3. Carried over, still unresolved: the old organisation name survives inside imported news bodies
-   (TH 10 / EN 25 places) and the owner has not decided whether published text may be rewritten;
-   `/en/contact/` keeps a 172-character description on purpose; news index pages 2–4 reuse page
-   1's description because a different one needs new approved copy.
-4. Outbound links rot silently and nothing in CI probes them — re-probe `content/links.ts` and
-   `content/*/documents.ts` before repeating the "live destinations only" claim.
+1. Owner reviews and merges **#97**. A merge deploys the Pages *preview* only — never the VPS runtime.
+2. Merge the docs PR carrying this file.
+3. Turn the pixel measurement into `scripts/check-overlay-contrast.mjs` so the next hero change is
+   graded automatically instead of relying on a hand-run CDP session.
+4. Fix the Windows path failure in `tests/content.test.mjs` so a green suite means green everywhere.
+5. Only then take the carried-over text/SEO decisions to the owner as one batch.
