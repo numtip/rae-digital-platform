@@ -294,39 +294,68 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
   // that looks like a desk someone could type into without signing in.
   if (!token) {
     return (
-      <div className="mx-auto w-full max-w-[400px]">
-        <form
-          aria-busy={signingIn}
-          className="grid gap-4 rounded-lg border border-neutral-200 bg-white p-6 shadow-sm"
-          onSubmit={onLogin}
-        >
-          <p className="text-sm text-neutral-700">{copy.loginHint}</p>
-          <label className={LABEL} htmlFor="userId">
-            {copy.user}
-            <input autoComplete="username" className={FIELD} id="userId" name="userId" />
-          </label>
-          <label className={LABEL} htmlFor="password">
-            {copy.password}
-            <input autoComplete="current-password" className={FIELD} id="password" name="password" type="password" />
-          </label>
-          <button
-            className={`h-12 rounded-md bg-brand-700 px-4 text-sm font-medium text-white disabled:opacity-60 ${FOCUS}`}
-            disabled={signingIn}
-            type="submit"
-          >
-            {signingIn ? copy.signingIn : copy.login}
-          </button>
-          {ssoEnabled ? (
-            <a className={`flex h-12 items-center justify-center rounded-md border px-4 text-sm font-medium ${FOCUS}`} href={`${apiBase}/v1/sso/login`}>
-              {copy.ssoLogin}
-            </a>
-          ) : null}
-          {error ? (
-            <p className="text-sm text-red-700" role="alert">
-              {error}
-            </p>
-          ) : null}
-        </form>
+      // Full-viewport split login, the same shape as the RAE People Hub sign-in: brand panel on the
+      // left, one card on the right. MJU SSO is the primary action when the runtime offers it; the
+      // local account form stays available (open by default when SSO is off) as the emergency path.
+      <div className="fixed inset-0 z-[60] grid overflow-auto bg-surface-50 lg:grid-cols-2">
+        <aside className="flex flex-col justify-center gap-6 bg-gradient-to-br from-brand-500 via-brand-700 to-neutral-900 p-8 text-white lg:p-16">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img alt="" className="h-20 w-20 rounded-full" height={80} src="/images/brand/mju-emblem-96.png" width={80} />
+          <div>
+            <p className="text-4xl font-bold">{copy.hubName}</p>
+            <p className="mt-2 text-white/90">{copy.hubSub}</p>
+            <p className="mt-1 text-white/90">{copy.org}</p>
+          </div>
+          <ul className="grid gap-3 text-sm text-white/95">
+            {copy.hubPoints.map((point) => (
+              <li className="flex items-center gap-3" key={point}>
+                <span aria-hidden="true" className="h-2 w-2 rounded-full bg-white/80" />
+                {point}
+              </li>
+            ))}
+          </ul>
+        </aside>
+        <div className="flex items-center justify-center p-6">
+          <div aria-busy={signingIn} className="grid w-full max-w-[400px] gap-4 rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
+            <h2 className="text-2xl font-bold text-neutral-900">{copy.signInTitle}</h2>
+            <p className="text-sm text-neutral-700">{copy.signInLead}</p>
+            {ssoEnabled ? (
+              <a
+                className={`flex h-12 items-center justify-center rounded-md bg-brand-500 px-4 text-sm font-semibold text-white hover:bg-brand-600 ${FOCUS}`}
+                href={`${apiBase}/v1/sso/login`}
+              >
+                {copy.ssoLogin}
+              </a>
+            ) : null}
+            {error ? (
+              <p className="text-sm text-red-700" role="alert">
+                {error}
+              </p>
+            ) : null}
+            <details className="border-t border-neutral-200 pt-3" open={!ssoEnabled}>
+              <summary className={`cursor-pointer text-sm text-neutral-700 ${FOCUS}`}>{copy.localLogin}</summary>
+              <form className="mt-3 grid gap-4" onSubmit={onLogin}>
+                <p className="text-sm text-neutral-700">{copy.loginHint}</p>
+                <label className={LABEL} htmlFor="userId">
+                  {copy.user}
+                  <input autoComplete="username" className={FIELD} id="userId" name="userId" />
+                </label>
+                <label className={LABEL} htmlFor="password">
+                  {copy.password}
+                  <input autoComplete="current-password" className={FIELD} id="password" name="password" type="password" />
+                </label>
+                <button
+                  className={`h-12 rounded-md bg-brand-700 px-4 text-sm font-medium text-white disabled:opacity-60 ${FOCUS}`}
+                  disabled={signingIn}
+                  type="submit"
+                >
+                  {signingIn ? copy.signingIn : copy.login}
+                </button>
+              </form>
+            </details>
+            <p className="border-t border-neutral-200 pt-3 text-xs text-neutral-600">{copy.org}</p>
+          </div>
+        </div>
       </div>
     );
   }

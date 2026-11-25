@@ -24,8 +24,8 @@ test("without a session the desk renders the login card and no editor", () => {
   assert.ok(!/name="titleTh"/.test(unauthenticated), "no draft fields before a session exists");
 });
 
-test("the login card is a centred, capped card", () => {
-  assert.match(unauthenticated, /mx-auto w-full max-w-\[400px\]/, "the card must be centred and capped at 400px");
+test("the login card is a centred, capped card inside the split layout", () => {
+  assert.match(unauthenticated, /flex items-center justify-center[\s\S]*w-full max-w-\[400px\]/, "the card must be centred and capped at 400px");
   assert.match(unauthenticated, /rounded-lg border[^"]*bg-white/, "the card needs its own surface");
 });
 
