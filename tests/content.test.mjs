@@ -172,6 +172,8 @@ test("every path in the repository is either Apache-licensed or named as exclude
     "LICENSE", "NOTICE", "README.md", "package-lock.json", ".gitignore", ".nvmrc",
     "node_modules", "out", ".next", ".git", ".github", "public",
     "next-env.d.ts", "tsconfig.tsbuildinfo",
+    // written and re-added by `next dev`: the Next.js agent-rules block, not creative work
+    "AGENTS.md",
   ];
   const notice = readFileSync(join(process.cwd(), "NOTICE"), "utf8");
 

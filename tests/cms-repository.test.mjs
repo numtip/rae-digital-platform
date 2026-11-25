@@ -88,6 +88,50 @@ test("repository reads and writes through the database", { skip }, async () => {
   }
 });
 
+test("a failed audit rolls the article change back", { skip }, async () => {
+  const repository = await createMysqlRepository(db);
+  const id = `${PREFIX}rollback`;
+  try {
+    await repository.saveArticle({
+      id,
+      status: "draft",
+      pinned: false,
+      authorId: `${PREFIX}user`,
+      titleTh: "ก่อน",
+      titleEn: "Before",
+      source: "https://rae.mju.ac.th/rollback",
+    });
+    // actor_id is VARCHAR(64). The article update is already written on this connection;
+    // the audit insert must fail and the transaction must undo the title change.
+    await assert.rejects(() =>
+      repository.saveArticleWithAudit(
+        {
+          id,
+          status: "review",
+          pinned: false,
+          authorId: `${PREFIX}user`,
+          titleTh: "ก่อน",
+          titleEn: "After",
+          source: "https://rae.mju.ac.th/rollback",
+        },
+        { actorId: "x".repeat(80), action: "news.edit", entityType: "news", entityId: id },
+      ),
+    );
+    const article = await repository.getArticle(id);
+    assert.equal(article?.status, "draft");
+    assert.equal(article?.titleEn, "Before");
+    const audit = await repository.listAudit();
+    assert.equal(
+      audit.some((entry) => entry.entityId === id),
+      false,
+      "the failed audit row must not remain",
+    );
+  } finally {
+    await repository.close();
+    await purge();
+  }
+});
+
 test("records survive a fresh repository (the runtime restart case)", { skip }, async () => {
   const first = await createMysqlRepository(db);
   try {
