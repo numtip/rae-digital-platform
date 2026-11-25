@@ -1,6 +1,28 @@
 {
   "articles": [
     {
+      "id": "news-1795586188615",
+      "titleTh": "ข่าวทดสอบสเตจจิง 184437",
+      "titleEn": "Staging CMS readiness 184437",
+      "source": "https://rae.mju.ac.th/staging-uat",
+      "bodyTh": [
+        "เนื้อหาฉบับแรกสำหรับตรวจการเผยแพร่"
+      ],
+      "bodyEn": [
+        "First body for the staging publication check"
+      ],
+      "media": [
+        {
+          "url": "/cms-published/news-1795586188615/01-2d24a5e5.webp",
+          "captionTh": "ทดสอบ",
+          "captionEn": "Test",
+          "altTh": "จุด",
+          "altEn": "dot"
+        }
+      ],
+      "publishedAt": "2026-11-25T05:56:36.000Z"
+    },
+    {
       "id": "quality-assurance-public-hearing-2026",
       "titleTh": "สำนักวิจัยฯ จัดประชาพิจารณ์ผลการดำเนินงานด้านการประกันคุณภาพ ประจำปีงบประมาณ พ.ศ. 2569",
       "titleEn": "Office of Agricultural Research and Extension Holds Public Hearing on FY2026 Quality Assurance Performance",
