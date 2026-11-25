@@ -73,3 +73,37 @@ test("registry lifecycle: draft is hidden, publisher makes it current, counted o
     assert.equal((await call("POST", `/v1/public/documents/${created.code}/download`)).status, 404);
   });
 });
+
+test("link health: broken, unreachable and ok are told apart, and only live records are checked", async () => {
+  const { linkStatusFromResponse } = await import("../lib/cms/document-registry.ts");
+  assert.equal(linkStatusFromResponse(200), "ok");
+  assert.equal(linkStatusFromResponse(302), "ok", "a sign-in redirect means the file resolves");
+  assert.equal(linkStatusFromResponse(404), "broken");
+  assert.equal(linkStatusFromResponse(410), "broken");
+  assert.equal(linkStatusFromResponse(503), "unreachable");
+  assert.equal(linkStatusFromResponse(429), "unreachable");
+  assert.equal(linkStatusFromResponse(null), "unreachable");
+  const { checkDocumentLinks, memoryRepository, resetRuntime } = await import("../cms-runtime/server.mjs");
+  resetRuntime();
+  const repo = memoryRepository();
+  const base = { category: "administration", titleTh: "ก", titleEn: "a", docType: "pdf", version: "1.0", visibility: "public", note: "", createdBy: "t", updatedAt: 1 };
+  const mk = (n, status) => repo.createDocument({ ...base, status, storageUrl: `https://maejo365-my.sharepoint.com/x/${n}.pdf` }, { actorId: "t", action: "document.create", entityType: "document" });
+  await mk("live", "current"); await mk("gone", "current"); await mk("old", "obsolete");
+  const seen = [];
+  const counts = await checkDocumentLinks(repo, { fetchImpl: async (url) => (seen.push(url), { status: url.includes("gone") ? 404 : 200, body: null }), now: () => 5 });
+  assert.deepEqual(counts, { ok: 1, broken: 1, unreachable: 0 });
+  assert.equal(seen.length, 2, "an obsolete record is not requested");
+  assert.equal((await repo.getDocument("RAE-DC-0002")).linkStatus, "broken");
+});
+
+test("the check-links endpoint is for publishers and the public view never carries link health", async () => {
+  await withServer(async ({ call, officer, publisher }) => {
+    assert.equal((await call("POST", "/v1/documents/check-links", officer)).status, 403);
+    const res = await call("POST", "/v1/documents", publisher, { ...draft, status: "current" });
+    assert.equal(res.status, 201);
+    const checked = await call("POST", "/v1/documents/check-links", publisher);
+    assert.equal(checked.status, 200);
+    const [pub] = (await (await call("GET", "/v1/public/documents")).json()).documents;
+    assert.ok(!("linkStatus" in pub) && !("linkCheckedAt" in pub));
+  });
+});

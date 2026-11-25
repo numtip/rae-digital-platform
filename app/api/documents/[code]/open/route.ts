@@ -13,6 +13,11 @@ export function generateStaticParams() {
   return staticExportOnly ? [{ code: "RAE-DC-0000" }] : [];
 }
 
+function clientAddress(request: Request): Record<string, string> {
+  const ip = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  return ip ? { "cf-connecting-ip": ip } : {};
+}
+
 export async function GET(request: Request, { params }: { params: Promise<{ code: string }> }) {
   if (staticExportOnly) return new Response(null, { status: 404 });
   const { code } = await params;
@@ -20,8 +25,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
   try {
     const counted = await fetch(`${cmsBase()}/v1/public/documents/${code}/download`, {
       method: "POST",
-      // Pass the client address on so the CMS limits per reader, not per this process.
-      headers: { "cf-connecting-ip": request.headers.get("cf-connecting-ip") ?? "" },
+      // Pass the reader's address on so the CMS limits per reader, not per this process. Behind the
+      // tunnel that is cf-connecting-ip; behind host nginx (canonical site) nginx overwrites
+      // X-Forwarded-For with the peer address, so its first entry is trustworthy there. No address,
+      // no header: an empty one would put every reader in one bucket.
+      headers: clientAddress(request),
       cache: "no-store",
       signal: AbortSignal.timeout(4000),
     });

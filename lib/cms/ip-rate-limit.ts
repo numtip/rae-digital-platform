@@ -8,7 +8,7 @@
 export function clientKey(headers: Record<string, string | string[] | undefined>, remoteAddress?: string): string {
   const cf = headers["cf-connecting-ip"];
   const value = Array.isArray(cf) ? cf[0] : cf;
-  return (value ?? remoteAddress ?? "unknown").trim();
+  return (value?.trim() || remoteAddress || "unknown").trim();
 }
 
 export function createIpLimiter({ max, windowMs, maxKeys = 5000 }: { max: number; windowMs: number; maxKeys?: number }) {

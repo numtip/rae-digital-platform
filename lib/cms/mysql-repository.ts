@@ -54,6 +54,7 @@ export type Repository = {
   getDocument(code: string): Promise<RegistryDocument | null>;
   updateDocument(doc: RegistryDocument, version: DocumentVersionRecord | null, audit: Omit<AuditRecord, "createdAt">): Promise<void>;
   listDocumentVersions(code: string): Promise<DocumentVersionRecord[]>;
+  setLinkHealth(code: string, status: "ok" | "broken" | "unreachable", checkedAt: number): Promise<void>;
   /** Atomic +1; returns the record (with its storage link) or null if it is not a counted, public, current document. */
   countDownload(code: string): Promise<RegistryDocument | null>;
   /** MJU SSO. Absent on repositories that predate migration 008; the runtime then keeps SSO off. */
@@ -164,11 +165,13 @@ type DocRow = {
   code: string; category: string; title_th: string; title_en: string; doc_type: string; version: string;
   status: RegistryDocument["status"]; visibility: RegistryDocument["visibility"]; storage_url: string;
   note: string; created_by: string; updated_at: Date; download_count: number;
+  link_status: "ok" | "broken" | "unreachable" | null; link_checked_at: Date | null;
 };
 const toDoc = (r: DocRow): RegistryDocument => ({
   code: r.code, category: r.category, titleTh: r.title_th, titleEn: r.title_en, docType: r.doc_type,
   version: r.version, status: r.status, visibility: r.visibility, storageUrl: r.storage_url, note: r.note,
   createdBy: r.created_by, updatedAt: asMillis(r.updated_at), downloadCount: Number(r.download_count),
+  linkStatus: r.link_status ?? null, linkCheckedAt: r.link_checked_at ? asMillis(r.link_checked_at) : null,
 });
 type SsoRow = {
   id: string;
@@ -468,6 +471,10 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
         changedAt: asMillis(r.changed_at),
         changeNote: r.change_note,
       }));
+    },
+
+    async setLinkHealth(code, status, checkedAt) {
+      await pool.query("UPDATE documents SET link_status = ?, link_checked_at = ? WHERE code = ?", [status, asDate(checkedAt), code]);
     },
 
     async countDownload(code) {
