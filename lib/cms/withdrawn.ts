@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
+import { closeSync, mkdirSync, openSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { SAFE_ID } from "./media.ts";
 
@@ -55,17 +55,64 @@ export function withdrawnIds(): Set<string> {
 
 export const isWithdrawn = (nid: string): boolean => withdrawnIds().has(nid);
 
+const LOCK_WAIT_MS = 5000;
+const LOCK_STALE_MS = 10000;
+const sleep = (ms: number) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+// An exclusive lock file ("wx" fails if it exists) serialises the read-merge-rename across
+// processes. A lock older than LOCK_STALE_MS belongs to a crashed holder and is taken over.
+function withLock<T>(file: string, run: () => T): T {
+  const lock = `${file}.lock`;
+  const deadline = Date.now() + LOCK_WAIT_MS;
+  for (;;) {
+    try {
+      closeSync(openSync(lock, "wx"));
+      break;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+      const age = Date.now() - mtimeOf(lock);
+      if (mtimeOf(lock) !== 0 && age > LOCK_STALE_MS) {
+        try {
+          unlinkSync(lock);
+        } catch {
+          // another waiter took it over first; loop and try again
+        }
+        continue;
+      }
+      if (Date.now() > deadline) throw new Error("withdrawn list is locked by another process");
+      sleep(20);
+    }
+  }
+  try {
+    return run();
+  } finally {
+    try {
+      unlinkSync(lock);
+    } catch {
+      // already taken over as stale
+    }
+  }
+}
+
 /** Persist a batch, recording how many ids were not already on the list. Throws if unwritable. */
 export function rememberWithdrawn(ids: string[]): number {
-  const fresh = [...new Set(ids.filter((id) => SAFE_ID.test(id)))].filter((id) => !withdrawnIds().has(id));
-  if (fresh.length === 0) return 0;
+  const wanted = [...new Set(ids.filter((id) => SAFE_ID.test(id)))];
+  if (wanted.length === 0) return 0;
   const file = filePath();
   mkdirSync(dirname(file), { recursive: true });
-  // Write-then-rename: a crash mid-write must not leave a truncated file, because an empty list is
-  // the one value that would let a withdrawn story back.
-  const tmp = `${file}.${process.pid}.tmp`;
-  writeFileSync(tmp, `${JSON.stringify([...withdrawnIds(), ...fresh].sort(), null, 2)}\n`);
-  renameSync(tmp, file);
-  cache = null;
-  return fresh.length;
+  return withLock(file, () => {
+    // Read inside the lock and from disk, not the cache: another process may have written since.
+    cache = null;
+    const current = withdrawnIds();
+    const fresh = wanted.filter((id) => !current.has(id));
+    if (fresh.length === 0) return 0;
+    // Write-then-rename: a crash mid-write must not leave a truncated file, because an empty list is
+    // the one value that would let a withdrawn story back.
+    const tmp = `${file}.${process.pid}.tmp`;
+    writeFileSync(tmp, `${JSON.stringify([...current, ...fresh].sort(), null, 2)}
+`);
+    renameSync(tmp, file);
+    cache = null;
+    return fresh.length;
+  });
 }
