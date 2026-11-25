@@ -193,24 +193,34 @@ async function actorFrom(request, now, repository) {
 // to the site, but the CMS write has already happened, so the request itself still answers 200.
 export async function notifySite(payload, env = process.env, fetchImpl = fetch) {
   const secret = env.RAE_REVALIDATE_SECRET;
-  const hook = env.RAE_SITE_REVALIDATE_URL ?? "http://127.0.0.1:3000/api/news-live/revalidate";
+  // One or more renderers read this CMS (the admin-host build and the canonical /rae-landing build),
+  // so the hook may be a comma-separated list. Every one must answer for the call to count as told.
+  const hooks = String(env.RAE_SITE_REVALIDATE_URL ?? "http://127.0.0.1:3000/api/news-live/revalidate")
+    .split(",")
+    .map((url) => url.trim())
+    .filter(Boolean);
   if (!secret) {
     console.error("rae-cms: RAE_REVALIDATE_SECRET is not set; the site was NOT told about this change");
     return false;
   }
-  try {
-    const result = await fetchImpl(hook, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-revalidate-secret": secret },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!result.ok) throw new Error(`HTTP ${result.status}`);
-    return true;
-  } catch (error) {
-    console.error(`rae-cms: the site was NOT told about this change (${error.message})`);
-    return false;
-  }
+  const results = await Promise.all(
+    hooks.map(async (hook) => {
+      try {
+        const result = await fetchImpl(hook, {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-revalidate-secret": secret },
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!result.ok) throw new Error(`HTTP ${result.status}`);
+        return true;
+      } catch (error) {
+        console.error(`rae-cms: the site was NOT told about this change (${hook}: ${error.message})`);
+        return false;
+      }
+    }),
+  );
+  return results.every(Boolean);
 }
 
 // One image may be 8 MB, which is ~11 MB once base64 encoded; 12 MB leaves room for the captions

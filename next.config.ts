@@ -8,7 +8,14 @@ const preview = process.env.NEXT_PAGES_PREVIEW === "1";
 // GitHub Pages keeps the default; VPS staging sets NEXT_PREVIEW_BASE_PATH=/rae-digital-staging.
 const previewBasePath =
   process.env.NEXT_PREVIEW_BASE_PATH?.replace(/\/$/, "") || "/rae-digital-platform";
-const basePath = preview ? previewBasePath : "";
+// A SERVER build can also live under a sub-path: the canonical public site is
+// https://raeservice.mju.ac.th/rae-landing/ (NEXT_SERVER_BASE_PATH=/rae-landing), while the admin host
+// serves the same code at the root. basePath is compiled in, so each path needs its own build and its own
+// distDir (NEXT_DIST_DIR); both read the one CMS and the one database.
+const serverBasePath = preview ? "" : (process.env.NEXT_SERVER_BASE_PATH ?? "").replace(/\/$/, "");
+const basePath = preview ? previewBasePath : serverBasePath;
+// The admin host must not compete with the canonical site in search results.
+const noindex = process.env.NEXT_NOINDEX === "1";
 
 // A server deployment can put the whole desk behind one hostname and let this process proxy the CMS
 // API on the same origin: NEXT_CMS_API_PROXY=http://127.0.0.1:13317 turns `/cms-api/*` into
@@ -19,6 +26,10 @@ const cmsApiProxy = process.env.NEXT_CMS_API_PROXY?.replace(/\/$/, "");
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  ...(!preview && process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
+  ...(!preview && noindex
+    ? { async headers() { return [{ source: "/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] }]; } }
+    : {}),
   // `/th/` and `/en/` are the canonical form (issue #17), so `/th` redirects to
   // `/th/` and every internal href keeps one shape.
   trailingSlash: true,
@@ -30,6 +41,7 @@ const nextConfig: NextConfig = {
         images: { unoptimized: true },
       }
     : {
+        ...(serverBasePath ? { basePath: serverBasePath } : {}),
         // Not supported with output: "export" — the preview build ships a static
         // /index.html redirect instead (see the pages-preview workflow).
         async redirects() {
