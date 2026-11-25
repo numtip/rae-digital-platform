@@ -17,6 +17,7 @@ import { hasPermission, requirePermission } from "../lib/cms/permissions.ts";
 import { hashSessionToken, isSessionExpired, openSession } from "../lib/cms/session.ts";
 import { FAILURE_WINDOW_MS, createLoginThrottle } from "../lib/cms/login-throttle.ts";
 import { createSso } from "./sso.mjs";
+import { clientKey, createIpLimiter } from "../lib/cms/ip-rate-limit.ts";
 import { createMysqlRepository } from "../lib/cms/mysql-repository.ts";
 
 // The runtime keeps no state of its own any more: every record goes through a Repository.
@@ -31,6 +32,7 @@ const media = new Map();
 const ssoLinks = new Map();
 const ssoHandoffs = new Map();
 const throttle = createLoginThrottle();
+const loginByIp = createIpLimiter({ max: 30, windowMs: 60_000 });
 
 export function hashPassword(password) {
   assertLocalPassword(password);
@@ -41,6 +43,7 @@ export function hashPassword(password) {
 export function resetRuntime() {
   users.clear();
   throttle.reset();
+  loginByIp.reset();
   sessions.clear();
   articles.clear();
   media.clear();
@@ -369,6 +372,12 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         return;
       }
       if (request.method === "POST" && url.pathname === "/v1/login") {
+        // Per client first: one address sweeping many accounts is stopped here, before any lookup.
+        const over = loginByIp.hit(clientKey(request.headers, request.socket?.remoteAddress), now());
+        if (over.limited) {
+          response.setHeader("retry-after", String(over.retryAfterSeconds));
+          return send(response, 429, { error: "TOO_MANY_REQUESTS" }, origin);
+        }
         const body = await readBody(request);
         const attemptKey = String(body.userId ?? "");
         if (throttle.isBlocked(attemptKey, now())) {

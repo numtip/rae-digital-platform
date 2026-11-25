@@ -17,6 +17,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash, createHmac, randomBytes } from "node:crypto";
 import { hashSessionToken, openSession } from "../lib/cms/session.ts";
+import { clientKey, createIpLimiter } from "../lib/cms/ip-rate-limit.ts";
 
 const HANDOFF_COOKIE = "rae_sso_handoff";
 const HANDOFF_TTL_MS = 60_000;
@@ -113,17 +114,19 @@ export async function createSso({ repository, env = process.env, now = () => Dat
     response.end(JSON.stringify(body));
   };
 
-  // Per-process rate limit on the two public entry points (keyed on the proxy's client address).
-  const hits = new Map();
-  const limited = (request) => {
-    const key = String(request.headers["cf-connecting-ip"] ?? request.headers["x-forwarded-for"] ?? request.socket?.remoteAddress ?? "?").split(",")[0].trim();
-    const t = now();
-    const recent = (hits.get(key) ?? []).filter((x) => t - x < 60_000);
-    recent.push(t);
-    hits.set(key, recent);
-    if (hits.size > 5000) hits.clear();
-    return recent.length > 20;
+  // Per-client budgets (see lib/cms/ip-rate-limit.ts). Separate buckets so a login flood cannot
+  // consume the callback or exchange budget of someone mid sign-in.
+  const buckets = {
+    login: createIpLimiter({ max: 20, windowMs: 60_000 }),
+    callback: createIpLimiter({ max: 20, windowMs: 60_000 }),
+    exchange: createIpLimiter({ max: 30, windowMs: 60_000 }),
   };
+  const limited = (request, bucket) => {
+    const result = buckets[bucket].hit(clientKey(request.headers, request.socket?.remoteAddress), now());
+    return result.limited ? result : null;
+  };
+  const tooMany = (response, result) =>
+    (response.setHeader("retry-after", String(result.retryAfterSeconds)), json(response, 429, { error: "TOO_MANY_REQUESTS" }));
 
   return {
     enabled: true,
@@ -136,7 +139,8 @@ export async function createSso({ repository, env = process.env, now = () => Dat
         return true;
       }
       if (path === "/v1/sso/login" && request.method === "GET") {
-        if (limited(request)) return json(response, 429, { error: "TOO_MANY_REQUESTS" }), true;
+        const over = limited(request, "login");
+        if (over) return tooMany(response, over), true;
         try {
           const result = await sso.beginLogin({ correlationId: randomBytes(8).toString("hex") });
           redirect(response, 302, result.redirectTo, result.cookies);
@@ -146,7 +150,8 @@ export async function createSso({ repository, env = process.env, now = () => Dat
         return true;
       }
       if (path === "/v1/sso/callback") {
-        if (limited(request)) return json(response, 429, { error: "TOO_MANY_REQUESTS" }), true;
+        const over = limited(request, "callback");
+        if (over) return tooMany(response, over), true;
         const holder = {};
         try {
           const result = await context.run(holder, () => sso.handleCallback({
@@ -173,6 +178,8 @@ export async function createSso({ repository, env = process.env, now = () => Dat
         return true;
       }
       if (path === "/v1/sso/exchange" && request.method === "POST") {
+        const over = limited(request, "exchange");
+        if (over) return tooMany(response, over), true;
         const cookies = parseCookies(request.headers.cookie);
         const code = cookies[HANDOFF_COOKIE];
         const clear = [{ name: HANDOFF_COOKIE, value: "", path: "/", maxAge: 0 }];

@@ -79,3 +79,18 @@ test("unauthenticated export is rejected and drafts stay out", async () => {
     assert.deepEqual(publishedBody.articles.map((item) => item.id), ["n1"]);
   });
 });
+
+test("login is rate limited per client address, not by a spoofable header", async () => {
+  await withServer(async (base) => {
+    const attempt = (headers) =>
+      fetch(`${base}/v1/login`, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify({ userId: `nobody-${Math.random()}`, password: "wrong-password-1" }) });
+    let last = 0;
+    for (let i = 0; i < 31; i += 1) last = (await attempt({ "cf-connecting-ip": "203.0.113.7" })).status;
+    assert.equal(last, 429, "the 31st attempt inside a minute from one client is refused");
+    const refused = await attempt({ "cf-connecting-ip": "203.0.113.7" });
+    assert.ok(Number(refused.headers.get("retry-after")) >= 1, "Retry-After tells the client when to return");
+    // another client is unaffected, and x-forwarded-for cannot be used to get a fresh bucket
+    assert.equal((await attempt({ "cf-connecting-ip": "203.0.113.8" })).status, 401);
+    assert.equal((await attempt({ "cf-connecting-ip": "203.0.113.7", "x-forwarded-for": "198.51.100.1" })).status, 429);
+  });
+});
