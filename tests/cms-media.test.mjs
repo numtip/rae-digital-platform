@@ -38,6 +38,7 @@ async function withServer(run) {
   resetRuntime();
   addUser({ id: "author", role: "publisher", password: "author-password-12" });
   addUser({ id: "reviewer", role: "editor", password: "reviewer-password-12" });
+  addUser({ id: "viewer", role: "viewer", password: "viewer-password-12" });
   const server = createCmsServer();
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -205,5 +206,35 @@ test("ids and file names are validated, and an oversized upload is refused", asy
       request.end();
     });
     assert.equal(oversized, 413);
+  });
+});
+
+test("a viewer cannot list or download a draft's images, and a sixth image is refused", async () => {
+  await withServer(async (base) => {
+    const author = await login(base, "author", "author-password-12");
+    const viewer = await login(base, "viewer", "viewer-password-12");
+    await fetch(`${base}/v1/news`, {
+      method: "POST",
+      headers: auth(author),
+      body: JSON.stringify({ id: "hidden-1", titleTh: "ก", titleEn: "A", source: "https://rae.mju.ac.th/h", bodyTh: ["ก"], bodyEn: ["A"] }),
+    });
+    let first;
+    for (let index = 1; index <= 6; index += 1) {
+      const response = await fetch(`${base}/v1/news/hidden-1/media`, {
+        method: "POST",
+        headers: auth(author),
+        body: JSON.stringify({ dataBase64: PNG.toString("base64") }),
+      });
+      if (index <= 5) {
+        assert.equal(response.status, 201);
+        first ??= (await response.json()).filename;
+      } else {
+        assert.equal(response.status, 400, "the public page shows five, so the desk takes five");
+      }
+    }
+    assert.equal((await fetch(`${base}/v1/news/hidden-1/media`, { headers: auth(viewer) })).status, 404);
+    assert.equal((await fetch(`${base}/v1/media/hidden-1/${first}`, { headers: auth(viewer) })).status, 404);
+    assert.equal((await fetch(`${base}/v1/news/hidden-1/media`, { headers: auth(author) })).status, 200);
+    assert.equal((await fetch(`${base}/v1/media/hidden-1/${first}`, { headers: auth(author) })).status, 200);
   });
 });

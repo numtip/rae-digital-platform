@@ -12,6 +12,7 @@ import {
   unpublishNews,
 } from "../lib/cms/news-workflow.ts";
 import { publishedArticlesForExport, publishedSnapshotOf } from "../lib/cms/publish.ts";
+import { assertLocalPassword } from "../lib/cms/validation.ts";
 import { hasPermission, requirePermission } from "../lib/cms/permissions.ts";
 import { hashSessionToken, isSessionExpired, openSession } from "../lib/cms/session.ts";
 import { FAILURE_WINDOW_MS, createLoginThrottle } from "../lib/cms/login-throttle.ts";
@@ -29,6 +30,7 @@ const media = new Map();
 const throttle = createLoginThrottle();
 
 export function hashPassword(password) {
+  assertLocalPassword(password);
   const salt = randomBytes(16).toString("hex");
   return `${salt}:${scryptSync(password, salt, 32).toString("hex")}`;
 }
@@ -135,6 +137,31 @@ async function actorFrom(request, now, repository) {
   }
   await repository.touchSession(key, now);
   return repository.findUser(session.userId);
+}
+
+// The site keeps a 30-second page cache and a tombstone file for withdrawn stories; both are
+// updated only when this hook is called. A failure is logged loudly and never reported as success
+// to the site, but the CMS write has already happened, so the request itself still answers 200.
+export async function notifySite(payload, env = process.env, fetchImpl = fetch) {
+  const secret = env.RAE_REVALIDATE_SECRET;
+  const hook = env.RAE_SITE_REVALIDATE_URL ?? "http://127.0.0.1:3000/api/news-live/revalidate";
+  if (!secret) {
+    console.error("rae-cms: RAE_REVALIDATE_SECRET is not set; the site was NOT told about this change");
+    return false;
+  }
+  try {
+    const result = await fetchImpl(hook, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-revalidate-secret": secret },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!result.ok) throw new Error(`HTTP ${result.status}`);
+    return true;
+  } catch (error) {
+    console.error(`rae-cms: the site was NOT told about this change (${error.message})`);
+    return false;
+  }
 }
 
 // One image may be 8 MB, which is ~11 MB once base64 encoded; 12 MB leaves room for the captions
@@ -294,8 +321,10 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         // A draft's images stay behind authentication; a published article's images are what the
         // preview page and, later, the static import need — including while the row is a revision,
         // because the export still serves the last published version with them.
-        if (owner.status !== "published" && owner.status !== "revision" && !(await actorFrom(request, now(), repo))) {
-          return send(response, 404, { error: "NOT_FOUND" }, origin);
+        // A viewer is logged in but may not see drafts, so the same rule as GET /v1/news applies.
+        if (owner.status !== "published" && owner.status !== "revision") {
+          const reader = await actorFrom(request, now(), repo);
+          if (!reader || !hasPermission(reader.role, "news:draft")) return send(response, 404, { error: "NOT_FOUND" }, origin);
         }
         const files = await repo.listMedia(mediaArticleId);
         const match = files.find((item) => item.filename === mediaFile);
@@ -432,6 +461,7 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
           before: { status: current.status, revisionNo: current.revisionNo ?? 0 },
           after: { status: record.status, revisionNo: record.revisionNo },
         });
+        await notifySite({});
         return send(response, 200, record, origin);
       }
 
@@ -466,6 +496,7 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
           before: { status: current.status },
           after: { status: withdrawn.status, reason: withdrawn.withdrawalReason },
         });
+        await notifySite({ withdrawn: [id] });
         return send(response, 200, withdrawn, origin);
       }
 
@@ -497,8 +528,8 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         }
         if (!SAFE_ID.test(id)) return send(response, 400, { error: "INVALID_ID" }, origin);
         const existing = await repo.listMedia(id);
-        if (existing.length >= 10) {
-          return send(response, 400, { error: "MediaRejected", message: "an article carries at most 10 images" }, origin);
+        if (existing.length >= 5) {
+          return send(response, 400, { error: "MediaRejected", message: "an article carries at most 5 images" }, origin);
         }
         const position = existing.length + 1;
         const filename = `${String(position).padStart(2, "0")}-${randomUUID().slice(0, 8)}.${extensionFor(mime)}`;
@@ -524,6 +555,9 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
 
       if (request.method === "GET" && url.pathname === `/v1/news/${id}/media`) {
         if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        if (current.status !== "published" && current.status !== "revision" && !hasPermission(actor.role, "news:draft")) {
+          return send(response, 404, { error: "NOT_FOUND" }, origin);
+        }
         return send(response, 200, { media: await repo.listMedia(id) }, origin);
       }
 

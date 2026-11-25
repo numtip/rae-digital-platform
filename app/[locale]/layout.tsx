@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { LOCALES, SITE_URL, getContent, isLocale } from "@/lib/i18n";
+import { jsonLdScript } from "@/lib/json-ld";
 import { openGraphSite } from "@/lib/seo";
 import "../globals.css";
 
@@ -112,11 +113,11 @@ export default async function LocaleLayout({
         <SiteFooter content={content} locale={locale} />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdScript(orgJsonLd) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdScript(siteJsonLd) }}
         />
       </body>
     </html>
