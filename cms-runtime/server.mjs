@@ -83,6 +83,17 @@ export function memoryRepository() {
     async saveArticle(article) {
       articles.set(article.id, article);
     },
+    async saveArticleWithAudit(article, record) {
+      const before = articles.get(article.id);
+      articles.set(article.id, article);
+      try {
+        await this.appendAudit(record);
+      } catch (error) {
+        if (before) articles.set(article.id, before);
+        else articles.delete(article.id);
+        throw error;
+      }
+    },
     async saveMedia(record) {
       const list = (media.get(record.articleId) ?? []).filter((item) => item.id !== record.id);
       list.push(record);
@@ -385,8 +396,7 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
           bodyTh: toParagraphs(body.bodyTh),
           bodyEn: toParagraphs(body.bodyEn),
         };
-        await repo.saveArticle(article);
-        await repo.appendAudit({ actorId: actor.id, action: "news.draft", entityType: "news", entityId: article.id });
+        await repo.saveArticleWithAudit(article, { actorId: actor.id, action: "news.draft", entityType: "news", entityId: article.id });
         return send(response, 201, article, origin);
       }
 
@@ -414,16 +424,14 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
           bodyTh: body.bodyTh === undefined ? current.bodyTh : toParagraphs(body.bodyTh),
           bodyEn: body.bodyEn === undefined ? current.bodyEn : toParagraphs(body.bodyEn),
         };
-        await repo.saveArticle(next);
-        await repo.appendAudit({ actorId: actor.id, action: "news.edit", entityType: "news", entityId: id });
+        await repo.saveArticleWithAudit(next, { actorId: actor.id, action: "news.edit", entityType: "news", entityId: id });
         return send(response, 200, next, origin);
       }
 
       if (request.method === "POST" && url.pathname === `/v1/news/${id}/submit`) {
         if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
         const next = submitForReview(current, actor);
-        await repo.saveArticle(next);
-        await repo.appendAudit({ actorId: actor.id, action: "news.submit", entityType: "news", entityId: id });
+        await repo.saveArticleWithAudit(next, { actorId: actor.id, action: "news.submit", entityType: "news", entityId: id });
         return send(response, 200, next, origin);
       }
 
@@ -431,16 +439,14 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
         const body = await readBody(request);
         const next = returnForRevision(current, actor, String(body.reason ?? ""));
-        await repo.saveArticle(next);
-        await repo.appendAudit({ actorId: actor.id, action: "news.return", entityType: "news", entityId: id });
+        await repo.saveArticleWithAudit(next, { actorId: actor.id, action: "news.return", entityType: "news", entityId: id });
         return send(response, 200, next, origin);
       }
 
       if (request.method === "POST" && url.pathname === `/v1/news/${id}/approve`) {
         if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
         const next = approveNews(current, actor);
-        await repo.saveArticle(next);
-        await repo.appendAudit({ actorId: actor.id, action: "news.approve", entityType: "news", entityId: id });
+        await repo.saveArticleWithAudit(next, { actorId: actor.id, action: "news.approve", entityType: "news", entityId: id });
         return send(response, 200, next, origin);
       }
 
@@ -450,10 +456,9 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         // The live version is frozen here: while a later revision is being edited, the export keeps
         // serving this snapshot, so an unapproved correction cannot reach the site.
         const record = { ...published, publishedSnapshot: publishedSnapshotOf(published) };
-        await repo.saveArticle(record);
         // A republish replaces a story that was already live, which the trail must show as a
         // revision of it; the first release of an item is a plain publish.
-        await repo.appendAudit({
+        await repo.saveArticleWithAudit(record, {
           actorId: actor.id,
           action: current.revisionNo ? "news.revise" : "news.publish",
           entityType: "news",
@@ -471,8 +476,7 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         // Rows published before the snapshot column existed have none; freeze their live body now
         // so the story stays exported for as long as the revision is open.
         const record = { ...revised, publishedSnapshot: revised.publishedSnapshot ?? publishedSnapshotOf(current) };
-        await repo.saveArticle(record);
-        await repo.appendAudit({
+        await repo.saveArticleWithAudit(record, {
           actorId: actor.id,
           action: "news.revise",
           entityType: "news",
@@ -487,8 +491,7 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
         const body = await readBody(request);
         const withdrawn = unpublishNews(current, actor, String(body.reason ?? ""));
-        await repo.saveArticle(withdrawn);
-        await repo.appendAudit({
+        await repo.saveArticleWithAudit(withdrawn, {
           actorId: actor.id,
           action: "news.unpublish",
           entityType: "news",

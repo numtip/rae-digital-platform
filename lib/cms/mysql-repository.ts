@@ -44,6 +44,8 @@ export type Repository = {
   listArticles(): Promise<NewsRecord[]>;
   getArticle(id: string): Promise<NewsRecord | null>;
   saveArticle(article: NewsRecord): Promise<void>;
+  /** The article write and its audit row succeed or fail together. */
+  saveArticleWithAudit(article: NewsRecord, audit: Omit<AuditRecord, "createdAt">): Promise<void>;
   saveMedia(record: MediaRecord): Promise<void>;
   listMedia(articleId: string): Promise<MediaRecord[]>;
   deleteMedia(articleId: string): Promise<void>;
@@ -139,6 +141,60 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
     supportBigNumbers: true,
   });
 
+  // Both writers take the handle to run on: the pool for a lone write, one connection inside a transaction.
+  const insertArticle = (db: Pick<mysql.Pool, "query">, article: NewsRecord) =>
+    db.query(
+        `INSERT INTO news_articles
+           (id, status, pinned, author_id, reviewer_id, publisher_id, title_th, title_en, source, revision_reason, returned_by, body_th, body_en, published_at, withdrawn_at, withdrawn_by, withdrawal_reason, revision_no, published_snapshot)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           status = VALUES(status), pinned = VALUES(pinned), reviewer_id = VALUES(reviewer_id),
+           publisher_id = VALUES(publisher_id), title_th = VALUES(title_th), title_en = VALUES(title_en),
+           source = VALUES(source), revision_reason = VALUES(revision_reason), returned_by = VALUES(returned_by),
+           body_th = VALUES(body_th), body_en = VALUES(body_en),
+           published_at = COALESCE(VALUES(published_at), published_at),
+           withdrawn_at = COALESCE(VALUES(withdrawn_at), withdrawn_at),
+           withdrawn_by = COALESCE(VALUES(withdrawn_by), withdrawn_by),
+           withdrawal_reason = COALESCE(VALUES(withdrawal_reason), withdrawal_reason),
+           revision_no = VALUES(revision_no),
+           published_snapshot = COALESCE(VALUES(published_snapshot), published_snapshot)`,
+        [
+          article.id,
+          article.status,
+          article.pinned ? 1 : 0,
+          article.authorId,
+          article.reviewerId ?? null,
+          article.publisherId ?? null,
+          article.titleTh,
+          article.titleEn,
+          article.source,
+          article.revisionReason ?? null,
+          article.returnedBy ?? null,
+          (article.bodyTh ?? []).join("\n\n"),
+          (article.bodyEn ?? []).join("\n\n"),
+          article.publishedAt ? new Date(article.publishedAt) : null,
+          article.withdrawnAt ? new Date(article.withdrawnAt) : null,
+          article.withdrawnBy ?? null,
+          article.withdrawalReason ?? null,
+          article.revisionNo ?? 0,
+          article.publishedSnapshot ? JSON.stringify(article.publishedSnapshot) : null,
+        ],
+      );
+
+  const insertAudit = (db: Pick<mysql.Pool, "query">, record: Omit<AuditRecord, "createdAt">) =>
+    db.query(
+        "INSERT INTO audit_logs (id, actor_id, action, entity_type, entity_id, before_json, after_json) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [
+          randomUUID(),
+          record.actorId,
+          record.action,
+          record.entityType,
+          record.entityId,
+          JSON.stringify(record.before ?? {}),
+          JSON.stringify(record.after ?? {}),
+        ],
+      );
+
   return {
     async findUser(id) {
       const [rows] = await pool.query("SELECT id, role, password_hash FROM users WHERE id = ?", [id]);
@@ -195,43 +251,22 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
       // COALESCE keeps what an earlier write set: a save that carries no publication date must not
       // erase the one publish stamped, and one that carries no snapshot must not erase the live
       // version a revision is being edited against.
-      await pool.query(
-        `INSERT INTO news_articles
-           (id, status, pinned, author_id, reviewer_id, publisher_id, title_th, title_en, source, revision_reason, returned_by, body_th, body_en, published_at, withdrawn_at, withdrawn_by, withdrawal_reason, revision_no, published_snapshot)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE
-           status = VALUES(status), pinned = VALUES(pinned), reviewer_id = VALUES(reviewer_id),
-           publisher_id = VALUES(publisher_id), title_th = VALUES(title_th), title_en = VALUES(title_en),
-           source = VALUES(source), revision_reason = VALUES(revision_reason), returned_by = VALUES(returned_by),
-           body_th = VALUES(body_th), body_en = VALUES(body_en),
-           published_at = COALESCE(VALUES(published_at), published_at),
-           withdrawn_at = COALESCE(VALUES(withdrawn_at), withdrawn_at),
-           withdrawn_by = COALESCE(VALUES(withdrawn_by), withdrawn_by),
-           withdrawal_reason = COALESCE(VALUES(withdrawal_reason), withdrawal_reason),
-           revision_no = VALUES(revision_no),
-           published_snapshot = COALESCE(VALUES(published_snapshot), published_snapshot)`,
-        [
-          article.id,
-          article.status,
-          article.pinned ? 1 : 0,
-          article.authorId,
-          article.reviewerId ?? null,
-          article.publisherId ?? null,
-          article.titleTh,
-          article.titleEn,
-          article.source,
-          article.revisionReason ?? null,
-          article.returnedBy ?? null,
-          (article.bodyTh ?? []).join("\n\n"),
-          (article.bodyEn ?? []).join("\n\n"),
-          article.publishedAt ? new Date(article.publishedAt) : null,
-          article.withdrawnAt ? new Date(article.withdrawnAt) : null,
-          article.withdrawnBy ?? null,
-          article.withdrawalReason ?? null,
-          article.revisionNo ?? 0,
-          article.publishedSnapshot ? JSON.stringify(article.publishedSnapshot) : null,
-        ],
-      );
+      await insertArticle(pool, article);
+    },
+
+    async saveArticleWithAudit(article, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        await insertArticle(connection, article);
+        await insertAudit(connection, audit);
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback().catch(() => {});
+        throw error;
+      } finally {
+        connection.release();
+      }
     },
 
     async saveMedia(record) {
@@ -282,18 +317,7 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
     },
 
     async appendAudit(record) {
-      await pool.query(
-        "INSERT INTO audit_logs (id, actor_id, action, entity_type, entity_id, before_json, after_json) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [
-          randomUUID(),
-          record.actorId,
-          record.action,
-          record.entityType,
-          record.entityId,
-          JSON.stringify(record.before ?? {}),
-          JSON.stringify(record.after ?? {}),
-        ],
-      );
+      await insertAudit(pool, record);
     },
 
     async listAudit() {
