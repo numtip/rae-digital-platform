@@ -60,6 +60,10 @@ export async function createSso({ repository, env = process.env, now = () => Dat
   const lib = importAdapter ? await importAdapter() : await import(env.MJU_SSO_MODULE || "@mju/sso-integration");
   const { loadConfig, createMjuSsoAdapter, parseCallbackQuery, toPublicError, ATTEMPT_COOKIE } = lib;
   const { adapter: config } = loadConfig(env);
+  // The single-use login attempts (and so replay denial) survive a restart when a durable driver is
+  // configured: MJU_SSO_STORE_DRIVER=file + MJU_SSO_STORE_FILE_ROOT, with MJU_SSO_STORE_REQUIRE_DURABLE=true
+  // making a memory fallback a start-up error. Sessions here are CMS bearer sessions in MySQL, not this store.
+  const stores = await lib.createStoresFromConfig(env);
 
   // A per-request holder: the resolver stays a pure read and only remembers which subject it saw,
   // so an unknown one can be recorded as `pending` afterwards. It never carries the raw identifier.
@@ -68,6 +72,7 @@ export async function createSso({ repository, env = process.env, now = () => Dat
   const sso = createMjuSsoAdapter({
     config: { ...config, postLoginRedirect: DESK_PATH },
     deps: {
+      attemptStore: stores.attempts,
       ...adapterDeps,
       identityResolver: async ({ subject, subjectClaim, subjectIsConfidential }) => {
         // A confidential claim already arrives as the application-scoped HMAC. A non-confidential

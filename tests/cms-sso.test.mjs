@@ -157,3 +157,32 @@ test("a replayed or wrong-method callback never signs anyone in", { skip }, asyn
     await ctx.close();
   }
 });
+
+test("a consumed login code stays consumed across a restart with the file store", { skip }, async () => {
+  const { mkdtempSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const root = mkdtempSync(join(tmpdir(), "sso-state-"));
+  const env = { ...ENV, MJU_SSO_STORE_DRIVER: "file", MJU_SSO_STORE_FILE_ROOT: root, MJU_SSO_STORE_REQUIRE_DURABLE: "true" };
+  const first = await boot({ env });
+  let attempt;
+  try {
+    const start = await fetch(`${first.base}/v1/sso/login`, { redirect: "manual" });
+    attempt = cookieJar(start).mju_sso_attempt;
+  } finally {
+    await first.close();
+  }
+  // "restart": a new process-equivalent over the same state directory still knows the attempt
+  const second = await boot({ env });
+  try {
+    const cb = await fetch(`${second.base}/v1/sso/callback?ac=ABCDEF0123456789ABCDEF0123456789`, { redirect: "manual", headers: { cookie: `mju_sso_attempt=${attempt}` } });
+    // attempt survived (so it reaches the identity gate: unlinked), and is burned by this use
+    assert.match(cb.headers.get("location"), /sso_error=SSO_IDENTITY_UNLINKED/);
+    const again = await fetch(`${second.base}/v1/sso/callback?ac=ABCDEF0123456789ABCDEF0123456789`, { redirect: "manual", headers: { cookie: `mju_sso_attempt=${attempt}` } });
+    assert.match(again.headers.get("location"), /sso_error=SSO_ATTEMPT_MISSING/);
+  } finally {
+    await second.close();
+  }
+  // durable required but memory configured: refuse to start
+  await assert.rejects(() => createSso({ repository: memoryRepository(), env: { ...ENV, MJU_SSO_STORE_REQUIRE_DURABLE: "true" } }));
+});
