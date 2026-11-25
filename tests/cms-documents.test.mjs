@@ -102,7 +102,7 @@ test("the check-links endpoint is for publishers and the public view never carri
     const res = await call("POST", "/v1/documents", publisher, { ...draft, status: "current" });
     assert.equal(res.status, 201);
     const checked = await call("POST", "/v1/documents/check-links", publisher);
-    assert.equal(checked.status, 200);
+    assert.equal(checked.status, 202, "the pass runs in the background");
     const [pub] = (await (await call("GET", "/v1/public/documents")).json()).documents;
     assert.ok(!("linkStatus" in pub) && !("linkCheckedAt" in pub));
   });

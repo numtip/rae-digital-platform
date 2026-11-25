@@ -10,7 +10,7 @@ const COPY = {
     heading: "ทะเบียนเอกสาร (Document Center)",
     hint: "วางลิงก์ไฟล์ SharePoint ของมหาวิทยาลัย ระบบไม่เก็บสำเนาไฟล์",
     category: "หมวด", titleTh: "ชื่อเอกสาร (ไทย)", titleEn: "ชื่อเอกสาร (อังกฤษ)", version: "ฉบับ", url: "ลิงก์ไฟล์ SharePoint", note: "หมายเหตุ",
-    register: "ลงทะเบียนเป็นฉบับร่าง", saved: "ลงทะเบียนแล้ว", newVersion: "ไฟล์ฉบับใหม่", changeNote: "สิ่งที่เปลี่ยน", saveVersion: "บันทึกฉบับใหม่", checkLinks: "ตรวจลิงก์ทั้งหมดตอนนี้", checked: "ตรวจแล้ว", link: { ok: "ลิงก์ใช้ได้", broken: "ลิงก์เสีย", unreachable: "ตรวจไม่ได้ (ลองใหม่)" }, unchecked: "ยังไม่ตรวจ", status: "สถานะ", none: "ยังไม่มีเอกสาร", opens: "เปิดแล้ว",
+    register: "ลงทะเบียนเป็นฉบับร่าง", saved: "ลงทะเบียนแล้ว", newVersion: "ไฟล์ฉบับใหม่", changeNote: "สิ่งที่เปลี่ยน", saveVersion: "บันทึกฉบับใหม่", checkLinks: "ตรวจลิงก์ทั้งหมดตอนนี้", checking: "กำลังตรวจลิงก์ในเบื้องหลัง ผลจะแสดงในรายการภายในไม่กี่นาที", link: { ok: "ลิงก์ใช้ได้", broken: "ลิงก์เสีย", unreachable: "ตรวจไม่ได้ (ลองใหม่)" }, unchecked: "ยังไม่ตรวจ", status: "สถานะ", none: "ยังไม่มีเอกสาร", opens: "เปิดแล้ว",
     cats: { administration: "บริหารจัดการ", research: "งานวิจัย", "academic-services": "งานบริการวิชาการ" },
     statuses: { draft: "ฉบับร่าง", current: "ใช้งานอยู่ (เผยแพร่)", obsolete: "ยกเลิกใช้", archived: "เก็บถาวร" },
   },
@@ -18,7 +18,7 @@ const COPY = {
     heading: "Document register (Document Center)",
     hint: "Paste the university SharePoint file link. The site keeps no copy of the file.",
     category: "Category", titleTh: "Title (Thai)", titleEn: "Title (English)", version: "Version", url: "SharePoint file link", note: "Note",
-    register: "Register as draft", saved: "Registered", newVersion: "New file version", changeNote: "What changed", saveVersion: "Save new version", checkLinks: "Check all links now", checked: "Checked", link: { ok: "Link OK", broken: "Link broken", unreachable: "Could not check (retry)" }, unchecked: "Not checked yet", status: "Status", none: "No documents yet", opens: "Opened",
+    register: "Register as draft", saved: "Registered", newVersion: "New file version", changeNote: "What changed", saveVersion: "Save new version", checkLinks: "Check all links now", checking: "Checking links in the background; results appear in the list within a few minutes.", link: { ok: "Link OK", broken: "Link broken", unreachable: "Could not check (retry)" }, unchecked: "Not checked yet", status: "Status", none: "No documents yet", opens: "Opened",
     cats: { administration: "Administration", research: "Research", "academic-services": "Academic services" },
     statuses: { draft: "Draft", current: "Current (published)", obsolete: "Obsolete", archived: "Archived" },
   },
@@ -99,8 +99,10 @@ export function DocumentsDesk({ apiBase, token, locale }: { apiBase: string; tok
 
   async function onCheckLinks() {
     const result = await call("/v1/documents/check-links", "POST");
-    setMessage(result.ok ? `${copy.checked}: ${JSON.stringify(result.payload.checked)}` : String(result.payload.message || result.payload.error || result.status));
-    await refresh();
+    setMessage(result.ok ? copy.checking : String(result.payload.message || result.payload.error || result.status));
+    // The pass runs on the server; look again shortly, and once more after a longer wait.
+    setTimeout(() => void refresh(), 5000);
+    setTimeout(() => void refresh(), 30000);
   }
 
   return (
