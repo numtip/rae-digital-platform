@@ -94,6 +94,23 @@ jobs:
         if: steps.app.outputs.present == 'yes'
         run: npm test
 
+      # SSO tests need the private MJU SSO adapter. A READ-ONLY deploy key (one repository, no write)
+      # is held as a secret; it is unavailable to fork PRs, in which case the step is skipped and the
+      # SSO tests skip with their own message. The adapter is pinned to a tag and never lands in this repo.
+      - name: SSO tests with the private adapter (pinned tag)
+        if: steps.app.outputs.present == 'yes' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          ADAPTER_KEY: ${{ secrets.MJU_SSO_ADAPTER_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ADAPTER_KEY}" ]; then echo "::warning::adapter deploy key not available; SSO tests skipped"; exit 0; fi
+          install -m 700 -d "$RUNNER_TEMP/ssh"
+          printf '%s\n' "$ADAPTER_KEY" > "$RUNNER_TEMP/ssh/key"; chmod 600 "$RUNNER_TEMP/ssh/key"
+          GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/ssh/key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
+            git clone --quiet --depth 1 --branch v1.0.0-rc.6 git@github.com:numtip/mju-sso-integration.git "$RUNNER_TEMP/mju-sso"
+          shred -u "$RUNNER_TEMP/ssh/key"
+          MJU_SSO_MODULE="$RUNNER_TEMP/mju-sso/src/index.js" node --test tests/cms-sso.test.mjs
+
       # Export + integrity: internal links resolve with the Pages basePath, no dead
       # anchors, no plain-http assets, and every Thai route has an English twin.
       # This is the check that caught the three 404ing about-page images.
