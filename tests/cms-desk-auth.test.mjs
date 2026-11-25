@@ -50,7 +50,10 @@ test("signing out clears the session and everything it owned", () => {
   for (const state of ["setItems", "setSelected", "setMedia", "setPending"]) {
     assert.match(body, new RegExp(`${state}\\(`), `signOut must reset ${state}`);
   }
-  assert.match(authenticated, /onClick=\{\(\) => signOut\(\)\}/, "the dashboard needs a sign-out control");
+  // onSignOut revokes the server session first when SSO is on, then always runs signOut().
+  assert.match(authenticated, /onClick=\{\(\) => void onSignOut\(\)\}/, "the dashboard needs a sign-out control");
+  const onSignOut = desk.match(/async function onSignOut\(\) \{([\s\S]*?)\n  \}/)?.[1] ?? "";
+  assert.match(onSignOut, /signOut\(\);\s*$/, "the plain path must end in signOut()");
 });
 
 test("an expired session returns the reader to the login card", () => {
