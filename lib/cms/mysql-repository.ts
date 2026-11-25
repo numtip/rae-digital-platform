@@ -34,7 +34,28 @@ export type AuditRecord = {
   createdAt: string;
 };
 
+export type SsoLink = {
+  id: string;
+  subjectKey: string;
+  status: "pending" | "approved" | "revoked";
+  userId: string | null;
+  requestedAt: number;
+  approvedBy: string | null;
+  approvedAt: number | null;
+};
+
 export type Repository = {
+  /** MJU SSO. Absent on repositories that predate migration 008; the runtime then keeps SSO off. */
+  findSsoLink(subjectKey: string): Promise<SsoLink | null>;
+  /** Records a first sign-in attempt as `pending`. Never approves; a no-op if a row exists. */
+  requestSsoLink(subjectKey: string, now: number): Promise<SsoLink>;
+  listSsoLinks(): Promise<SsoLink[]>;
+  /** Pending -> approved for one existing user. False if the row was not pending or the user already has a link. */
+  approveSsoLink(id: string, userId: string, approvedBy: string, now: number): Promise<boolean>;
+  revokeSsoLink(id: string, revokedBy: string, now: number): Promise<boolean>;
+  saveSsoHandoff(tokenHash: string, userId: string, expiresAt: number): Promise<void>;
+  /** Single use: returns the user id once, then never again. */
+  consumeSsoHandoff(tokenHash: string, now: number): Promise<string | null>;
   findUser(id: string): Promise<CmsUser | null>;
   addUser(user: CmsUser): Promise<void>;
   getSession(tokenHash: string): Promise<Session | null>;
@@ -128,6 +149,24 @@ export type MysqlConfig = {
 
 // Timestamps cross the wire as DATETIME in UTC; the runtime works in epoch milliseconds.
 const asDate = (ms: number) => new Date(ms);
+type SsoRow = {
+  id: string;
+  subject_key: string;
+  status: SsoLink["status"];
+  user_id: string | null;
+  requested_at: Date;
+  approved_by: string | null;
+  approved_at: Date | null;
+};
+const toSsoLink = (row: SsoRow): SsoLink => ({
+  id: row.id,
+  subjectKey: row.subject_key,
+  status: row.status,
+  userId: row.user_id,
+  requestedAt: asMillis(row.requested_at),
+  approvedBy: row.approved_by,
+  approvedAt: row.approved_at ? asMillis(row.approved_at) : null,
+});
 const asMillis = (value: unknown) => (value instanceof Date ? value.getTime() : new Date(String(value)).getTime());
 
 export async function createMysqlRepository(config: MysqlConfig): Promise<Repository> {
@@ -337,6 +376,63 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
         after: parseJson(row.after_json),
         createdAt: new Date(row.created_at).toISOString(),
       }));
+    },
+
+    async findSsoLink(subjectKey) {
+      const [rows] = await pool.query("SELECT * FROM sso_identity_links WHERE subject_key = ?", [subjectKey]);
+      const row = (rows as SsoRow[])[0];
+      return row ? toSsoLink(row) : null;
+    },
+
+    async requestSsoLink(subjectKey, now) {
+      await pool.query(
+        "INSERT IGNORE INTO sso_identity_links (id, subject_key, status, requested_at) VALUES (?, ?, 'pending', ?)",
+        [randomUUID(), subjectKey, asDate(now)],
+      );
+      const [rows] = await pool.query("SELECT * FROM sso_identity_links WHERE subject_key = ?", [subjectKey]);
+      return toSsoLink((rows as SsoRow[])[0]);
+    },
+
+    async listSsoLinks() {
+      const [rows] = await pool.query("SELECT * FROM sso_identity_links ORDER BY requested_at DESC LIMIT 500");
+      return (rows as SsoRow[]).map(toSsoLink);
+    },
+
+    async approveSsoLink(id, userId, approvedBy, now) {
+      // One approved link per user: the NOT EXISTS keeps two identities from sharing an account.
+      const [result] = await pool.query(
+        `UPDATE sso_identity_links SET status = 'approved', user_id = ?, approved_by = ?, approved_at = ?
+         WHERE id = ? AND status = 'pending'
+           AND NOT EXISTS (SELECT 1 FROM (SELECT id FROM sso_identity_links WHERE user_id = ? AND status = 'approved') AS x)`,
+        [userId, approvedBy, asDate(now), id, userId],
+      );
+      return (result as { affectedRows: number }).affectedRows === 1;
+    },
+
+    async revokeSsoLink(id, revokedBy, now) {
+      const [result] = await pool.query(
+        "UPDATE sso_identity_links SET status = 'revoked', revoked_by = ?, revoked_at = ? WHERE id = ? AND status <> 'revoked'",
+        [revokedBy, asDate(now), id],
+      );
+      return (result as { affectedRows: number }).affectedRows === 1;
+    },
+
+    async saveSsoHandoff(tokenHash, userId, expiresAt) {
+      await pool.query("DELETE FROM sso_handoffs WHERE expires_at < ?", [asDate(Date.now())]);
+      await pool.query("INSERT INTO sso_handoffs (token_hash, user_id, expires_at) VALUES (?, ?, ?)", [
+        tokenHash,
+        userId,
+        asDate(expiresAt),
+      ]);
+    },
+
+    async consumeSsoHandoff(tokenHash, now) {
+      const [rows] = await pool.query("SELECT user_id, expires_at FROM sso_handoffs WHERE token_hash = ?", [tokenHash]);
+      const row = (rows as { user_id: string; expires_at: Date }[])[0];
+      if (!row) return null;
+      const [result] = await pool.query("DELETE FROM sso_handoffs WHERE token_hash = ?", [tokenHash]);
+      if ((result as { affectedRows: number }).affectedRows !== 1) return null;
+      return asMillis(row.expires_at) > now ? row.user_id : null;
     },
 
     async close() {

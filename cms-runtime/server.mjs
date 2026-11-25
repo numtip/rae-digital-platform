@@ -16,6 +16,7 @@ import { assertLocalPassword } from "../lib/cms/validation.ts";
 import { hasPermission, requirePermission } from "../lib/cms/permissions.ts";
 import { hashSessionToken, isSessionExpired, openSession } from "../lib/cms/session.ts";
 import { FAILURE_WINDOW_MS, createLoginThrottle } from "../lib/cms/login-throttle.ts";
+import { createSso } from "./sso.mjs";
 import { createMysqlRepository } from "../lib/cms/mysql-repository.ts";
 
 // The runtime keeps no state of its own any more: every record goes through a Repository.
@@ -27,6 +28,8 @@ const sessions = new Map();
 const articles = new Map();
 const audit = [];
 const media = new Map();
+const ssoLinks = new Map();
+const ssoHandoffs = new Map();
 const throttle = createLoginThrottle();
 
 export function hashPassword(password) {
@@ -41,6 +44,8 @@ export function resetRuntime() {
   sessions.clear();
   articles.clear();
   media.clear();
+  ssoLinks.clear();
+  ssoHandoffs.clear();
   audit.length = 0;
 }
 
@@ -111,6 +116,39 @@ export function memoryRepository() {
     },
     async listAudit() {
       return [...audit];
+    },
+    async findSsoLink(subjectKey) {
+      return ssoLinks.get(subjectKey) ?? null;
+    },
+    async requestSsoLink(subjectKey, now) {
+      if (!ssoLinks.has(subjectKey)) {
+        ssoLinks.set(subjectKey, { id: randomUUID(), subjectKey, status: "pending", userId: null, requestedAt: now, approvedBy: null, approvedAt: null });
+      }
+      return ssoLinks.get(subjectKey);
+    },
+    async listSsoLinks() {
+      return [...ssoLinks.values()];
+    },
+    async approveSsoLink(id, userId, approvedBy, now) {
+      const link = [...ssoLinks.values()].find((l) => l.id === id);
+      if (!link || link.status !== "pending") return false;
+      if ([...ssoLinks.values()].some((l) => l.status === "approved" && l.userId === userId)) return false;
+      Object.assign(link, { status: "approved", userId, approvedBy, approvedAt: now });
+      return true;
+    },
+    async revokeSsoLink(id) {
+      const link = [...ssoLinks.values()].find((l) => l.id === id);
+      if (!link || link.status === "revoked") return false;
+      link.status = "revoked";
+      return true;
+    },
+    async saveSsoHandoff(tokenHash, userId, expiresAt) {
+      ssoHandoffs.set(tokenHash, { userId, expiresAt });
+    },
+    async consumeSsoHandoff(tokenHash, now) {
+      const row = ssoHandoffs.get(tokenHash);
+      ssoHandoffs.delete(tokenHash);
+      return row && row.expiresAt > now ? row.userId : null;
     },
     async close() {},
   };
@@ -294,11 +332,24 @@ function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 }
 
-export function createCmsServer({ now = () => Date.now(), repository = memoryRepository() } = {}) {
+export function createCmsServer({ now = () => Date.now(), repository = memoryRepository(), sso = null } = {}) {
   const repo = repository;
   return createServer(async (request, response) => {
     try {
       const url = new URL(request.url ?? "/", "http://127.0.0.1");
+      if (url.pathname.startsWith("/v1/sso/")) {
+        // Off unless explicitly enabled: an unconfigured deployment has no SSO surface at all.
+        if (!sso) return send(response, 404, { error: "NOT_FOUND" }, request.headers.origin);
+        const handled = await sso.handle(request, response, url, {
+          actor: () => actorFrom(request, now(), repo),
+          readBody,
+          send,
+          requirePermission,
+          audit: (record) => repo.appendAudit({ ...record, before: {}, after: {}, createdAt: new Date(now()).toISOString() }),
+        });
+        if (handled) return;
+        return send(response, 404, { error: "NOT_FOUND" }, request.headers.origin);
+      }
       const origin = request.headers.origin;
       if (request.method === "OPTIONS") {
         const headers = { "access-control-allow-methods": "GET,POST,PATCH,OPTIONS", "access-control-allow-headers": "content-type, authorization" };
@@ -609,7 +660,8 @@ export async function startRuntime(env = process.env) {
   // interface, because a published port is forwarded to that address — the port is still
   // published on 127.0.0.1 only, so nothing is reachable from outside the host.
   const bind = env.RAE_CMS_API_BIND ?? "127.0.0.1";
-  const server = createCmsServer({ repository });
+  const sso = await createSso({ repository, env });
+  const server = createCmsServer({ repository, sso });
   await new Promise((resolve) => server.listen(port, bind, resolve));
   return { server, repository, port, bind };
 }

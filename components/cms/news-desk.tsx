@@ -57,6 +57,9 @@ type Payload = {
   articles?: unknown;
   media?: unknown;
   status?: unknown;
+  enabled?: unknown;
+  csrf?: unknown;
+  signoutUrl?: unknown;
 };
 type Result = { ok: boolean; status: number; payload: Payload };
 
@@ -97,6 +100,9 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
   const [busy, setBusy] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState("");
+  // MJU SSO is offered only when the runtime says it is enabled; local login always stays.
+  const [ssoEnabled, setSsoEnabled] = useState(false);
+  const [csrf, setCsrf] = useState("");
 
   // One place clears everything a session owned, so signing out never leaves the previous account's
   // list, open draft or pending upload on screen.
@@ -109,6 +115,44 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
     setReason("");
     setMessage(copy.empty);
     setError(notice);
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const status = await api(apiBase, "/v1/sso/status", "");
+      if (cancelled) return;
+      setSsoEnabled(status.ok && status.payload.enabled === true);
+      const params = new URLSearchParams(window.location.search);
+      if (params.has("sso_error")) {
+        setError(copy.ssoFailed);
+      } else if (params.get("sso") === "1") {
+        const exchanged = await api(apiBase, "/v1/sso/exchange", "", "POST");
+        const next = String(exchanged.payload.token ?? "");
+        if (!exchanged.ok || !next) return setError(copy.ssoFailed);
+        setCsrf(String(exchanged.payload.csrf ?? ""));
+        setToken(next);
+        setMessage(copy.login);
+        await refresh(next);
+      }
+      if (params.has("sso") || params.has("sso_error")) window.history.replaceState(null, "", window.location.pathname);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // Runs once on load: it reads the one-shot query the SSO callback appended.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function onSignOut() {
+    if (ssoEnabled && token && csrf) {
+      // Revokes the session on the server, then leaves through the provider's sign-out.
+      const result = await api(apiBase, "/v1/sso/logout", token, "POST", { csrf });
+      signOut();
+      if (result.ok && typeof result.payload.signoutUrl === "string") window.location.assign(result.payload.signoutUrl);
+      return;
+    }
+    signOut();
   }
 
   // An expired session answers 401, which sends the reader back to the login card instead of leaving
@@ -194,11 +238,17 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
     const data = new FormData(event.currentTarget);
     setBusy(true);
     for (const [index, file] of pending.entries()) {
-      const encoded = await new Promise<string>((resolve) => {
+      const encoded = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(String(reader.result ?? "").split(",")[1] ?? "");
+        reader.onerror = () => reject(reader.error);
         reader.readAsDataURL(file);
-      });
+      }).catch(() => null);
+      if (encoded === null) {
+        setBusy(false);
+        setMessage(copy.fileUnreadable);
+        return;
+      }
       const result = await api(apiBase, `/v1/news/${selected.id}/media`, token, "POST", {
         dataBase64: encoded,
         captionTh: String(data.get(`captionTh-${index}`) ?? ""),
@@ -266,6 +316,11 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
           >
             {signingIn ? copy.signingIn : copy.login}
           </button>
+          {ssoEnabled ? (
+            <a className={`flex h-12 items-center justify-center rounded-md border px-4 text-sm font-medium ${FOCUS}`} href={`${apiBase}/v1/sso/login`}>
+              {copy.ssoLogin}
+            </a>
+          ) : null}
           {error ? (
             <p className="text-sm text-red-700" role="alert">
               {error}
@@ -282,7 +337,7 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
         <h2 className="text-xl font-bold" id="news-desk">
           {copy.news}
         </h2>
-        <button className={`h-11 rounded-md border px-4 text-sm ${FOCUS}`} onClick={() => signOut()} type="button">
+        <button className={`h-11 rounded-md border px-4 text-sm ${FOCUS}`} onClick={() => void onSignOut()} type="button">
           {copy.logout}
         </button>
       </div>

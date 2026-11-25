@@ -1,4 +1,6 @@
 ﻿# DATABASE_AND_API_BLUEPRINT.md
+
+> **Superseded in part by [ADR-0006](adr/ADR-0006-mysql-repository-and-mju-sso.md) (2026-11-25):** persistence is the hand-written MySQL repository; Prisma is not used.
 ### MySQL schema, data classification, REST contract and OpenAPI strategy
 
 | | |
