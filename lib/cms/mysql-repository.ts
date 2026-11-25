@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { formatDocumentCode, type RegistryDocument } from "./document-registry.ts";
 import mysql from "mysql2/promise";
 import type { NewsRecord, PublishedSnapshot } from "./news-workflow.ts";
 import type { RoleName } from "./permissions.ts";
@@ -44,7 +45,17 @@ export type SsoLink = {
   approvedAt: number | null;
 };
 
+export type DocumentVersionRecord = { version: string; storageUrl: string; changedBy: string; changedAt: number; changeNote: string };
+
 export type Repository = {
+  /** M03 registry. Code assignment is the repository's job so two creators can never share a code. */
+  createDocument(doc: Omit<RegistryDocument, "code" | "downloadCount">, audit: Omit<AuditRecord, "createdAt" | "entityId">): Promise<RegistryDocument>;
+  listDocuments(): Promise<RegistryDocument[]>;
+  getDocument(code: string): Promise<RegistryDocument | null>;
+  updateDocument(doc: RegistryDocument, version: DocumentVersionRecord | null, audit: Omit<AuditRecord, "createdAt">): Promise<void>;
+  listDocumentVersions(code: string): Promise<DocumentVersionRecord[]>;
+  /** Atomic +1; returns the record (with its storage link) or null if it is not a counted, public, current document. */
+  countDownload(code: string): Promise<RegistryDocument | null>;
   /** MJU SSO. Absent on repositories that predate migration 008; the runtime then keeps SSO off. */
   findSsoLink(subjectKey: string): Promise<SsoLink | null>;
   /** Records a first sign-in attempt as `pending`. Never approves; a no-op if a row exists. */
@@ -149,6 +160,16 @@ export type MysqlConfig = {
 
 // Timestamps cross the wire as DATETIME in UTC; the runtime works in epoch milliseconds.
 const asDate = (ms: number) => new Date(ms);
+type DocRow = {
+  code: string; category: string; title_th: string; title_en: string; doc_type: string; version: string;
+  status: RegistryDocument["status"]; visibility: RegistryDocument["visibility"]; storage_url: string;
+  note: string; created_by: string; updated_at: Date; download_count: number;
+};
+const toDoc = (r: DocRow): RegistryDocument => ({
+  code: r.code, category: r.category, titleTh: r.title_th, titleEn: r.title_en, docType: r.doc_type,
+  version: r.version, status: r.status, visibility: r.visibility, storageUrl: r.storage_url, note: r.note,
+  createdBy: r.created_by, updatedAt: asMillis(r.updated_at), downloadCount: Number(r.download_count),
+});
 type SsoRow = {
   id: string;
   subject_key: string;
@@ -376,6 +397,87 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
         after: parseJson(row.after_json),
         createdAt: new Date(row.created_at).toISOString(),
       }));
+    },
+
+    async createDocument(doc, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM documents FOR UPDATE");
+        const code = formatDocumentCode(Number((rows as { n: number }[])[0].n) + 1);
+        await connection.query(
+          "INSERT INTO documents (code, category, title_th, title_en, doc_type, version, status, visibility, storage_url, note, created_by, updated_at, download_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
+          [code, doc.category, doc.titleTh, doc.titleEn, doc.docType, doc.version, doc.status, doc.visibility, doc.storageUrl, doc.note, doc.createdBy, asDate(doc.updatedAt)],
+        );
+        await connection.query(
+          "INSERT INTO document_versions (id, code, version, storage_url, changed_by, changed_at, change_note) VALUES (?, ?, ?, ?, ?, ?, '')",
+          [randomUUID(), code, doc.version, doc.storageUrl, doc.createdBy, asDate(doc.updatedAt)],
+        );
+        await insertAudit(connection, { ...audit, entityId: code });
+        await connection.commit();
+        return { ...doc, code, downloadCount: 0 };
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    },
+
+    async listDocuments() {
+      const [rows] = await pool.query("SELECT * FROM documents ORDER BY code");
+      return (rows as DocRow[]).map(toDoc);
+    },
+
+    async getDocument(code) {
+      const [rows] = await pool.query("SELECT * FROM documents WHERE code = ?", [code]);
+      const row = (rows as DocRow[])[0];
+      return row ? toDoc(row) : null;
+    },
+
+    async updateDocument(doc, version, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        await connection.query(
+          "UPDATE documents SET category = ?, title_th = ?, title_en = ?, doc_type = ?, version = ?, status = ?, visibility = ?, storage_url = ?, note = ?, updated_at = ? WHERE code = ?",
+          [doc.category, doc.titleTh, doc.titleEn, doc.docType, doc.version, doc.status, doc.visibility, doc.storageUrl, doc.note, asDate(doc.updatedAt), doc.code],
+        );
+        if (version) {
+          await connection.query(
+            "INSERT INTO document_versions (id, code, version, storage_url, changed_by, changed_at, change_note) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [randomUUID(), doc.code, version.version, version.storageUrl, version.changedBy, asDate(version.changedAt), version.changeNote],
+          );
+        }
+        await insertAudit(connection, audit);
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    },
+
+    async listDocumentVersions(code) {
+      const [rows] = await pool.query("SELECT version, storage_url, changed_by, changed_at, change_note FROM document_versions WHERE code = ? ORDER BY changed_at DESC", [code]);
+      return (rows as { version: string; storage_url: string; changed_by: string; changed_at: Date; change_note: string }[]).map((r) => ({
+        version: r.version,
+        storageUrl: r.storage_url,
+        changedBy: r.changed_by,
+        changedAt: asMillis(r.changed_at),
+        changeNote: r.change_note,
+      }));
+    },
+
+    async countDownload(code) {
+      const [result] = await pool.query(
+        "UPDATE documents SET download_count = download_count + 1 WHERE code = ? AND status = 'current' AND visibility = 'public'",
+        [code],
+      );
+      if ((result as { affectedRows: number }).affectedRows !== 1) return null;
+      const [rows] = await pool.query("SELECT * FROM documents WHERE code = ?", [code]);
+      return toDoc((rows as DocRow[])[0]);
     },
 
     async findSsoLink(subjectKey) {

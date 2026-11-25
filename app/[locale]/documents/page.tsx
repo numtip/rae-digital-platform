@@ -2,7 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumb, CARD, PageHero, SourceLine } from "@/components/page-shell";
+import { DocumentRegistryList } from "@/components/document-registry-list";
+import { readPublicDocuments } from "@/lib/cms/documents-live";
 import { getContent, getDocuments, isLocale } from "@/lib/i18n";
+
+// Static link groups plus the CMS registry (M03). The registry read is cached for a minute and
+// dropped by the CMS publish hook.
+export const revalidate = 60;
 
 // Categories and link labels come from content/<locale>/documents.ts, transcribed
 // from the official download page. Files are linked at source, never mirrored.
@@ -27,6 +33,7 @@ export default async function Documents({ params }: Props) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const documents = getDocuments(locale);
+  const registry = await readPublicDocuments();
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -70,6 +77,9 @@ export default async function Documents({ params }: Props) {
               </ul>
             </div>
           ))}
+        </div>
+        <div className="mx-auto w-full max-w-7xl px-4">
+          <DocumentRegistryList documents={registry} locale={locale} />
         </div>
       </section>
 
