@@ -7,7 +7,7 @@
 | **Target** | `RAE Digital Platform` — public site + CMS/admin + modular systems |
 | **Architecture** | Option 1 (modular monolith) — `RAE_PLATFORM_ARCHITECTURE.md §8` |
 | **Module scope** | 29 modules — `MODULE_REQUIREMENTS_MATRIX.md` |
-| **Status** | Planning only. **No implementation has started.** |
+| **Status** | Implementation under way. See `docs/STATUS.md` (2026-11-25) for what is live. The phase plan below is unchanged. |
 
 ---
 
@@ -261,3 +261,13 @@ Six weeks, dependent only on **A-1** (hosting) and **A-3** (SSO) to deploy the l
 7. Public shell using Stitch V2 tokens with 7 working nav routes and correct `<html lang>`.
 
 **Why this first:** every later module depends on identity, organisation, media and audit, and this phase is the only one that can proceed while A-2/A-4/A-5/A-6 are still being negotiated. It also removes the two biggest inherited defects (no auth at all; a design system without enforced tokens).
+
+
+---
+
+## Progress note — 2026-11-25
+
+Delivered ahead of the phase plan, as working vertical slices on one VPS (VPS190), one CMS, one database:
+CMS news lifecycle with RBAC and audit; canonical public site `https://raeservice.mju.ac.th/rae-landing/` served by the CMS-backed
+Next.js app (admin on `rae-cms.raemanagemju.net`); MJU SSO built and **disabled** pending external approvals; M03 Document Center core.
+Next: real M365 document onboarding, SSO activation after approvals, Cloudflare Access on the admin pages, then the next Phase 2 modules.
