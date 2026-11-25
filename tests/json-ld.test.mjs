@@ -22,6 +22,12 @@ test("the site hook is called with the secret, and a missing secret is reported 
   assert.equal(calls[0].init.headers["x-revalidate-secret"], "s");
   assert.equal(calls[0].init.body, '{"withdrawn":["a"]}');
   assert.equal(await notifySite({}, {}, fetchImpl), false);
+  // several renderers: all must be told, and one failing makes the whole call false
+  const seen = [];
+  const two = { RAE_REVALIDATE_SECRET: "s", RAE_SITE_REVALIDATE_URL: "http://a/x, http://b/y" };
+  assert.equal(await notifySite({}, two, async (url) => (seen.push(url), { ok: true })), true);
+  assert.deepEqual(seen.sort(), ["http://a/x", "http://b/y"]);
+  assert.equal(await notifySite({}, two, async (url) => ({ ok: url.includes("a") })), false);
   assert.equal(calls.length, 1, "no secret, no request");
   assert.equal(await notifySite({}, { RAE_REVALIDATE_SECRET: "s" }, async () => ({ ok: false, status: 500 })), false);
 });
