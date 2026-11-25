@@ -278,6 +278,21 @@ export async function notifySite(payload, env = process.env, fetchImpl = fetch) 
  * records are not worth a request. Sequential on purpose: a registry of hundreds must not become a burst
  * against SharePoint. Returns counts so the caller (timer or desk button) can say what it found.
  */
+// One pass at a time: a second request while one is running reports it instead of starting another.
+const linkCheck = { running: false, finishedAt: null, counts: null };
+export function startLinkCheck(repository, options = {}) {
+  if (linkCheck.running) return false;
+  linkCheck.running = true;
+  checkDocumentLinks(repository, options)
+    .then((counts) => Object.assign(linkCheck, { counts, finishedAt: (options.now ?? Date.now)() }))
+    .catch((error) => console.error(`rae-cms: link check failed (${error.message})`))
+    .finally(() => {
+      linkCheck.running = false;
+    });
+  return true;
+}
+export const linkCheckState = () => ({ ...linkCheck });
+
 export async function checkDocumentLinks(repository, { fetchImpl = fetch, now = () => Date.now() } = {}) {
   const counts = { ok: 0, broken: 0, unreachable: 0 };
   for (const doc of await repository.listDocuments()) {
@@ -481,7 +496,7 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         requirePermission(actor.role, "document:register");
         const audit = (action, code) => ({ actorId: actor.id, action, entityType: "document", entityId: code });
         if (request.method === "GET" && url.pathname === "/v1/documents") {
-          return send(response, 200, { documents: await repo.listDocuments() }, origin);
+          return send(response, 200, { documents: await repo.listDocuments(), linkCheck: linkCheckState() }, origin);
         }
         if (request.method === "POST" && url.pathname === "/v1/documents") {
           const fields = validateNewDocument(await readBody(request));
@@ -493,7 +508,9 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         }
         if (request.method === "POST" && url.pathname === "/v1/documents/check-links") {
           requirePermission(actor.role, "news:publish");
-          return send(response, 200, { checked: await checkDocumentLinks(repo, { now }) }, origin);
+          // Many links, ten seconds each at worst: run in the background and answer at once.
+          const started = startLinkCheck(repo, { now });
+          return send(response, 202, { started, ...linkCheckState() }, origin);
         }
         const one = /^\/v1\/documents\/(RAE-DC-\d{4,})(\/versions)?$/.exec(url.pathname);
         if (one) {
@@ -807,7 +824,7 @@ export async function startRuntime(env = process.env) {
   // so a restart storm does not become a request storm.
   const hours = Number(env.RAE_DOC_LINK_CHECK_HOURS ?? 24);
   if (hours > 0) {
-    const run = () => checkDocumentLinks(repository).catch((error) => console.error(`rae-cms: link check failed (${error.message})`));
+    const run = () => startLinkCheck(repository);
     setTimeout(run, 5 * 60 * 1000).unref();
     setInterval(run, hours * 3600 * 1000).unref();
   }
