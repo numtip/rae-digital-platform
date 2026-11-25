@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { asset } from "@/lib/assets";
 import type { PublicDocument } from "@/lib/cms/documents-live";
@@ -27,13 +28,17 @@ export function DocumentRegistryList({ locale, documents }: { locale: "th" | "en
         {shown.map((doc) => (
           <li className="flex flex-wrap items-center justify-between gap-3 p-4" key={doc.code}>
             <div className="min-w-0">
+              <Link className="font-medium text-neutral-900 underline underline-offset-2 hover:text-brand-600" href={`/${locale}/documents/${doc.code}`}>
+                {locale === "th" ? doc.titleTh : doc.titleEn}
+              </Link>
+              {" · "}
               <a
-                className="font-medium text-neutral-900 underline underline-offset-2 hover:text-brand-600"
+                className="text-sm text-brand-600 underline underline-offset-2"
                 href={asset(`/api/documents/${doc.code}/open`)}
                 rel="noreferrer noopener"
                 target="_blank"
               >
-                {locale === "th" ? doc.titleTh : doc.titleEn}
+                {copy.open}
               </a>
               <p className="mt-1 text-xs text-neutral-600">
                 {doc.code} · {doc.fileType.toUpperCase()} · {copy.version} {doc.version} · {copy.updated} {date.format(new Date(doc.updatedAt))} · {copy.opens} {doc.downloadCount} {copy.times}

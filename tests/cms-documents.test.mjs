@@ -107,3 +107,33 @@ test("the check-links endpoint is for publishers and the public view never carri
     assert.ok(!("linkStatus" in pub) && !("linkCheckedAt" in pub));
   });
 });
+
+test("import review: duplicates (same file, different spelling), invalid rows and new rows are told apart", async () => {
+  const { reviewRows, canonicalLink, readRows } = await import("../scripts/import-m365-links.mjs");
+  const base = "https://maejo365-my.sharepoint.com/:b:/g/personal/rae";
+  assert.equal(canonicalLink(`${base}/Abc/Form%20A.PDF?e=xyz#frag`), canonicalLink(`${base}/Abc/form a.pdf/`));
+  const rows = [
+    { category: "research", titleTh: "ก", titleEn: "A", storageUrl: `${base}/Abc/a.pdf` },
+    { category: "research", titleTh: "ก2", titleEn: "A again", storageUrl: `${base}/Abc/A.pdf?e=1` },
+    { category: "research", titleTh: "ข", titleEn: "B", storageUrl: `${base}/Abc/b.pdf` },
+    { category: "research", titleTh: "ค", titleEn: "C", storageUrl: "https://example.com/c.pdf" },
+    { category: "nope", titleTh: "ง", titleEn: "D", storageUrl: `${base}/Abc/d.pdf` },
+  ];
+  const report = reviewRows(rows, [`${base}/Abc/b.pdf`]);
+  assert.deepEqual(report.new.map((r) => r.line), [2]);
+  assert.deepEqual(report.duplicate.map((r) => [r.line, r.of]), [[3, "row 2"], [4, "registry"]]);
+  assert.deepEqual(report.invalid.map((r) => r.line), [5, 6]);
+  const csv = 'category,titleTh,titleEn,storageUrl\nresearch,"ก, ข",A,https://maejo365-my.sharepoint.com/x/a.pdf\n';
+  assert.equal(readRows(csv, "x.csv")[0].titleTh, "ก, ข");
+});
+
+test("public document detail endpoint serves only current public records", async () => {
+  await withServer(async ({ call, publisher }) => {
+    const created = await (await call("POST", "/v1/documents", publisher, draft)).json();
+    assert.equal((await call("GET", `/v1/public/documents/${created.code}`)).status, 404, "a draft has no public page");
+    await call("PATCH", `/v1/documents/${created.code}`, publisher, { status: "current" });
+    const view = await (await call("GET", `/v1/public/documents/${created.code}`)).json();
+    assert.equal(view.code, created.code);
+    assert.ok(!("storageUrl" in view));
+  });
+});

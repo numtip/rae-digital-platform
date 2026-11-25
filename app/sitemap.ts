@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { readPublicDocuments } from "@/lib/cms/documents-live";
 import { liveNews, liveSitemap } from "@/lib/cms/live";
 import { LOCALES, PAGES, SITE_URL, getDocuments, getNews, getNewsPages } from "@/lib/i18n";
 
@@ -87,12 +88,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { items: published } = await liveNews("th");
   const liveItems = liveSitemap(published, new Set(getNews("th").items.map((item) => item.nid)), SITE_URL);
 
+  // Registered documents (M03): each current, public record has its own page, both locales. Withdrawing
+  // a record (obsolete/archived/draft) drops it from the CMS read, hence from this file.
+  const registered = (await readPublicDocuments()).flatMap((doc) =>
+    LOCALES.map((locale) => ({
+      url: `${SITE_URL}/${locale}/documents/${doc.code}/`,
+      lastModified: doc.updatedAt,
+      changeFrequency: "monthly" as const,
+      priority: 0.4,
+      alternates: { languages: languagesFor(`documents/${doc.code}`) },
+    })),
+  );
+
   return [
     ...home,
     ...pages,
     ...events,
     ...newsItems,
     ...docCategories,
+    ...registered,
     ...newsIndexPages,
     ...liveItems,
   ];

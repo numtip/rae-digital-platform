@@ -479,6 +479,12 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         const list = (await repo.listDocuments()).filter((d) => isPublicDocument(d) && (!category || d.category === category));
         return send(response, 200, { documents: list.map(publicDocumentView) }, origin);
       }
+      const oneMatch = /^\/v1\/public\/documents\/(RAE-DC-\d{4,})$/.exec(url.pathname);
+      if (request.method === "GET" && oneMatch) {
+        const doc = await repo.getDocument(oneMatch[1]);
+        if (!doc || !isPublicDocument(doc)) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        return send(response, 200, publicDocumentView(doc), origin);
+      }
       const countMatch = /^\/v1\/public\/documents\/(RAE-DC-\d{4,})\/download$/.exec(url.pathname);
       if (request.method === "POST" && countMatch) {
         const over = downloadByIp.hit(clientKey(request.headers, request.socket?.remoteAddress), now());

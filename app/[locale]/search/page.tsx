@@ -46,12 +46,12 @@ export default async function Search({ params }: Props) {
   }));
 
   // Registered documents (M03): found by title, code, type or note; the result lands on the category
-  // page, where the counted open link lives (files stay in Microsoft 365, ADR-0004).
+  // document's own page, which carries the counted open link (files stay in Microsoft 365, ADR-0004).
   const documents = registry.map((doc) => ({
     kind: "item" as const,
     title: locale === "th" ? doc.titleTh : doc.titleEn,
     text: [doc.code, doc.fileType.toUpperCase(), doc.note, locale === "th" ? doc.titleEn : doc.titleTh].filter(Boolean).join(" · "),
-    href: `/${locale}/documents/category/${doc.category}`,
+    href: `/${locale}/documents/${doc.code}`,
   }));
 
   return (
