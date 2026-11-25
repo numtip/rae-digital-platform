@@ -35,6 +35,10 @@ export async function POST(request: Request) {
   revalidatePath("/[locale]/news/[nid]", "page");
   revalidatePath("/[locale]/search", "page");
   revalidatePath("/sitemap.xml");
+  // The Document Center registry shares the hook: a change to a document drops its cached read too.
+  revalidatePath("/[locale]/documents", "page");
+  revalidatePath("/[locale]/documents/category/[slug]", "page");
+  revalidateTag("cms-docs", "max");
   // The cached CMS read itself, so the next render asks the runtime again instead of reusing the
   // export that was current when this entry was written.
   revalidateTag(NEWS_TAG, "max");

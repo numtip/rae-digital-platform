@@ -16,6 +16,12 @@ import { assertLocalPassword } from "../lib/cms/validation.ts";
 import { hasPermission, requirePermission } from "../lib/cms/permissions.ts";
 import { hashSessionToken, isSessionExpired, openSession } from "../lib/cms/session.ts";
 import { FAILURE_WINDOW_MS, createLoginThrottle } from "../lib/cms/login-throttle.ts";
+import {
+  applyDocumentUpdate,
+  isPublicDocument,
+  publicDocumentView,
+  validateNewDocument,
+} from "../lib/cms/document-registry.ts";
 import { createSso } from "./sso.mjs";
 import { clientKey, createIpLimiter } from "../lib/cms/ip-rate-limit.ts";
 import { createMysqlRepository } from "../lib/cms/mysql-repository.ts";
@@ -32,6 +38,9 @@ const media = new Map();
 const ssoLinks = new Map();
 const ssoHandoffs = new Map();
 const throttle = createLoginThrottle();
+const documents = new Map();
+const documentVersions = new Map();
+const downloadByIp = createIpLimiter({ max: 60, windowMs: 60_000 });
 const loginByIp = createIpLimiter({ max: 30, windowMs: 60_000 });
 
 export function hashPassword(password) {
@@ -44,6 +53,9 @@ export function resetRuntime() {
   users.clear();
   throttle.reset();
   loginByIp.reset();
+  downloadByIp.reset();
+  documents.clear();
+  documentVersions.clear();
   sessions.clear();
   articles.clear();
   media.clear();
@@ -119,6 +131,36 @@ export function memoryRepository() {
     },
     async listAudit() {
       return [...audit];
+    },
+    async createDocument(doc, audit) {
+      const n = [...documents.keys()].reduce((max, code) => Math.max(max, Number(code.slice(7))), 0) + 1;
+      const code = `RAE-DC-${String(n).padStart(4, "0")}`;
+      const record = { ...doc, code, downloadCount: 0 };
+      documents.set(code, record);
+      documentVersions.set(code, [{ version: doc.version, storageUrl: doc.storageUrl, changedBy: doc.createdBy, changedAt: doc.updatedAt, changeNote: "" }]);
+      await this.appendAudit({ ...audit, entityId: code });
+      return { ...record };
+    },
+    async listDocuments() {
+      return [...documents.values()].map((d) => ({ ...d }));
+    },
+    async getDocument(code) {
+      const d = documents.get(code);
+      return d ? { ...d } : null;
+    },
+    async updateDocument(doc, version, audit) {
+      documents.set(doc.code, { ...doc });
+      if (version) documentVersions.set(doc.code, [version, ...(documentVersions.get(doc.code) ?? [])]);
+      await this.appendAudit(audit);
+    },
+    async listDocumentVersions(code) {
+      return [...(documentVersions.get(code) ?? [])];
+    },
+    async countDownload(code) {
+      const d = documents.get(code);
+      if (!d || !isPublicDocument(d)) return null;
+      d.downloadCount += 1;
+      return { ...d };
     },
     async findSsoLink(subjectKey) {
       return ssoLinks.get(subjectKey) ?? null;
@@ -393,6 +435,61 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         const token = randomBytes(32).toString("base64url");
         await repo.saveSession(hashSessionToken(token), openSession(user.id, now()));
         return send(response, 200, { token }, origin);
+      }
+
+      // M03 Document Center. Public reads need no login and see only current, public records.
+      if (request.method === "GET" && url.pathname === "/v1/public/documents") {
+        const category = url.searchParams.get("category");
+        const list = (await repo.listDocuments()).filter((d) => isPublicDocument(d) && (!category || d.category === category));
+        return send(response, 200, { documents: list.map(publicDocumentView) }, origin);
+      }
+      const countMatch = /^\/v1\/public\/documents\/(RAE-DC-\d{4,})\/download$/.exec(url.pathname);
+      if (request.method === "POST" && countMatch) {
+        const over = downloadByIp.hit(clientKey(request.headers, request.socket?.remoteAddress), now());
+        if (over.limited) {
+          response.setHeader("retry-after", String(over.retryAfterSeconds));
+          return send(response, 429, { error: "TOO_MANY_REQUESTS" }, origin);
+        }
+        const doc = await repo.countDownload(countMatch[1]);
+        if (!doc) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        return send(response, 200, { url: doc.storageUrl }, origin);
+      }
+      if (url.pathname === "/v1/documents" || url.pathname.startsWith("/v1/documents/")) {
+        const actor = await actorFrom(request, now(), repo);
+        if (!actor) return send(response, 401, { error: "UNAUTHORIZED" }, origin);
+        requirePermission(actor.role, "document:register");
+        const audit = (action, code) => ({ actorId: actor.id, action, entityType: "document", entityId: code });
+        if (request.method === "GET" && url.pathname === "/v1/documents") {
+          return send(response, 200, { documents: await repo.listDocuments() }, origin);
+        }
+        if (request.method === "POST" && url.pathname === "/v1/documents") {
+          const fields = validateNewDocument(await readBody(request));
+          // Going live (anything but a draft) is a publisher's decision, as with news.
+          if (fields.status !== "draft") requirePermission(actor.role, "news:publish");
+          const record = await repo.createDocument({ ...fields, createdBy: actor.id, updatedAt: now() }, audit("document.create", ""));
+          await notifySite({});
+          return send(response, 201, record, origin);
+        }
+        const one = /^\/v1\/documents\/(RAE-DC-\d{4,})(\/versions)?$/.exec(url.pathname);
+        if (one) {
+          const current = await repo.getDocument(one[1]);
+          if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
+          if (request.method === "GET" && one[2]) return send(response, 200, { versions: await repo.listDocumentVersions(one[1]) }, origin);
+          if (request.method === "GET") return send(response, 200, current, origin);
+          if (request.method === "PATCH" && !one[2]) {
+            const input = await readBody(request);
+            const { next, newVersion } = applyDocumentUpdate(current, input, now());
+            if (next.status !== current.status || next.visibility !== current.visibility) requirePermission(actor.role, "news:publish");
+            await repo.updateDocument(
+              next,
+              newVersion ? { version: next.version, storageUrl: next.storageUrl, changedBy: actor.id, changedAt: now(), changeNote: String(input.changeNote ?? "").slice(0, 500) } : null,
+              audit("document.update", next.code),
+            );
+            await notifySite({});
+            return send(response, 200, next, origin);
+          }
+        }
+        return send(response, 404, { error: "NOT_FOUND" }, origin);
       }
 
       if (request.method === "GET" && url.pathname.startsWith("/v1/media/")) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { DocumentsDesk } from "@/components/cms/documents-desk";
 import { adminCopy } from "@/lib/cms/admin-copy";
 
 const FOCUS =
@@ -528,6 +529,7 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
           <p role="status">{message}</p>
         </div>
       </div>
+      <DocumentsDesk apiBase={apiBase} locale={locale} token={token} />
     </section>
   );
 }

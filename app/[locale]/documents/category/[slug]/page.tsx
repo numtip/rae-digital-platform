@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumb, CARD, PageHero, SourceLine } from "@/components/page-shell";
+import { DocumentRegistryList } from "@/components/document-registry-list";
+import { readPublicDocuments } from "@/lib/cms/documents-live";
 import { SITE_URL, getContent, getDocuments, isLocale } from "@/lib/i18n";
 import { metaDescription } from "@/lib/seo";
 
@@ -11,6 +13,7 @@ import { metaDescription } from "@/lib/seo";
 type Props = { params: Promise<{ locale: string; slug: string }> };
 
 export const dynamicParams = false;
+export const revalidate = 60;
 
 export function generateStaticParams() {
   return getDocuments("th").groups.map((group) => ({ slug: group.slug }));
@@ -41,6 +44,7 @@ export default async function DocumentCategory({ params }: Props) {
   const documents = getDocuments(locale);
   const group = documents.groups.find((entry) => entry.slug === slug);
   if (!group) notFound();
+  const registry = await readPublicDocuments(slug);
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -76,6 +80,8 @@ export default async function DocumentCategory({ params }: Props) {
               ))}
             </ul>
           </div>
+
+          <DocumentRegistryList documents={registry} locale={locale} />
 
           <p className="mt-6 text-neutral-700">{documents.note}</p>
 
