@@ -6,9 +6,8 @@ _Digital platform for the Office of Agricultural Research and Extension (RAE), M
 Repo นี้เป็น **canonical development repository** สำหรับ Cursor และ Hermes: เอกสารสถาปัตยกรรม,
 ข้อกำหนด, หลักฐานงานวิจัย และ design reference ทั้งหมดอยู่ในที่นี้
 
-> **สถานะปัจจุบัน (อัปเดต 2026-10-24):** `main` ยังเป็น docs-only — ยังไม่มีโค้ดแอปพลิเคชัน
-> เรียงตามลำดับที่จะ merge: **PR #1** `chore/phase1-scaffold` (Next.js + TS + Tailwind + CI) ก่อน
-> แล้วจึง **PR #3** `docs/initial-architecture` (เอกสารชุดนี้) และ PR ปรับ README นี้ให้ตรงขอบเขต Phase 1
+> **สถานะปัจจุบัน (อัปเดต 2026-11-25):** `main` คือแอปพลิเคชันจริง — มี Next.js public site (Phase 1),
+> CMS runtime (`cms-runtime/`, ฟังที่ loopback เท่านั้น, ยังไม่ deploy สู่สาธารณะ) และ CI อยู่ใน tree แล้ว
 >
 > `main` ถูกป้องกันแล้ว: ต้องผ่าน PR + required check `build` + review 1 คน, ห้าม force-push/ลบ branch
 > ไม่มี auto-merge และไม่มีการ deploy อัตโนมัติ
@@ -179,8 +178,8 @@ Draft PR → รายงานเช้า ห้าม merge/deploy เอง 
 
 ## License
 
-ยังไม่มีไฟล์ `LICENSE` — repo เป็น public แต่เจ้าของยังไม่ได้เลือกสัญญาอนุญาต
-ดูประเด็นและตัวเลือกใน `docs/PROVENANCE.md §5` (ต้องตัดสินก่อนเปิดให้ภายนอกมีส่วนร่วม)
+โค้ดแอปพลิเคชันใช้สัญญาอนุญาต Apache-2.0 (ดู [LICENSE](LICENSE) และ [NOTICE](NOTICE)); ประเด็นเพิ่มเติมใน `docs/PROVENANCE.md §5`
+
 ## Licence
 
 **Owner-declared policy (2026-10-26).** Recorded in full in [NOTICE](NOTICE):
