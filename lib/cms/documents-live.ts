@@ -33,3 +33,16 @@ export async function readPublicDocuments(category?: string): Promise<PublicDocu
     return [];
   }
 }
+
+export async function readPublicDocument(code: string): Promise<PublicDocument | null> {
+  if (process.env.NEXT_PAGES_PREVIEW === "1" || !/^RAE-DC-\d{4,}$/.test(code)) return null;
+  try {
+    const response = await fetch(`${cmsBase()}/v1/public/documents/${code}`, {
+      next: { revalidate: DOCS_WINDOW, tags: [DOCS_TAG] },
+      signal: AbortSignal.timeout(4000),
+    });
+    return response.ok ? ((await response.json()) as PublicDocument) : null;
+  } catch {
+    return null;
+  }
+}
