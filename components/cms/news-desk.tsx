@@ -218,23 +218,23 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
     await loadMedia(selected);
   }
 
-  async function act(action: "submit" | "approve" | "publish" | "return", reason?: string) {
+  async function act(action: "submit" | "approve" | "publish" | "return" | "revise" | "unpublish", reason?: string) {
     // Silently doing nothing on an unselected desk reads like a broken button.
     if (!selected) {
       setMessage(copy.selectFirst);
       return;
     }
-    if (action === "return" && !String(reason ?? "").trim()) {
-      setMessage(copy.reasonRequired);
+    if ((action === "return" || action === "unpublish") && !String(reason ?? "").trim()) {
+      setMessage(action === "unpublish" ? copy.unpublishReason : copy.reasonRequired);
       return;
     }
-    const body = action === "return" ? { reason } : {};
+    const body = action === "return" || action === "unpublish" ? { reason } : {};
     const result = await api(apiBase, `/v1/news/${selected.id}/${action}`, token, "POST", body);
     if (!result.ok) {
       fail(result);
       return;
     }
-    if (action === "return") setReason("");
+    if (action === "return" || action === "unpublish") setReason("");
     setMessage(String(result.payload.status ?? ""));
     setSelected(result.payload as Article);
     await refresh();
@@ -342,6 +342,16 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
               <button className={`h-11 rounded-md border px-4 text-sm ${FOCUS}`} type="button" onClick={() => act("publish")}>
                 {copy.publish}
               </button>
+              {selected?.status === "published" ? (
+                <>
+                  <button className={`h-11 rounded-md border px-4 text-sm ${FOCUS}`} type="button" onClick={() => act("revise")}>
+                    {copy.revise}
+                  </button>
+                  <button className={`h-11 rounded-md border px-4 text-sm ${FOCUS}`} type="button" onClick={() => act("unpublish", reason)}>
+                    {copy.unpublish}
+                  </button>
+                </>
+              ) : null}
             </div>
             <label className={LABEL} htmlFor="revisionReason">
               {copy.reasonLabel}
