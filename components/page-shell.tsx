@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Provenance } from "@/lib/content";
+import { jsonLdScript } from "@/lib/json-ld";
 import { SITE_URL, getContent, type Locale } from "@/lib/i18n";
 
 // Shared shell for the interior content pages, so five pages do not each carry
@@ -73,7 +74,7 @@ export function Breadcrumb({ locale, trail }: { locale: Locale; trail: { label: 
           </li>
         ))}
       </ol>
-      <script dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} type="application/ld+json" />
+      <script dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} type="application/ld+json" />
     </nav>
   );
 }

@@ -41,7 +41,7 @@ export class CmsUnavailable extends Error {
 
 // Read at call time, not import time, so a test can point one call at a stand-in server.
 // Never a public hostname: the runtime listens on loopback and stays there.
-export const cmsBase = () => (process.env.RAE_CMS_API ?? "http://127.0.0.1:3321").replace(/\/$/, "");
+export const cmsBase = () => (process.env.RAE_CMS_API ?? "http://127.0.0.1:3317").replace(/\/$/, "");
 
 // One session per process, re-minted on expiry. Keyed by base so a changed base cannot reuse it.
 let session: { base: string; token: string } | null = null;

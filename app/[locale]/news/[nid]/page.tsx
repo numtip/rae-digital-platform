@@ -7,6 +7,7 @@ import { asset } from "@/lib/assets";
 import { liveNews } from "@/lib/cms/live";
 import { publicationStamp, publishedIds } from "@/lib/cms/published-site";
 import { SITE_URL, getContent, getNews, isLocale, type Locale } from "@/lib/i18n";
+import { jsonLdScript } from "@/lib/json-ld";
 import { metaDescription, openGraphSite } from "@/lib/seo";
 
 // One page per published item. Bodies are the office's own text (Thai); the
@@ -262,7 +263,7 @@ export default async function NewsItemPage({ params }: Props) {
       </section>
 
       <script
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }}
         type="application/ld+json"
       />
     </main>

@@ -27,9 +27,12 @@ const rel = (f) => f.slice(process.cwd().length + 1);
 
 test("every content file exists in both locales", () => {
   // Compare names, not counts: a count check passes when one file per locale is renamed.
-  const name = (f) => f.slice(f.indexOf("/content/") + "/content/".length).replace(/^(th|en)\//, "");
-  const th = files.filter((f) => f.includes("/th/")).map(name).sort();
-  const en = files.filter((f) => f.includes("/en/")).map(name).sort();
+  // Split on either separator: on Windows the walked paths use "\\".
+  const parts = (f) => f.split(/[\\/]/);
+  const localeOf = (f) => { const p = parts(f); return p[p.lastIndexOf("content") + 1]; };
+  const name = (f) => { const p = parts(f); return p.slice(p.lastIndexOf("content") + 2).join("/"); };
+  const th = files.filter((f) => localeOf(f) === "th").map(name).sort();
+  const en = files.filter((f) => localeOf(f) === "en").map(name).sort();
   assert.ok(th.length > 0, "no Thai content files found");
   assert.deepEqual(en, th, `locale file sets differ — th only: ${th.filter((n) => !en.includes(n))}, en only: ${en.filter((n) => !th.includes(n))}`);
 });
