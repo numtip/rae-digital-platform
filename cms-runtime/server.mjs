@@ -18,6 +18,7 @@ import { hashSessionToken, isSessionExpired, openSession } from "../lib/cms/sess
 import { FAILURE_WINDOW_MS, createLoginThrottle } from "../lib/cms/login-throttle.ts";
 import {
   applyDocumentUpdate,
+  checkLink,
   isPublicDocument,
   publicDocumentView,
   validateNewDocument,
@@ -156,6 +157,10 @@ export function memoryRepository() {
     async listDocumentVersions(code) {
       return [...(documentVersions.get(code) ?? [])];
     },
+    async setLinkHealth(code, status, checkedAt) {
+      const d = documents.get(code);
+      if (d) Object.assign(d, { linkStatus: status, linkCheckedAt: checkedAt });
+    },
     async countDownload(code) {
       const d = documents.get(code);
       if (!d || !isPublicDocument(d)) return null;
@@ -266,6 +271,22 @@ export async function notifySite(payload, env = process.env, fetchImpl = fetch) 
     }),
   );
   return results.every(Boolean);
+}
+
+/**
+ * Checks every record that is (or could become) visible: current and draft ones. Obsolete and archived
+ * records are not worth a request. Sequential on purpose: a registry of hundreds must not become a burst
+ * against SharePoint. Returns counts so the caller (timer or desk button) can say what it found.
+ */
+export async function checkDocumentLinks(repository, { fetchImpl = fetch, now = () => Date.now() } = {}) {
+  const counts = { ok: 0, broken: 0, unreachable: 0 };
+  for (const doc of await repository.listDocuments()) {
+    if (doc.status !== "current" && doc.status !== "draft") continue;
+    const status = await checkLink(doc.storageUrl, fetchImpl);
+    await repository.setLinkHealth(doc.code, status, now());
+    counts[status] += 1;
+  }
+  return counts;
 }
 
 // One image may be 8 MB, which is ~11 MB once base64 encoded; 12 MB leaves room for the captions
@@ -469,6 +490,10 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
           const record = await repo.createDocument({ ...fields, createdBy: actor.id, updatedAt: now() }, audit("document.create", ""));
           await notifySite({});
           return send(response, 201, record, origin);
+        }
+        if (request.method === "POST" && url.pathname === "/v1/documents/check-links") {
+          requirePermission(actor.role, "news:publish");
+          return send(response, 200, { checked: await checkDocumentLinks(repo, { now }) }, origin);
         }
         const one = /^\/v1\/documents\/(RAE-DC-\d{4,})(\/versions)?$/.exec(url.pathname);
         if (one) {
@@ -778,6 +803,14 @@ export async function startRuntime(env = process.env) {
   const bind = env.RAE_CMS_API_BIND ?? "127.0.0.1";
   const sso = await createSso({ repository, env });
   const server = createCmsServer({ repository, sso });
+  // Daily link health (RAE_DOC_LINK_CHECK_HOURS, 0 turns it off); the first pass waits five minutes
+  // so a restart storm does not become a request storm.
+  const hours = Number(env.RAE_DOC_LINK_CHECK_HOURS ?? 24);
+  if (hours > 0) {
+    const run = () => checkDocumentLinks(repository).catch((error) => console.error(`rae-cms: link check failed (${error.message})`));
+    setTimeout(run, 5 * 60 * 1000).unref();
+    setInterval(run, hours * 3600 * 1000).unref();
+  }
   await new Promise((resolve) => server.listen(port, bind, resolve));
   return { server, repository, port, bind };
 }

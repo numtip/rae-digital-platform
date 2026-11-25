@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ContentSearch } from "@/components/content-search";
 import { Breadcrumb, PageHero } from "@/components/page-shell";
+import { readPublicDocuments } from "@/lib/cms/documents-live";
 import { liveNews } from "@/lib/cms/live";
 import { getContent, getSearch, isLocale } from "@/lib/i18n";
 import { buildSearchIndex } from "@/lib/search-index";
@@ -34,6 +35,7 @@ export default async function Search({ params }: Props) {
   if (!isLocale(locale)) notFound();
   const search = getSearch(locale);
   const { items } = await liveNews(locale);
+  const registry = await readPublicDocuments();
   // Same shape the index uses, so the client component and the category chips need no special
   // case: a published story is a "news" item like any archive story.
   const published = items.map((item) => ({
@@ -41,6 +43,15 @@ export default async function Search({ params }: Props) {
     title: item.title,
     text: item.body.join(" · "),
     href: `/${locale}/news/${item.nid}`,
+  }));
+
+  // Registered documents (M03): found by title, code, type or note; the result lands on the category
+  // page, where the counted open link lives (files stay in Microsoft 365, ADR-0004).
+  const documents = registry.map((doc) => ({
+    kind: "item" as const,
+    title: locale === "th" ? doc.titleTh : doc.titleEn,
+    text: [doc.code, doc.fileType.toUpperCase(), doc.note, locale === "th" ? doc.titleEn : doc.titleTh].filter(Boolean).join(" · "),
+    href: `/${locale}/documents/category/${doc.category}`,
   }));
 
   return (
@@ -56,7 +67,7 @@ export default async function Search({ params }: Props) {
             ]}
           />
           <Suspense fallback={<p className="text-neutral-700">{search.labels.empty}</p>}>
-            <ContentSearch entries={[...buildSearchIndex(locale), ...published]} labels={search.labels} />
+            <ContentSearch entries={[...buildSearchIndex(locale), ...published, ...documents]} labels={search.labels} />
           </Suspense>
         </div>
       </section>

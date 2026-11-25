@@ -24,7 +24,12 @@ export type RegistryDocument = {
   updatedAt: number;
   createdBy: string;
   downloadCount: number;
+  /** ok | broken | unreachable; null until the first check. Never shown publicly. */
+  linkStatus?: LinkStatus | null;
+  linkCheckedAt?: number | null;
 };
+
+export type LinkStatus = "ok" | "broken" | "unreachable";
 
 export type DocumentInput = Partial<Pick<RegistryDocument, "category" | "titleTh" | "titleEn" | "docType" | "version" | "status" | "visibility" | "storageUrl" | "note">> & {
   changeNote?: string;
@@ -114,4 +119,32 @@ export function publicDocumentView(d: RegistryDocument) {
     updatedAt: new Date(d.updatedAt).toISOString(),
     downloadCount: d.downloadCount,
   };
+}
+
+/**
+ * Reads a link-check answer. SharePoint answers an anonymous GET with a sign-in redirect when the file
+ * exists but is not shared, so a redirect is "ok" (the host and path resolve); only a missing file is
+ * "broken", and a timeout or server error is "unreachable" (try again, do not accuse the link).
+ */
+export function linkStatusFromResponse(status: number | null): LinkStatus {
+  if (status === null) return "unreachable";
+  if (status === 404 || status === 410) return "broken";
+  if (status >= 500 || status === 429) return "unreachable";
+  return "ok";
+}
+
+export async function checkLink(storageUrl: string, fetchImpl: typeof fetch = fetch): Promise<LinkStatus> {
+  assertSharePointFileUrl(storageUrl);
+  try {
+    const response = await fetchImpl(storageUrl, {
+      method: "GET",
+      redirect: "manual",
+      headers: { range: "bytes=0-0", "user-agent": "RAE-link-check/1.0" },
+      signal: AbortSignal.timeout(10_000),
+    });
+    await response.body?.cancel().catch(() => {});
+    return linkStatusFromResponse(response.status);
+  } catch {
+    return "unreachable";
+  }
 }

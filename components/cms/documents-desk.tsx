@@ -10,7 +10,7 @@ const COPY = {
     heading: "ทะเบียนเอกสาร (Document Center)",
     hint: "วางลิงก์ไฟล์ SharePoint ของมหาวิทยาลัย ระบบไม่เก็บสำเนาไฟล์",
     category: "หมวด", titleTh: "ชื่อเอกสาร (ไทย)", titleEn: "ชื่อเอกสาร (อังกฤษ)", version: "ฉบับ", url: "ลิงก์ไฟล์ SharePoint", note: "หมายเหตุ",
-    register: "ลงทะเบียนเป็นฉบับร่าง", saved: "ลงทะเบียนแล้ว", status: "สถานะ", none: "ยังไม่มีเอกสาร", opens: "เปิดแล้ว",
+    register: "ลงทะเบียนเป็นฉบับร่าง", saved: "ลงทะเบียนแล้ว", newVersion: "ไฟล์ฉบับใหม่", changeNote: "สิ่งที่เปลี่ยน", saveVersion: "บันทึกฉบับใหม่", checkLinks: "ตรวจลิงก์ทั้งหมดตอนนี้", checked: "ตรวจแล้ว", link: { ok: "ลิงก์ใช้ได้", broken: "ลิงก์เสีย", unreachable: "ตรวจไม่ได้ (ลองใหม่)" }, unchecked: "ยังไม่ตรวจ", status: "สถานะ", none: "ยังไม่มีเอกสาร", opens: "เปิดแล้ว",
     cats: { administration: "บริหารจัดการ", research: "งานวิจัย", "academic-services": "งานบริการวิชาการ" },
     statuses: { draft: "ฉบับร่าง", current: "ใช้งานอยู่ (เผยแพร่)", obsolete: "ยกเลิกใช้", archived: "เก็บถาวร" },
   },
@@ -18,13 +18,13 @@ const COPY = {
     heading: "Document register (Document Center)",
     hint: "Paste the university SharePoint file link. The site keeps no copy of the file.",
     category: "Category", titleTh: "Title (Thai)", titleEn: "Title (English)", version: "Version", url: "SharePoint file link", note: "Note",
-    register: "Register as draft", saved: "Registered", status: "Status", none: "No documents yet", opens: "Opened",
+    register: "Register as draft", saved: "Registered", newVersion: "New file version", changeNote: "What changed", saveVersion: "Save new version", checkLinks: "Check all links now", checked: "Checked", link: { ok: "Link OK", broken: "Link broken", unreachable: "Could not check (retry)" }, unchecked: "Not checked yet", status: "Status", none: "No documents yet", opens: "Opened",
     cats: { administration: "Administration", research: "Research", "academic-services": "Academic services" },
     statuses: { draft: "Draft", current: "Current (published)", obsolete: "Obsolete", archived: "Archived" },
   },
 } as const;
 
-type Doc = { code: string; category: string; titleTh: string; titleEn: string; version: string; status: keyof (typeof COPY)["en"]["statuses"]; docType: string; downloadCount: number };
+type Doc = { code: string; category: string; titleTh: string; titleEn: string; version: string; status: keyof (typeof COPY)["en"]["statuses"]; docType: string; downloadCount: number; linkStatus?: "ok" | "broken" | "unreachable" | null };
 const FIELD = "h-11 w-full rounded-md border border-neutral-300 px-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600";
 
 export function DocumentsDesk({ apiBase, token, locale }: { apiBase: string; token: string; locale: "th" | "en" }) {
@@ -85,6 +85,24 @@ export function DocumentsDesk({ apiBase, token, locale }: { apiBase: string; tok
     await refresh();
   }
 
+  async function onNewVersion(event: FormEvent<HTMLFormElement>, code: string) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const result = await call(`/v1/documents/${code}`, "PATCH", { storageUrl: data.get("storageUrl"), version: data.get("version"), changeNote: data.get("changeNote") });
+    setMessage(result.ok ? copy.saved : String(result.payload.message || result.payload.error || result.status));
+    if (result.ok) {
+      form.reset();
+      await refresh();
+    }
+  }
+
+  async function onCheckLinks() {
+    const result = await call("/v1/documents/check-links", "POST");
+    setMessage(result.ok ? `${copy.checked}: ${JSON.stringify(result.payload.checked)}` : String(result.payload.message || result.payload.error || result.status));
+    await refresh();
+  }
+
   return (
     <section aria-labelledby="documents-desk" className="mt-8 rounded-lg border border-neutral-200 bg-white p-6">
       <h2 className="text-xl font-bold" id="documents-desk">{copy.heading}</h2>
@@ -105,6 +123,7 @@ export function DocumentsDesk({ apiBase, token, locale }: { apiBase: string; tok
         <label className="flex flex-col gap-1 text-sm font-medium md:col-span-2">{copy.note}<input className={FIELD} name="note" /></label>
         <button className="h-11 rounded-md border px-4 text-sm font-medium md:col-span-2" type="submit">{copy.register}</button>
       </form>
+      <button className="mt-3 h-10 rounded-md border px-4 text-sm" onClick={() => void onCheckLinks()} type="button">{copy.checkLinks}</button>
       <p className="mt-2 text-sm" role="status">{message}</p>
       <ul className="mt-4 divide-y divide-neutral-200">
         {docs.length === 0 ? <li className="py-2 text-sm text-neutral-600">{copy.none}</li> : null}
@@ -112,7 +131,16 @@ export function DocumentsDesk({ apiBase, token, locale }: { apiBase: string; tok
           <li className="flex flex-wrap items-center justify-between gap-3 py-3" key={doc.code}>
             <div className="min-w-0 text-sm">
               <p className="font-medium">{locale === "th" ? doc.titleTh : doc.titleEn}</p>
-              <p className="text-xs text-neutral-600">{doc.code} · {doc.docType.toUpperCase()} · v{doc.version} · {copy.opens} {doc.downloadCount}</p>
+              <p className="text-xs text-neutral-600">{doc.code} · {doc.docType.toUpperCase()} · v{doc.version} · {copy.opens} {doc.downloadCount} · {doc.linkStatus ? copy.link[doc.linkStatus] : copy.unchecked}</p>
+              <details className="mt-1">
+                <summary className="cursor-pointer text-xs text-neutral-700">{copy.newVersion}</summary>
+                <form className="mt-2 grid gap-2" onSubmit={(event) => void onNewVersion(event, doc.code)}>
+                  <input className={FIELD} name="storageUrl" placeholder="https://maejo365-my.sharepoint.com/…" required type="url" />
+                  <input className={FIELD} name="version" placeholder={copy.version} required />
+                  <input className={FIELD} name="changeNote" placeholder={copy.changeNote} />
+                  <button className="h-10 rounded-md border px-4 text-sm" type="submit">{copy.saveVersion}</button>
+                </form>
+              </details>
             </div>
             <label className="flex items-center gap-2 text-sm">
               {copy.status}
