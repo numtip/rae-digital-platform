@@ -37,6 +37,8 @@ async function purge() {
     await pool.query("DELETE FROM sessions WHERE user_id LIKE ?", [`${PREFIX}%`]);
     await pool.query("DELETE FROM audit_logs WHERE actor_id LIKE ?", [`${PREFIX}%`]);
     await pool.query("DELETE FROM users WHERE id LIKE ?", [`${PREFIX}%`]);
+    await pool.query("DELETE FROM sso_identity_links WHERE subject_key LIKE ?", [`${"0".repeat(8)}%`]);
+    await pool.query("DELETE FROM sso_handoffs WHERE user_id LIKE ?", [`${PREFIX}%`]);
   } finally {
     await pool.end();
   }
@@ -257,6 +259,34 @@ test("the whole workflow persists through the HTTP runtime", { skip }, async () 
     }
   } finally {
     await new Promise((resolve) => server.close(resolve));
+    await repository.close();
+    await purge();
+  }
+});
+
+// Needs migration 008. Subject keys here start with eight zeros so purge() can find them.
+test("SSO links: pending, one approval per user, revoke, single-use handoff", { skip }, async () => {
+  const repository = await createMysqlRepository(db);
+  const key = (n) => `${"0".repeat(8)}${String(n).repeat(56)}`.slice(0, 64);
+  try {
+    await addUserToRepository(repository, { id: `${PREFIX}sso-a`, role: "officer", password: "officer-password-12" });
+    const first = await repository.requestSsoLink(key(1), Date.now());
+    assert.equal(first.status, "pending");
+    assert.equal((await repository.requestSsoLink(key(1), Date.now())).id, first.id, "a repeat request must not create a second row");
+    assert.equal(await repository.approveSsoLink(first.id, `${PREFIX}sso-a`, "admin", Date.now()), true);
+    assert.equal(await repository.approveSsoLink(first.id, `${PREFIX}sso-a`, "admin", Date.now()), false, "not pending any more");
+    const second = await repository.requestSsoLink(key(2), Date.now());
+    assert.equal(await repository.approveSsoLink(second.id, `${PREFIX}sso-a`, "admin", Date.now()), false, "one approved link per user");
+    assert.equal((await repository.findSsoLink(key(1)))?.status, "approved");
+    assert.equal(await repository.revokeSsoLink(first.id, "admin", Date.now()), true);
+    assert.equal((await repository.findSsoLink(key(1)))?.status, "revoked");
+
+    await repository.saveSsoHandoff("h".repeat(64), `${PREFIX}sso-a`, Date.now() + 60_000);
+    assert.equal(await repository.consumeSsoHandoff("h".repeat(64), Date.now()), `${PREFIX}sso-a`);
+    assert.equal(await repository.consumeSsoHandoff("h".repeat(64), Date.now()), null, "single use");
+    await repository.saveSsoHandoff("g".repeat(64), `${PREFIX}sso-a`, Date.now() - 1);
+    assert.equal(await repository.consumeSsoHandoff("g".repeat(64), Date.now()), null, "expired");
+  } finally {
     await repository.close();
     await purge();
   }
