@@ -1,0 +1,96 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { addUser, createCmsServer, resetRuntime } from "../cms-runtime/server.mjs";
+
+async function withServer(run) {
+  resetRuntime();
+  addUser({ id: "author", role: "editor", password: "author-password-12" });
+  addUser({ id: "reviewer", role: "editor", password: "reviewer-password-12" });
+  addUser({ id: "publisher", role: "publisher", password: "publisher-password-12" });
+  const server = createCmsServer();
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const { port } = server.address();
+  try {
+    await run(`http://127.0.0.1:${port}`);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+}
+
+async function login(base, userId, password) {
+  const response = await fetch(`${base}/v1/login`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ userId, password }),
+  });
+  const body = await response.json();
+  return { status: response.status, token: body.token };
+}
+
+test("unauthenticated export is rejected and drafts stay out", async () => {
+  await withServer(async (base) => {
+    const anon = await fetch(`${base}/v1/export`);
+    assert.equal(anon.status, 401);
+    const bad = await login(base, "author", "wrong-password-12");
+    assert.equal(bad.status, 401);
+    const author = await login(base, "author", "author-password-12");
+    const created = await fetch(`${base}/v1/news`, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${author.token}` },
+      body: JSON.stringify({
+        id: "n1",
+        titleTh: "ข่าว",
+        titleEn: "News",
+        source: "https://rae.mju.ac.th/example",
+      }),
+    });
+    assert.equal(created.status, 201);
+    const exported = await fetch(`${base}/v1/export`, {
+      headers: { authorization: `Bearer ${author.token}` },
+    });
+    const body = await exported.json();
+    assert.deepEqual(body.articles, []);
+    const publish = await fetch(`${base}/v1/news/n1/publish`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${author.token}` },
+    });
+    assert.equal(publish.status, 403);
+    const reviewer = await login(base, "reviewer", "reviewer-password-12");
+    const submitted = await fetch(`${base}/v1/news/n1/submit`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${author.token}` },
+    });
+    assert.equal(submitted.status, 200);
+    const approved = await fetch(`${base}/v1/news/n1/approve`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${reviewer.token}` },
+    });
+    assert.equal(approved.status, 200);
+    const publisher = await login(base, "publisher", "publisher-password-12");
+    const published = await fetch(`${base}/v1/news/n1/publish`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${publisher.token}` },
+    });
+    assert.equal(published.status, 200);
+    const after = await fetch(`${base}/v1/export`, {
+      headers: { authorization: `Bearer ${publisher.token}` },
+    });
+    const publishedBody = await after.json();
+    assert.deepEqual(publishedBody.articles.map((item) => item.id), ["n1"]);
+  });
+});
+
+test("login is rate limited per client address, not by a spoofable header", async () => {
+  await withServer(async (base) => {
+    const attempt = (headers) =>
+      fetch(`${base}/v1/login`, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify({ userId: `nobody-${Math.random()}`, password: "wrong-password-1" }) });
+    let last = 0;
+    for (let i = 0; i < 31; i += 1) last = (await attempt({ "cf-connecting-ip": "203.0.113.7" })).status;
+    assert.equal(last, 429, "the 31st attempt inside a minute from one client is refused");
+    const refused = await attempt({ "cf-connecting-ip": "203.0.113.7" });
+    assert.ok(Number(refused.headers.get("retry-after")) >= 1, "Retry-After tells the client when to return");
+    // another client is unaffected, and x-forwarded-for cannot be used to get a fresh bucket
+    assert.equal((await attempt({ "cf-connecting-ip": "203.0.113.8" })).status, 401);
+    assert.equal((await attempt({ "cf-connecting-ip": "203.0.113.7", "x-forwarded-for": "198.51.100.1" })).status, 429);
+  });
+});

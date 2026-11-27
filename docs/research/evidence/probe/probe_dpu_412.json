@@ -1,0 +1,398 @@
+{
+  "url": "https://www.dpu.ac.th/th",
+  "finalUrl": "about:blank",
+  "port": 9444,
+  "viewport": {
+    "w": 412,
+    "h": 915
+  },
+  "loaded": true,
+  "capturedAt": "2026-10-24T14:56:52.223Z",
+  "probe": {
+    "title": "หน้าแรก - Dhurakij Pundit University | มหาวิทยาลัยธุรกิจบัณฑิตย์ (DPU)",
+    "meta": {
+      "description": "Dhurakij Pundit University (DPU) : มหาวิทยาลัยธุรกิจบัณฑิตย์",
+      "keywords": "DPU, ม.ธุรกิจบัณฑิตย์, มหาวิทยาลัยธุรกิจบัณฑิตย์, Dhurakij Pundit University, เรียนต่อ DPU, มหาวิทยาลัยเอกชน, TCAS, เรียนต่อมหาวิทยาลัย, สมัครเรียน DPU, ทุนการศึกษา, เจอดีที่ DPU, หลักสูตรดี, อาจารย์ดี, สังคมดี, งานดี, จบแล้วได้งานจริง, จบแล้วได้งานไว, เรียนจบมีงานทำ, เรียนจบได้งานไว, เรียนจบไว",
+      "viewport": "width=device-width, initial-scale=1",
+      "generator": null,
+      "ogSite": "มหาวิทยาลัยธุรกิจบัณฑิตย์ DPU",
+      "ogImage": "https://s3.ap-southeast-1.amazonaws.com/dpu-prod/dpu-assets/og-image.jpg",
+      "ogTitle": "หน้าแรก - Dhurakij Pundit University | มหาวิทยาลัยธุรกิจบัณฑิตย์ (DPU)",
+      "robots": "index,follow",
+      "canonical": null,
+      "hreflang": [],
+      "charset": "UTF-8"
+    },
+    "h1": [],
+    "headings": [],
+    "navs": [
+      {
+        "sel": "div#__nuxt>div>div>nav",
+        "links": [
+          {
+            "text": "",
+            "href": "/th"
+          }
+        ]
+      }
+    ],
+    "searchForms": 0,
+    "counts": {
+      "a": 258,
+      "img": 81,
+      "form": 0,
+      "iframe": 1,
+      "video": 2,
+      "section": 17,
+      "article": 0,
+      "table": 0,
+      "button": 31,
+      "svg": 66,
+      "picture": 0,
+      "elements": 242
+    },
+    "widgetMarkers": {
+      "carousel": [
+        ".swiper"
+      ],
+      "tabs": [],
+      "accordion": [],
+      "modal": [
+        "[role=\"dialog\"]"
+      ],
+      "cookieBanner": [
+        "[class*=\"cookie\" i]",
+        "[id*=\"cookie\" i]"
+      ],
+      "backToTop": [],
+      "langSwitch": [
+        "[class*=\"lang\" i]"
+      ]
+    },
+    "sticky": [],
+    "palette": {
+      "text": [
+        {
+          "k": "rgb(0, 0, 0)",
+          "v": 121
+        },
+        {
+          "k": "rgb(255, 255, 255)",
+          "v": 77
+        },
+        {
+          "k": "rgb(32, 25, 74)",
+          "v": 13
+        },
+        {
+          "k": "rgb(131, 131, 145)",
+          "v": 11
+        },
+        {
+          "k": "rgba(255, 255, 255, 0.6)",
+          "v": 7
+        },
+        {
+          "k": "rgb(156, 163, 175)",
+          "v": 5
+        },
+        {
+          "k": "rgb(152, 162, 179)",
+          "v": 4
+        },
+        {
+          "k": "rgb(107, 114, 128)",
+          "v": 3
+        }
+      ],
+      "background": [
+        {
+          "k": "rgb(237, 239, 245)",
+          "v": 5
+        },
+        {
+          "k": "rgb(255, 255, 255)",
+          "v": 5
+        },
+        {
+          "k": "rgb(0, 0, 0)",
+          "v": 5
+        },
+        {
+          "k": "rgb(75, 129, 232)",
+          "v": 2
+        },
+        {
+          "k": "rgba(255, 255, 255, 0.6)",
+          "v": 2
+        },
+        {
+          "k": "rgb(31, 41, 55)",
+          "v": 2
+        },
+        {
+          "k": "rgb(38, 38, 38)",
+          "v": 1
+        },
+        {
+          "k": "rgb(72, 0, 212)",
+          "v": 1
+        }
+      ],
+      "fontFamily": [
+        {
+          "k": "IBMPlexSansThai",
+          "v": 24
+        },
+        {
+          "k": "DPU Nopparat",
+          "v": 11
+        },
+        {
+          "k": "Open Sans",
+          "v": 8
+        }
+      ],
+      "fontSize": [
+        {
+          "k": "16px",
+          "v": 12
+        },
+        {
+          "k": "14px",
+          "v": 9
+        },
+        {
+          "k": "15px",
+          "v": 5
+        },
+        {
+          "k": "24px",
+          "v": 4
+        },
+        {
+          "k": "20px",
+          "v": 4
+        },
+        {
+          "k": "12px",
+          "v": 3
+        },
+        {
+          "k": "13px",
+          "v": 2
+        },
+        {
+          "k": "18px",
+          "v": 2
+        },
+        {
+          "k": "0px",
+          "v": 1
+        },
+        {
+          "k": "44px",
+          "v": 1
+        }
+      ]
+    },
+    "cssVars": null,
+    "css": {
+      "sheets": 22,
+      "sameOriginReadable": 15,
+      "mediaBreakpoints": [
+        "(min-width: 1026px)",
+        "(min-width: 768px)",
+        "(min-width: 480px)",
+        "(min-width: 640px)",
+        "(min-width: 1280px)",
+        "(min-width: 1536px)",
+        "(min-width: 1024px)",
+        "(min-width: 435px)",
+        "(min-width: 700px)",
+        "(min-width: 1070px)",
+        "(min-width: 1080px)",
+        "(min-width: 1085px)",
+        "(min-width: 1100px)",
+        "(min-width: 1120px)",
+        "(min-width: 1140px)",
+        "(min-width: 1180px)",
+        "(min-width: 1200px)",
+        "(min-width: 1240px)",
+        "(min-width: 1380px)",
+        "(min-width: 1400px)"
+      ],
+      "topClasses": [
+        {
+          "k": "",
+          "v": 3019
+        },
+        {
+          "k": "#cconsent-modal",
+          "v": 3
+        }
+      ],
+      "fontFaces": [
+        "IBMPlexSansThai",
+        "FcSound",
+        "\"DPU Nopparat\"",
+        "swiper-icons"
+      ]
+    },
+    "fontsLoaded": [
+      "IBMPlexSansThai 200 unloaded",
+      "IBMPlexSansThai 300 loaded",
+      "IBMPlexSansThai 400 loaded",
+      "IBMPlexSansThai 500 loaded",
+      "IBMPlexSansThai 600 loaded",
+      "FcSound 700 unloaded",
+      "DPU Nopparat 300 loaded",
+      "DPU Nopparat 400 loaded",
+      "DPU Nopparat 700 loaded",
+      "swiper-icons 400 loaded",
+      "Inter 100 900 unloaded",
+      "Montserrat 100 900 unloaded"
+    ],
+    "tech": {
+      "jquery": null,
+      "bootstrap": null,
+      "react": false,
+      "vue": false,
+      "next": false,
+      "nuxt": true,
+      "angular": false,
+      "gtm": true,
+      "ga": true,
+      "fbq": true,
+      "recaptcha": false
+    },
+    "resources": {
+      "total": 183,
+      "byType": {
+        "script": 32,
+        "link": 31,
+        "other": 32,
+        "img": 54,
+        "css": 8,
+        "xmlhttprequest": 2,
+        "fetch": 22,
+        "video": 2
+      },
+      "bytes": 198152,
+      "hosts": [
+        [
+          "www.dpu.ac.th",
+          102
+        ],
+        [
+          "d1uz5ndh63mn2u.cloudfront.net",
+          35
+        ],
+        [
+          "www.googletagmanager.com",
+          10
+        ],
+        [
+          "www.google.com",
+          4
+        ],
+        [
+          "analytics.google.com",
+          4
+        ],
+        [
+          "www.google-analytics.com",
+          4
+        ],
+        [
+          "cookiebanner.pdpanetka.com",
+          4
+        ],
+        [
+          "cdn.jsdelivr.net",
+          4
+        ],
+        [
+          "static.hotjar.com",
+          2
+        ],
+        [
+          "connect.facebook.net",
+          2
+        ],
+        [
+          "cdn.us.heap-api.com",
+          2
+        ],
+        [
+          "unpkg.com",
+          1
+        ],
+        [
+          "static.cloudflareinsights.com",
+          1
+        ],
+        [
+          "dpu.pdpanetka.com",
+          1
+        ],
+        [
+          "analytics.tiktok.com",
+          1
+        ]
+      ]
+    },
+    "perf": {
+      "ttfb": 188,
+      "domContentLoaded": 319,
+      "load": 2025,
+      "transferSize": 41194,
+      "decodedBodySize": 280999
+    },
+    "layout": {
+      "docWidth": 412,
+      "viewport": 412,
+      "horizontalOverflow": false,
+      "docHeight": 9137
+    },
+    "a11y": {
+      "lang": "th",
+      "skipLink": false,
+      "landmarks": {
+        "header": 9,
+        "nav": 1,
+        "main": 16,
+        "footer": 0
+      },
+      "imgTotal": 81,
+      "imgWithAlt": 74,
+      "imgEmptyAlt": 24,
+      "imgNoAlt": 7,
+      "ariaLabelCount": 13,
+      "buttons": 31,
+      "inputsWithoutLabel": 1,
+      "smallFonts": 0
+    },
+    "cookies": [
+      "_gcl_au",
+      "_ga",
+      "_hp5_event_props.120320362",
+      "_hp5_meta.120320362",
+      "_fbp",
+      "_tt_enable_cookie",
+      "_ttp",
+      "ttcsid",
+      "ttcsid_D789I3BC77U41AUTL43G",
+      "_ga_7EX5LNTQEH",
+      "_ga_JEYK4RGLQE",
+      "_ga_YDZ0PHX76V",
+      "_ga_RBWH52F380",
+      "_hp5_let.120320362",
+      "_hjSessionUser_3859979",
+      "_hjSession_3859979"
+    ],
+    "bodyBg": "rgba(0, 0, 0, 0)",
+    "bodyFont": "IBMPlexSansThai, sans-serif",
+    "bodyFontSize": "16px"
+  }
+}

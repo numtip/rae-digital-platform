@@ -1,0 +1,75 @@
+{
+ "contrast": {
+  "checked": 2912,
+  "belowAA": 5,
+  "imageBgSkipped": 5,
+  "worst": [
+   {
+    "sel": "h2.elementor-heading-title.elementor-size-default",
+    "text": "ข้อมูลอัปเดตล่าสุด : 24 ตุลาคม 2026 21:5",
+    "color": "rgb(147, 147, 147)",
+    "bg": "rgb(255,255,255)",
+    "ratio": 3.07,
+    "need": 4.5,
+    "size": 14
+   },
+   {
+    "sel": "span.elementor-button-text",
+    "text": "All Video TikTok",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(237,41,153)",
+    "ratio": 3.9,
+    "need": 4.5,
+    "size": 16
+   },
+   {
+    "sel": "span.elementor-button-text",
+    "text": "All SPU Calendars",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(237,41,153)",
+    "ratio": 3.9,
+    "need": 4.5,
+    "size": 13
+   },
+   {
+    "sel": "span.elementor-button-text",
+    "text": "0 2558 6888",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(230,0,127)",
+    "ratio": 4.5,
+    "need": 4.5,
+    "size": 18
+   },
+   {
+    "sel": "span.e-n-tab-title-text",
+    "text": "FAQS",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(230,0,127)",
+    "ratio": 4.5,
+    "need": 4.5,
+    "size": 16
+   }
+  ]
+ },
+ "headingOrder": {
+  "count": 30,
+  "issues": [
+   "first-heading-is-h2"
+  ]
+ },
+ "tapTargets": {
+  "interactive": 211,
+  "under24": 34,
+  "sample": [
+   "a.skip-link.screen-reader-text 1x1",
+   "span.swiper-pagination-bullet 12x12",
+   "span.swiper-pagination-bullet.swiper-pagination-bullet-active 12x12",
+   "span.swiper-pagination-bullet 12x12",
+   "span.swiper-pagination-bullet 12x12",
+   "span.swiper-pagination-bullet 12x12"
+  ]
+ },
+ "emptyLinks": 19,
+ "lang": "th",
+ "title": "มหาวิทยาลัยศรีปทุม"
+}

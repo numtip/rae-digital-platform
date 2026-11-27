@@ -1,0 +1,19 @@
+{
+  "decision": "pending-owner-approval",
+  "providerCertified": false,
+  "authorisedBy": "PENDING: project owner, RAE Research Office, Maejo University — to be completed by the owner; nothing here is in force",
+  "date": "PENDING",
+  "scope": "Single consumer: the RAE CMS news desk (rae-cms.raemanagemju.net). Only RAE staff who already hold a local CMS account AND an approved identity link may sign in. No auto-linking, no authorisation from an email address, no cross-organisation access. Roles stay on the CMS account; SSO grants none. Local password login is retained as the emergency path.",
+  "acceptedItems": ["C-01","C-02","C-03","C-04","C-05","C-06","C-07","C-09","C-10","C-11","C-12","C-13"],
+  "controls": [
+    "fail-closed identity gate: only an approved link to an existing CMS user mints a handoff; unknown subjects are recorded as pending and refused",
+    "citizenID is never stored raw: only an HMAC-SHA256 subject key with a per-application key (>= 32 bytes, app id rae-cms) is kept, never logged",
+    "approved identity links only, one approved link per CMS user, approval and revocation by an administrator with an audit row; no auto-linking",
+    "callback bound to a single-use attempt created by the same browser; replay refused; attempts held in a durable file store (MJU_SSO_STORE_REQUIRE_DURABLE=true)",
+    "the callback never puts a token in a URL: single-use 60 s handoff, exchanged once for a fresh session; any presented session is revoked (rotation)",
+    "logout is POST with CSRF, revokes the server session, then goes to the provider sign-out",
+    "rate limiting on /login and /callback; no-store, nosniff, no-referrer on every SSO response; TLS end to end via the tunnel",
+    "PII redaction in logs; provider responses shape-checked; a missing subject fails rather than falling back to another claim",
+    "SSO is off unless MJU_SSO_ENABLED=true and can be turned off with one flag without affecting local login"
+  ]
+}

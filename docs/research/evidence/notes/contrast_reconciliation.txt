@@ -1,0 +1,80 @@
+--- gold on dark surfaces ---
+
+#D8A01A on #003F2A: 5.14 AA
+
+#D8A01A on #005C3B: 3.46 UI/large only
+
+#D8A01A on #014D35: 4.24 UI/large only
+
+#FFDE00 on #003F2A: 9.0 AAA
+
+#FFDE00 on #005C3B: 6.05 AA
+
+#FFDE00 on #014D35: 7.43 AAA
+
+#E6C800 on #003F2A: 7.24 AAA
+
+#E6C800 on #005C3B: 4.87 AA
+
+#E6C800 on #014D35: 5.97 AA
+
+
+
+--- border / UI boundary candidates on white ---
+
+#9CA3AF on white: 2.54 FAIL
+
+#8A94A3 on white: 3.07 UI/large only
+
+#7C8794 on white: 3.65 UI/large only
+
+#6B7280 on white: 4.83 AA
+
+#D4E0DA on white: 1.36 FAIL
+
+#B8CFC4 on white: 1.65 FAIL
+
+#A3B3AA on white: 2.19 FAIL
+
+
+
+--- muted text candidates ---
+
+#6B7280 on #F7F3EA: 4.37 UI/large only
+
+#5B6470 on #F7F3EA: 5.42 AA
+
+#4C4C4C on #F7F3EA: 7.75 AAA
+
+#6B7280 on #FFFFFF: 4.83 AA
+
+#4C4C4C on #FFFFFF: 8.59 AAA
+
+
+
+--- CTA combinations ---
+
+#003F2A on #D8A01A: 5.14 AA
+
+#FFFFFF on #D8A01A: 2.34 FAIL
+
+#FFFFFF on #C79318: 2.76 FAIL
+
+#003F2A on #FFDE00: 9.0 AAA
+
+#005C3B on #FFDE00: 6.05 AA
+
+#FFFFFF on #005C3B: 8.1 AAA
+
+
+
+--- focus rings ---
+
+#0A7A52 on #FFFFFF: 5.36 AA
+
+#D8A01A on #FFFFFF: 2.34 FAIL
+
+#FFDE00 on #003F2A: 9.0 AAA
+
+#FFDE00 on #005C3B: 6.05 AA
+

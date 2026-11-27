@@ -1,0 +1,688 @@
+{
+  "url": "https://www.spu.ac.th/",
+  "finalUrl": "https://www.spu.ac.th/",
+  "port": 9444,
+  "viewport": {
+    "w": 1440,
+    "h": 1000
+  },
+  "loaded": true,
+  "capturedAt": "2026-10-24T14:56:35.669Z",
+  "probe": {
+    "title": "มหาวิทยาลัยศรีปทุม",
+    "meta": {
+      "description": "มหาวิทยาลัยศรีปทุม (SPU) ม.เอกชน ยอดนิยมอันดับ 1 เรียนกับตัวจริง ประสบการณ์จริง ตอบโจทย์ Future Skill หลักสูตรทันสมัยทันเทรนด์โลก ส่งเสริมผลักดันทุกความสำเร็จ",
+      "keywords": null,
+      "viewport": "width=device-width, initial-scale=1",
+      "generator": "WordPress 7.1.3",
+      "ogSite": "มหาวิทยาลัยศรีปทุม – SPU Dynamic University",
+      "ogImage": "https://www.spu.ac.th/wp-content/uploads/2022/07/Logo-SPU.png",
+      "ogTitle": "มหาวิทยาลัยศรีปทุม",
+      "robots": "follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+      "canonical": "https://www.spu.ac.th/",
+      "hreflang": [
+        "cn:https://www.spu.ac.th/zh-hans/",
+        "en:https://www.spu.ac.th/en/",
+        "th:https://www.spu.ac.th/",
+        "x-default:https://www.spu.ac.th/"
+      ],
+      "charset": "UTF-8"
+    },
+    "h1": [
+      "มหาวิทยาลัยศรีปทุม SPU",
+      "👋 มีคำถามเรื่องสมัครเรียนทักได้เลย!!"
+    ],
+    "headings": [
+      {
+        "t": "H2",
+        "text": "ปริญญาตรี",
+        "size": "16px"
+      },
+      {
+        "t": "H2",
+        "text": "ค่าเทอม",
+        "size": "16px"
+      },
+      {
+        "t": "H2",
+        "text": "ทุนการศึกษา",
+        "size": "16px"
+      },
+      {
+        "t": "H2",
+        "text": "กองทุนกู้ยืมฯ",
+        "size": "16px"
+      },
+      {
+        "t": "H2",
+        "text": "นักศึกษาใหม่",
+        "size": "16px"
+      },
+      {
+        "t": "H2",
+        "text": "SPU dspace",
+        "size": "16px"
+      },
+      {
+        "t": "H2",
+        "text": "ปริญญาโท-เอก",
+        "size": "16px"
+      },
+      {
+        "t": "H2",
+        "text": "spucare",
+        "size": "16px"
+      },
+      {
+        "t": "H2",
+        "text": "รับปริญญา",
+        "size": "16px"
+      },
+      {
+        "t": "H2",
+        "text": "SDGs",
+        "size": "16px"
+      },
+      {
+        "t": "H2",
+        "text": "Why? SPU",
+        "size": "35px"
+      },
+      {
+        "t": "H2",
+        "text": "SPU Video",
+        "size": "35px"
+      },
+      {
+        "t": "H2",
+        "text": "Showcase",
+        "size": "35px"
+      },
+      {
+        "t": "H2",
+        "text": "SPU NEWS",
+        "size": "35px"
+      },
+      {
+        "t": "H2",
+        "text": "SPU Update",
+        "size": "35px"
+      },
+      {
+        "t": "H2",
+        "text": "SPU Calendars",
+        "size": "18px"
+      },
+      {
+        "t": "H2",
+        "text": "Halloween Day",
+        "size": "15px"
+      },
+      {
+        "t": "H2",
+        "text": "by ศิลปศาสตร์",
+        "size": "14px"
+      },
+      {
+        "t": "H2",
+        "text": "SPU Halloween Festival 2026",
+        "size": "15px"
+      },
+      {
+        "t": "H2",
+        "text": "by นิเทศศาสตร์",
+        "size": "14px"
+      },
+      {
+        "t": "H2",
+        "text": "SPU Gallery",
+        "size": "35px"
+      },
+      {
+        "t": "H2",
+        "text": "คำถามที่พบบ่อย?",
+        "size": "22px"
+      },
+      {
+        "t": "H2",
+        "text": "ข้อมูลอัปเดตล่าสุด : 24 ตุลาคม 2026 21:55 น.",
+        "size": "14px"
+      },
+      {
+        "t": "H3",
+        "text": "คณะ / สาขา",
+        "size": "24px"
+      },
+      {
+        "t": "H3",
+        "text": "หน่วยงาน",
+        "size": "24px"
+      },
+      {
+        "t": "H3",
+        "text": "สื่อประชาสัมพันธ์",
+        "size": "24px"
+      },
+      {
+        "t": "H3",
+        "text": "โครงการและความร่วมมือ",
+        "size": "24px"
+      },
+      {
+        "t": "H3",
+        "text": "บุคลากร",
+        "size": "24px"
+      },
+      {
+        "t": "H3",
+        "text": "ติดต่อเรา",
+        "size": "18px"
+      },
+      {
+        "t": "H3",
+        "text": "Social Media",
+        "size": "18px"
+      }
+    ],
+    "navs": [
+      {
+        "sel": "div>div>div>nav",
+        "links": [
+          {
+            "text": "สมัครเรียน",
+            "href": null
+          },
+          {
+            "text": "คณะและหลักสูตร",
+            "href": null
+          },
+          {
+            "text": "นักศึกษา",
+            "href": null
+          },
+          {
+            "text": "วิทยาเขต",
+            "href": null
+          },
+          {
+            "text": "International",
+            "href": "https://spuic.spu.ac.th/"
+          },
+          {
+            "text": "SCMS",
+            "href": "https://studentscms.spu.ac.th/estudent/estudentlogin1.cfm"
+          },
+          {
+            "text": "Job",
+            "href": "https://job.spu.ac.th/"
+          },
+          {
+            "text": "TH",
+            "href": "https://www.spu.ac.th/"
+          }
+        ]
+      },
+      {
+        "sel": "div>div>nav>ul#menu-1-ce2a44b",
+        "links": [
+          {
+            "text": "สมัครเรียน",
+            "href": null
+          },
+          {
+            "text": "คณะและหลักสูตร",
+            "href": null
+          },
+          {
+            "text": "นักศึกษา",
+            "href": null
+          },
+          {
+            "text": "วิทยาเขต",
+            "href": null
+          },
+          {
+            "text": "International",
+            "href": "https://spuic.spu.ac.th/"
+          },
+          {
+            "text": "SCMS",
+            "href": "https://studentscms.spu.ac.th/estudent/estudentlogin1.cfm"
+          },
+          {
+            "text": "Job",
+            "href": "https://job.spu.ac.th/"
+          },
+          {
+            "text": "TH",
+            "href": "https://www.spu.ac.th/"
+          }
+        ]
+      }
+    ],
+    "searchForms": 0,
+    "counts": {
+      "a": 440,
+      "img": 63,
+      "form": 0,
+      "iframe": 0,
+      "video": 0,
+      "section": 0,
+      "article": 0,
+      "table": 2,
+      "button": 32,
+      "svg": 13,
+      "picture": 0,
+      "elements": 1389
+    },
+    "widgetMarkers": {
+      "carousel": [
+        ".swiper"
+      ],
+      "tabs": [
+        "[role=\"tablist\"]"
+      ],
+      "accordion": [],
+      "modal": [],
+      "cookieBanner": [
+        "[id*=\"cookie\" i]"
+      ],
+      "backToTop": [],
+      "langSwitch": [
+        "[class*=\"lang\" i]"
+      ]
+    },
+    "sticky": [],
+    "palette": {
+      "text": [
+        {
+          "k": "rgb(51, 51, 51)",
+          "v": 995
+        },
+        {
+          "k": "rgb(255, 255, 255)",
+          "v": 124
+        },
+        {
+          "k": "rgb(204, 51, 102)",
+          "v": 100
+        },
+        {
+          "k": "rgb(0, 0, 0)",
+          "v": 94
+        },
+        {
+          "k": "rgb(10, 10, 10)",
+          "v": 17
+        },
+        {
+          "k": "rgb(27, 27, 27)",
+          "v": 16
+        },
+        {
+          "k": "rgb(255, 72, 194)",
+          "v": 14
+        },
+        {
+          "k": "rgb(105, 114, 125)",
+          "v": 14
+        }
+      ],
+      "background": [
+        {
+          "k": "rgb(255, 255, 255)",
+          "v": 23
+        },
+        {
+          "k": "rgb(110, 193, 228)",
+          "v": 11
+        },
+        {
+          "k": "rgba(221, 0, 122, 0)",
+          "v": 6
+        },
+        {
+          "k": "rgb(17, 17, 17)",
+          "v": 4
+        },
+        {
+          "k": "rgba(0, 0, 0, 0.125)",
+          "v": 4
+        },
+        {
+          "k": "rgb(63, 63, 63)",
+          "v": 3
+        },
+        {
+          "k": "rgb(10, 10, 10)",
+          "v": 3
+        },
+        {
+          "k": "rgb(237, 41, 153)",
+          "v": 2
+        }
+      ],
+      "fontFamily": [
+        {
+          "k": "Noto Sans Thai",
+          "v": 117
+        },
+        {
+          "k": "Sarabun",
+          "v": 25
+        },
+        {
+          "k": "Prompt",
+          "v": 7
+        },
+        {
+          "k": "DB-HELVETHAICA-X-COND",
+          "v": 4
+        },
+        {
+          "k": "db_helvethaica_x_mon",
+          "v": 2
+        },
+        {
+          "k": "Roboto",
+          "v": 1
+        },
+        {
+          "k": "-apple-system",
+          "v": 1
+        }
+      ],
+      "fontSize": [
+        {
+          "k": "15px",
+          "v": 39
+        },
+        {
+          "k": "16px",
+          "v": 36
+        },
+        {
+          "k": "18px",
+          "v": 35
+        },
+        {
+          "k": "14px",
+          "v": 21
+        },
+        {
+          "k": "35px",
+          "v": 6
+        },
+        {
+          "k": "20px",
+          "v": 6
+        },
+        {
+          "k": "24px",
+          "v": 5
+        },
+        {
+          "k": "40px",
+          "v": 2
+        },
+        {
+          "k": "21px",
+          "v": 2
+        },
+        {
+          "k": "13px",
+          "v": 1
+        }
+      ]
+    },
+    "cssVars": null,
+    "css": {
+      "sheets": 66,
+      "sameOriginReadable": 56,
+      "mediaBreakpoints": [
+        "only screen and (max-width: 750px)",
+        "only screen and (max-width: 600px)",
+        "only screen and (max-width: 760px), (min-width: 768px) and (max-width: 1024px)",
+        "screen and (min-width: 769px)",
+        "screen and (max-width: 768px)",
+        "only screen and (max-width: 768px)",
+        "only screen and (min-width: 601px) and (max-width: 782px)",
+        "only screen and (min-width: 783px) and (max-width: 1249px)",
+        "(max-width: 500px)",
+        "only screen and (max-width: 782px)",
+        "(min-resolution: 2x)",
+        "only screen and (max-width: 700px)",
+        "only screen and (max-width: 500px)",
+        "only screen and (max-width: 900px)",
+        "(max-width: 991px)",
+        "(max-width: 575px)",
+        "(min-width: 768px)",
+        "(max-width: 767px)",
+        "(min-width: 576px)",
+        "(min-width: 992px)"
+      ],
+      "topClasses": [
+        {
+          "k": "",
+          "v": 10356
+        },
+        {
+          "k": "#comments",
+          "v": 17
+        },
+        {
+          "k": "#frm_loading",
+          "v": 7
+        },
+        {
+          "k": "#elementor-device-mode",
+          "v": 6
+        },
+        {
+          "k": "#frm_form_editor_container",
+          "v": 2
+        },
+        {
+          "k": "#content",
+          "v": 1
+        },
+        {
+          "k": "#frm_loading_content",
+          "v": 1
+        },
+        {
+          "k": "#ui-datepicker-div",
+          "v": 1
+        },
+        {
+          "k": "#field_9krsk",
+          "v": 1
+        },
+        {
+          "k": "#field_ekxze",
+          "v": 1
+        },
+        {
+          "k": "#field_bnbc0",
+          "v": 1
+        },
+        {
+          "k": "#field_9krsk6cd15ce44a",
+          "v": 1
+        },
+        {
+          "k": "#field_9krsk13eafa7243ee7abb74b9",
+          "v": 1
+        },
+        {
+          "k": "#field_ekxze6f4ab5e4180cdaea94b0",
+          "v": 1
+        },
+        {
+          "k": "#field_bnbc013aacde8070c7297dc03",
+          "v": 1
+        },
+        {
+          "k": "#wpwrap",
+          "v": 1
+        },
+        {
+          "k": "#left-area",
+          "v": 1
+        }
+      ],
+      "fontFaces": [
+        "eicons",
+        "swiper-icons",
+        "\"Font Awesome 5 Brands\"",
+        "\"Font Awesome 5 Free\"",
+        "db_helvethaica_x_mon",
+        "\"Noto Sans Thai\"",
+        "\"Roboto Slab\"",
+        "Sarabun",
+        "Roboto",
+        "Prompt"
+      ]
+    },
+    "fontsLoaded": [
+      "eicons 400 loaded",
+      "swiper-icons 400 unloaded",
+      "Font Awesome 5 Brands 400 loaded",
+      "Font Awesome 5 Free 400 loaded",
+      "Font Awesome 5 Free 900 loaded",
+      "db_helvethaica_x_mon normal loaded",
+      "Noto Sans Thai 100 unloaded",
+      "Noto Sans Thai 200 unloaded",
+      "Noto Sans Thai 300 loaded",
+      "Noto Sans Thai 300 unloaded",
+      "Noto Sans Thai 400 loaded",
+      "Noto Sans Thai 400 unloaded"
+    ],
+    "tech": {
+      "jquery": "3.7.1",
+      "bootstrap": null,
+      "react": false,
+      "vue": false,
+      "next": false,
+      "nuxt": false,
+      "angular": false,
+      "gtm": true,
+      "ga": true,
+      "fbq": true,
+      "recaptcha": false
+    },
+    "resources": {
+      "total": 174,
+      "byType": {
+        "link": 56,
+        "script": 39,
+        "img": 43,
+        "css": 24,
+        "fetch": 5,
+        "xmlhttprequest": 3,
+        "beacon": 4
+      },
+      "bytes": 31082,
+      "hosts": [
+        [
+          "www.spu.ac.th",
+          116
+        ],
+        [
+          "b3411481.assetcdn.net",
+          36
+        ],
+        [
+          "analytics.tiktok.com",
+          5
+        ],
+        [
+          "www.airanklab.com",
+          4
+        ],
+        [
+          "allchat.brc-spu.com",
+          3
+        ],
+        [
+          "www.clarity.ms",
+          2
+        ],
+        [
+          "connect.facebook.net",
+          2
+        ],
+        [
+          "www.googletagmanager.com",
+          1
+        ],
+        [
+          "analytics.google.com",
+          1
+        ],
+        [
+          "www.google.co.th",
+          1
+        ],
+        [
+          "scripts.clarity.ms",
+          1
+        ],
+        [
+          "analytics-ipv6.tiktokw.us",
+          1
+        ],
+        [
+          "h.clarity.ms",
+          1
+        ]
+      ]
+    },
+    "perf": {
+      "ttfb": 2,
+      "domContentLoaded": 469,
+      "load": 1203,
+      "transferSize": 0,
+      "decodedBodySize": 403126
+    },
+    "layout": {
+      "docWidth": 1440,
+      "viewport": 1440,
+      "horizontalOverflow": false,
+      "docHeight": 8246
+    },
+    "a11y": {
+      "lang": "th",
+      "skipLink": true,
+      "landmarks": {
+        "header": 1,
+        "nav": 14,
+        "main": 0,
+        "footer": 1
+      },
+      "imgTotal": 63,
+      "imgWithAlt": 63,
+      "imgEmptyAlt": 0,
+      "imgNoAlt": 0,
+      "ariaLabelCount": 128,
+      "buttons": 32,
+      "inputsWithoutLabel": 5,
+      "smallFonts": 2
+    },
+    "cookies": [
+      "_ga",
+      "wp-wpml_current_language",
+      "_fbp",
+      "_clck",
+      "_tt_enable_cookie",
+      "_ttp",
+      "_ga_W4QWF52Y28",
+      "ttcsid",
+      "ttcsid_D5NJU63C77U6J0PHHH70",
+      "_clsk"
+    ],
+    "bodyBg": "rgb(255, 255, 255)",
+    "bodyFont": "Sarabun, sans-serif",
+    "bodyFontSize": "16px"
+  }
+}

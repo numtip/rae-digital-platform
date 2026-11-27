@@ -1,0 +1,30 @@
+# Static staging stack QA — 2026-10-26 (feat/static-staging-stack)
+# Node: v22.23.2 via nvm (host Node v12 not used for app QA)
+
+npm test                          PASS (10/10)
+npm run lint                      PASS (0 errors, 9 pre-existing warnings in docs/app)
+npm run typecheck                 PASS
+npm run build                     PASS
+
+GitHub Pages export parity:
+  NEXT_PUBLIC_SITE_URL=https://numtip.github.io/rae-digital-platform \
+  NEXT_PAGES_PREVIEW=1 npm run build:export && npm run check:export   PASS
+
+VPS staging basePath:
+  NEXT_PREVIEW_BASE_PATH=/rae-digital-staging \
+  NEXT_PUBLIC_SITE_URL=https://raeservice.mju.ac.th/rae-digital-staging \
+  npm run build:export + root redirect + BASE_PATH=/rae-digital-staging check:export   PASS
+
+docker compose -f docker-compose.staging.yml config   PASS
+docker build -f Dockerfile.staging -t rae-digital-staging-static:qa-test .   PASS (nginx -t in image)
+
+scripts/staging/test-rollback-logic.sh   PASS
+
+Container runtime smoke (curl :8090, healthcheck inside running container):
+  NOT_TESTED — per delivery constraint: no start/deploy on VPS in this task
+
+Port collision / public listener on 8090 at QA time:
+  ss: 8090 not listening (pre-deploy)
+
+Secrets in git:
+  manual review — no htpasswd, tokens, or .env.staging committed

@@ -1,0 +1,19 @@
+# Keep Docker build context limited to static export + staging nginx config.
+.git
+.github
+node_modules
+.next
+coverage
+*.md
+docs
+tests
+tools
+EVIDENCE
+.env
+.env.*
+!.env.staging.example
+deploy/staging/host-nginx.reference.conf
+scripts/staging/*.sh
+docker-compose*.yml
+Dockerfile*
+!Dockerfile.staging

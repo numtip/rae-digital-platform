@@ -1,0 +1,44 @@
+white on brand-primary #005C3B                  8.1  AAA
+
+white on brand-dark #003F2A                   12.04  AAA
+
+white on brand-forest #014D35                  9.93  AAA
+
+stitch-text #1F2937 on white                  14.68  AAA
+
+stitch-muted #6B7280 on white                  4.83  AA
+
+stitch-text on brand-ivory #F7F3EA            13.26  AAA
+
+gold #D8A01A on white (text)                   2.34  FAIL
+
+white on gold #D8A01A (CTA)                    2.34  FAIL
+
+brand-dark on gold #D8A01A                     5.14  AA
+
+stitch-border #E5E7EB on white (divider)       1.24  FAIL
+
+placeholder #9CA3AF on white                   2.54  FAIL
+
+maejo-gold #FFDE00 on green #005C3B            6.05  AA
+
+maejo-gold #FFDE00 on white                    1.34  FAIL
+
+maejo-green #005C3B on gold #FFDE00            6.05  AA
+
+text #0F1F18 on bg #F6F8F7                    16.01  AAA
+
+muted #4C4C4C on #F6F8F7                       8.05  AAA
+
+white on green-muted #0A7A52                   5.36  AA
+
+green #005C3B on green-light #E8F5EF           7.22  AAA
+
+line #D4E0DA on white                          1.36  FAIL
+
+line-strong #B8CFC4 on white                   1.65  FAIL
+
+line-strong #B8CFC4 on #F6F8F7                 1.54  FAIL
+
+legacy white on #017F3F                        5.11  AA
+

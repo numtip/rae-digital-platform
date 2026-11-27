@@ -1,0 +1,138 @@
+{
+ "contrast": {
+  "checked": 4000,
+  "belowAA": 27,
+  "imageBgSkipped": 0,
+  "worst": [
+   {
+    "sel": "span.menu-text",
+    "text": "ผู้สนใจสมัครเรียน",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(255,255,255)",
+    "ratio": 1,
+    "need": 4.5,
+    "size": 16
+   },
+   {
+    "sel": "span.menu-text",
+    "text": "คณะ",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(255,255,255)",
+    "ratio": 1,
+    "need": 4.5,
+    "size": 16
+   },
+   {
+    "sel": "span.menu-text",
+    "text": "วิจัยและบริการธุรกิจ",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(255,255,255)",
+    "ratio": 1,
+    "need": 4.5,
+    "size": 16
+   },
+   {
+    "sel": "span.menu-text",
+    "text": "นักศึกษาปัจจุบัน",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(255,255,255)",
+    "ratio": 1,
+    "need": 4.5,
+    "size": 16
+   },
+   {
+    "sel": "span.menu-text",
+    "text": "ศิษย์เก่า",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(255,255,255)",
+    "ratio": 1,
+    "need": 4.5,
+    "size": 16
+   },
+   {
+    "sel": "span.menu-text",
+    "text": "บุคลากร",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(255,255,255)",
+    "ratio": 1,
+    "need": 4.5,
+    "size": 16
+   },
+   {
+    "sel": "span.menu-text",
+    "text": "สนับสนุนเรา",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(255,255,255)",
+    "ratio": 1,
+    "need": 4.5,
+    "size": 16
+   },
+   {
+    "sel": "span.button-caption",
+    "text": "Load more",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(255,255,255)",
+    "ratio": 1,
+    "need": 4.5,
+    "size": 16
+   },
+   {
+    "sel": "h2",
+    "text": "Dreams come true",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(255,255,255)",
+    "ratio": 1,
+    "need": 3,
+    "size": 40
+   },
+   {
+    "sel": "span",
+    "text": "ก้าวไปด้วยกัน เดินตามฝันที่ UTCC",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(255,255,255)",
+    "ratio": 1,
+    "need": 4.5,
+    "size": 18
+   },
+   {
+    "sel": "span",
+    "text": "ติดตามคลิปวิดีโอ ได้ที่นี่…",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(255,255,255)",
+    "ratio": 1,
+    "need": 4.5,
+    "size": 18
+   },
+   {
+    "sel": "span",
+    "text": "UTCC Dream Master",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(255,255,255)",
+    "ratio": 1,
+    "need": 4.5,
+    "size": 18
+   }
+  ]
+ },
+ "headingOrder": {
+  "count": 11,
+  "issues": [
+   "jump h1->h3"
+  ]
+ },
+ "tapTargets": {
+  "interactive": 154,
+  "under24": 61,
+  "sample": [
+   "a.menulink.menulink-eng 16x25",
+   "a.menulink.menulink-cn 16x25",
+   "a.submit.text-disable 16x16",
+   "a.search-icon 54x16",
+   "a 20x309",
+   "a.data-link 23x76"
+  ]
+ },
+ "emptyLinks": 18,
+ "lang": "th",
+ "title": "หน้าแรก - มหาวิทยาลัยหอการค้าไทย"
+}

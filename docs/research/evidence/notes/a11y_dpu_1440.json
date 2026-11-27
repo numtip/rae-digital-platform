@@ -1,0 +1,118 @@
+{
+ "contrast": {
+  "checked": 1520,
+  "belowAA": 10,
+  "imageBgSkipped": 0,
+  "worst": [
+   {
+    "sel": "strong",
+    "text": "สมัครเรียน",
+    "color": "rgb(0, 0, 0)",
+    "bg": "rgb(72,0,212)",
+    "ratio": 2.23,
+    "need": 3,
+    "size": 28
+   },
+   {
+    "sel": "span.truncate.max-w-[160px]",
+    "text": "การประชุมวิชาการ",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(72,178,255)",
+    "ratio": 2.31,
+    "need": 4.5,
+    "size": 16
+   },
+   {
+    "sel": "span.truncate.max-w-[160px]",
+    "text": "การเผยแพร่รูปแบบอื่น",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(17,185,98)",
+    "ratio": 2.58,
+    "need": 4.5,
+    "size": 16
+   },
+   {
+    "sel": "span",
+    "text": "This website uses cookies to ensure you ",
+    "color": "rgb(131, 131, 145)",
+    "bg": "rgb(237,239,245)",
+    "ratio": 3.25,
+    "need": 4.5,
+    "size": 15
+   },
+   {
+    "sel": "a.cc-link",
+    "text": "Cookie policy",
+    "color": "rgb(131, 131, 145)",
+    "bg": "rgb(237,239,245)",
+    "ratio": 3.25,
+    "need": 4.5,
+    "size": 15
+   },
+   {
+    "sel": "a.cc-link",
+    "text": "Privacy Notice",
+    "color": "rgb(131, 131, 145)",
+    "bg": "rgb(237,239,245)",
+    "ratio": 3.25,
+    "need": 4.5,
+    "size": 15
+   },
+   {
+    "sel": "button.btn-language.cc_change_language",
+    "text": "TH",
+    "color": "rgb(131, 131, 145)",
+    "bg": "rgb(237,239,245)",
+    "ratio": 3.25,
+    "need": 4.5,
+    "size": 15
+   },
+   {
+    "sel": "div.hidden.lg:block",
+    "text": "Copyright ©2026 Dhurakij Pundit Universi",
+    "color": "rgb(96, 96, 96)",
+    "bg": "rgb(0,0,0)",
+    "ratio": 3.34,
+    "need": 4.5,
+    "size": 12
+   },
+   {
+    "sel": "button.cc-btn.ccb__edit",
+    "text": "Cookie Preference",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(75,129,232)",
+    "ratio": 3.75,
+    "need": 4.5,
+    "size": 13
+   },
+   {
+    "sel": "button.cc-btn.cc-allow",
+    "text": "Accept",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(75,129,232)",
+    "ratio": 3.75,
+    "need": 4.5,
+    "size": 13
+   }
+  ]
+ },
+ "headingOrder": {
+  "count": 0,
+  "issues": []
+ },
+ "tapTargets": {
+  "interactive": 137,
+  "under24": 69,
+  "sample": [
+   "a.cc-link 6x6",
+   "button.cc-close 27x21",
+   "a 23x28",
+   "button.relative.flex 24x20",
+   "a.text-sm.text-white/[0.6] 20x312",
+   "a.text-sm.text-white/[0.6] 20x312"
+  ]
+ },
+ "emptyLinks": 13,
+ "lang": "th",
+ "title": "หน้าแรก - Dhurakij Pundit University | มหาวิทยาลัยธุรกิจบัณฑิตย์ (DPU)"
+}

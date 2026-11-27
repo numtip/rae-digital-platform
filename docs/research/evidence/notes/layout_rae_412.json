@@ -1,0 +1,250 @@
+{
+ "blocks": [
+  {
+   "d": 0,
+   "tag": "FORM",
+   "cls": "",
+   "id": "form1",
+   "top": 70,
+   "h": 11700,
+   "w": 412,
+   "bg": "rgba(0, 0, 0, 0)",
+   "bgimg": "none",
+   "pos": "static",
+   "hidden": false
+  },
+  {
+   "d": 1,
+   "tag": "DIV",
+   "cls": "d-block d-sm-block d-md-block d-lg-none d-xl-none d-xxl-none fixed-top",
+   "id": "",
+   "top": 0,
+   "h": 70,
+   "w": 416,
+   "bg": "rgba(0, 0, 0, 0)",
+   "bgimg": "none",
+   "pos": "fixed",
+   "hidden": false
+  },
+  {
+   "d": 2,
+   "tag": "DIV",
+   "cls": "container-fluid web-header-sm",
+   "id": "",
+   "top": 0,
+   "h": 70,
+   "w": 416,
+   "bg": "rgb(1, 127, 63)",
+   "bgimg": "none",
+   "pos": "static",
+   "hidden": false
+  },
+  {
+   "d": 3,
+   "tag": "TABLE",
+   "cls": "",
+   "id": "",
+   "top": 0,
+   "h": 70,
+   "w": 392,
+   "bg": "rgba(0, 0, 0, 0)",
+   "bgimg": "none",
+   "pos": "static",
+   "hidden": false
+  },
+  {
+   "d": 1,
+   "tag": "DIV",
+   "cls": "",
+   "id": "",
+   "top": 70,
+   "h": 11335,
+   "w": 412,
+   "bg": "rgba(0, 0, 0, 0)",
+   "bgimg": "none",
+   "pos": "static",
+   "hidden": false
+  },
+  {
+   "d": 2,
+   "tag": "DIV",
+   "cls": "",
+   "id": "",
+   "top": 70,
+   "h": 129,
+   "w": 412,
+   "bg": "rgba(0, 0, 0, 0)",
+   "bgimg": "none",
+   "pos": "static",
+   "hidden": false
+  },
+  {
+   "d": 3,
+   "tag": "DIV",
+   "cls": "carousel slide",
+   "id": "carouselExampleIndicators",
+   "top": 70,
+   "h": 129,
+   "w": 412,
+   "bg": "rgba(0, 0, 0, 0)",
+   "bgimg": "url(\"https://rae.mju.ac.th/wtms_system/images/BGbanner.jpg\")",
+   "pos": "relative",
+   "hidden": false
+  },
+  {
+   "d": 2,
+   "tag": "DIV",
+   "cls": "container-fluid",
+   "id": "",
+   "top": 215,
+   "h": 11190,
+   "w": 412,
+   "bg": "rgba(0, 0, 0, 0)",
+   "bgimg": "none",
+   "pos": "static",
+   "hidden": false
+  },
+  {
+   "d": 3,
+   "tag": "DIV",
+   "cls": "row",
+   "id": "",
+   "top": 215,
+   "h": 11190,
+   "w": 412,
+   "bg": "rgba(0, 0, 0, 0)",
+   "bgimg": "none",
+   "pos": "static",
+   "hidden": false
+  },
+  {
+   "d": 1,
+   "tag": "FOOTER",
+   "cls": "footer",
+   "id": "",
+   "top": 11405,
+   "h": 365,
+   "w": 412,
+   "bg": "rgb(1, 127, 63)",
+   "bgimg": "none",
+   "pos": "static",
+   "hidden": false
+  },
+  {
+   "d": 2,
+   "tag": "TABLE",
+   "cls": "",
+   "id": "",
+   "top": 11405,
+   "h": 365,
+   "w": 412,
+   "bg": "rgba(0, 0, 0, 0)",
+   "bgimg": "none",
+   "pos": "static",
+   "hidden": false
+  },
+  {
+   "d": 3,
+   "tag": "TBODY",
+   "cls": "",
+   "id": "",
+   "top": 11405,
+   "h": 365,
+   "w": 412,
+   "bg": "rgba(0, 0, 0, 0)",
+   "bgimg": "none",
+   "pos": "static",
+   "hidden": false
+  }
+ ],
+ "imgsBroken": [],
+ "heroImg": [
+  {
+   "cls": "carousel-item active",
+   "w": 412,
+   "h": 129,
+   "src": ""
+  },
+  {
+   "cls": "d-block",
+   "w": 412,
+   "h": 129,
+   "src": "ent/20130325103535_2013_rae/banner_25691006150603_439854.png"
+  },
+  {
+   "cls": "carousel-item",
+   "w": 0,
+   "h": 0,
+   "src": ""
+  },
+  {
+   "cls": "d-block",
+   "w": 0,
+   "h": 0,
+   "src": "ent/20130325103535_2013_rae/banner_25690507093827_210639.jpg"
+  },
+  {
+   "cls": "carousel-item",
+   "w": 0,
+   "h": 0,
+   "src": ""
+  },
+  {
+   "cls": "d-block",
+   "w": 0,
+   "h": 0,
+   "src": "ent/20130325103535_2013_rae/banner_25690306101947_370223.jpg"
+  },
+  {
+   "cls": "carousel-item",
+   "w": 0,
+   "h": 0,
+   "src": ""
+  },
+  {
+   "cls": "d-block",
+   "w": 0,
+   "h": 0,
+   "src": "ent/20130325103535_2013_rae/banner_25690311101352_474397.jpg"
+  },
+  {
+   "cls": "carousel-item",
+   "w": 0,
+   "h": 0,
+   "src": ""
+  },
+  {
+   "cls": "d-block",
+   "w": 0,
+   "h": 0,
+   "src": "ent/20130325103535_2013_rae/banner_25690311104023_228890.jpg"
+  },
+  {
+   "cls": "carousel-item",
+   "w": 0,
+   "h": 0,
+   "src": ""
+  },
+  {
+   "cls": "d-block",
+   "w": 0,
+   "h": 0,
+   "src": "ent/20130325103535_2013_rae/banner_25690216102413_343759.jpg"
+  },
+  {
+   "cls": "carousel-item",
+   "w": 0,
+   "h": 0,
+   "src": ""
+  },
+  {
+   "cls": "d-block",
+   "w": 0,
+   "h": 0,
+   "src": "ent/20130325103535_2013_rae/banner_25621111155137_788895.jpg"
+  }
+ ],
+ "menuToggle": [],
+ "scrollW": 416,
+ "innerW": 416
+}
