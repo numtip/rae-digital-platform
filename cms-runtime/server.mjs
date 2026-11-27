@@ -329,11 +329,13 @@ export function memoryRepository() {
       knowledge.set(entry.code, { ...entry });
       await this.appendAudit(audit);
     },
-    async createMediaAsset(asset, audit) {
-      const n = [...mediaAssets.keys()].reduce((max, code) => Math.max(max, Number(code.slice(7))), 0) + 1;
+    async createMediaAsset(asset, auditRecord) {
+      // Never reuse a code that appears in the audit trail, even if its row is gone (same rule as the MySQL repository).
+      const seen = [...mediaAssets.keys(), ...audit.filter((r) => r.entityType === "media" && /^RAE-MD-\d+$/.test(r.entityId ?? "")).map((r) => r.entityId)];
+      const n = seen.reduce((max, code) => Math.max(max, Number(code.slice(7))), 0) + 1;
       const code = formatMediaCode(n);
       mediaAssets.set(code, { ...asset, code });
-      await this.appendAudit({ ...audit, entityId: code });
+      await this.appendAudit({ ...auditRecord, entityId: code });
       return { ...asset, code };
     },
     async listMediaAssets() {

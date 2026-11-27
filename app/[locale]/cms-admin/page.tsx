@@ -40,8 +40,8 @@ export default async function CmsAdmin({ params }: Props) {
             form. */}
         <NewsDesk apiBase={process.env.NEXT_PUBLIC_CMS_API ?? "http://127.0.0.1:3317"} locale={locale} />
       </div>
-      {/* One toast host for every desk. Toasts announce success; failures also stay on the form. */}
-      <Toaster position="top-right" richColors />
+      {/* One toast host for every desk. Toasts announce success; failures also stay on the form. No richColors: its green/red tints on white measure below 4.5:1. */}
+      <Toaster position="top-right" />
     </main>
   );
 }
