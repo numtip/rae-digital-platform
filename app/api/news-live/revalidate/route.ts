@@ -40,6 +40,9 @@ export async function POST(request: Request) {
   revalidatePath("/[locale]/documents/category/[slug]", "page");
   revalidatePath("/[locale]/documents/[code]", "page");
   revalidateTag("cms-docs", "max");
+  // M04 FAQ entries: the knowledge page and its cached read.
+  revalidatePath("/[locale]/knowledge", "page");
+  revalidateTag("cms-knowledge", "max");
   // The cached CMS read itself, so the next render asks the runtime again instead of reusing the
   // export that was current when this entry was written.
   revalidateTag(NEWS_TAG, "max");
