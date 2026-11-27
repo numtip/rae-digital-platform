@@ -4,6 +4,9 @@ export type Permission =
   | "news:publish"
   | "media:upload"
   | "document:register"
+  | "personnel:manage"
+  | "personnel:publish"
+  | "personnel:private"
   | "audit:read"
   | "user:assign_role";
 
@@ -14,14 +17,17 @@ export const ROLE_PERMISSIONS: Record<RoleName, readonly Permission[]> = {
   // write route refuses it. The read endpoints filter on news:draft instead of on this key.
   viewer: [],
   officer: ["news:draft", "media:upload", "document:register"],
-  editor: ["news:draft", "news:review", "media:upload", "document:register"],
-  publisher: ["news:draft", "news:review", "news:publish", "media:upload", "document:register"],
+  editor: ["news:draft", "news:review", "media:upload", "document:register", "personnel:manage"],
+  publisher: ["news:draft", "news:review", "news:publish", "media:upload", "document:register", "personnel:manage", "personnel:publish"],
   admin: [
     "news:draft",
     "news:review",
     "news:publish",
     "media:upload",
     "document:register",
+    "personnel:manage",
+    "personnel:publish",
+    "personnel:private",
     "audit:read",
     "user:assign_role",
   ],

@@ -5,6 +5,7 @@ import { ContentSearch } from "@/components/content-search";
 import { Breadcrumb, PageHero } from "@/components/page-shell";
 import { readPublicDocuments } from "@/lib/cms/documents-live";
 import { readPublicDepartments } from "@/lib/cms/departments-live";
+import { personName, readPublicPersonnel } from "@/lib/cms/personnel-live";
 import { readPublicEvents } from "@/lib/cms/events-live";
 import { readPublicKnowledge } from "@/lib/cms/knowledge-live";
 import { liveNews } from "@/lib/cms/live";
@@ -42,6 +43,7 @@ export default async function Search({ params }: Props) {
   const faqEntries = await readPublicKnowledge();
   const eventList = await readPublicEvents();
   const unitList = await readPublicDepartments();
+  const peopleList = await readPublicPersonnel();
   // Same shape the index uses, so the client component and the category chips need no special
   // case: a published story is a "news" item like any archive story.
   const published = items.map((item) => ({
@@ -84,6 +86,14 @@ export default async function Search({ params }: Props) {
     href: `/${locale}/about#dp-${d.code}`,
   }));
 
+  // People (M12): public directory entries only — found by name, position or expertise; the result opens the directory.
+  const people = peopleList.map((p) => ({
+    kind: "item" as const,
+    title: personName(p, locale),
+    text: [p.code, locale === "th" ? p.positionTh : p.positionEn || p.positionTh, p.academicRank, p.workGroup, ...p.expertise, personName(p, locale === "th" ? "en" : "th")].filter(Boolean).join(" · "),
+    href: `/${locale}/people#ps-${p.code}`,
+  }));
+
   return (
     <main id="main-content" tabIndex={-1}>
       <PageHero title={search.hero.title} lead={search.hero.lead} />
@@ -97,7 +107,7 @@ export default async function Search({ params }: Props) {
             ]}
           />
           <Suspense fallback={<p className="text-neutral-700">{search.labels.empty}</p>}>
-            <ContentSearch entries={[...buildSearchIndex(locale), ...published, ...documents, ...faq, ...events, ...units]} labels={search.labels} />
+            <ContentSearch entries={[...buildSearchIndex(locale), ...published, ...documents, ...faq, ...events, ...units, ...people]} labels={search.labels} />
           </Suspense>
         </div>
       </section>

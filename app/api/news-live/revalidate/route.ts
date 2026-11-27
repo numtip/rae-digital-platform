@@ -51,6 +51,9 @@ export async function POST(request: Request) {
   // M13 departments: the about page.
   revalidatePath("/[locale]/about", "page");
   revalidateTag("cms-departments", "max");
+  // M12 people directory.
+  revalidatePath("/[locale]/people", "page");
+  revalidateTag("cms-personnel", "max");
   // M05 events.
   revalidatePath("/[locale]/news/events", "page");
   revalidateTag("cms-events", "max");

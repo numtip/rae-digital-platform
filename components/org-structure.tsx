@@ -12,6 +12,12 @@ function Branch({ parent, all, locale }: { parent: string | null; all: PublicDep
       {kids.map((d) => (
         <li id={`dp-${d.code}`} key={d.code}>
           <p className="font-medium text-neutral-800">{locale === "th" ? d.nameTh : d.nameEn}</p>
+          {d.head ? (
+            <p className="text-sm text-neutral-700">
+              {locale === "th" ? "หัวหน้าหน่วย" : "Head"}: {locale === "th" ? `${d.head.prefixTh}${d.head.firstTh} ${d.head.lastTh}`.trim() : `${d.head.firstEn || d.head.firstTh} ${d.head.lastEn || d.head.lastTh}`.trim()}
+              {(locale === "th" ? d.head.positionTh : d.head.positionEn || d.head.positionTh) ? ` — ${locale === "th" ? d.head.positionTh : d.head.positionEn || d.head.positionTh}` : ""}
+            </p>
+          ) : null}
           {(locale === "th" ? d.descriptionTh : d.descriptionEn) ? <p className="text-sm text-neutral-700">{locale === "th" ? d.descriptionTh : d.descriptionEn}</p> : null}
           <Branch all={all} locale={locale} parent={d.code} />
         </li>

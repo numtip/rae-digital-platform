@@ -10,6 +10,8 @@ export type DepartmentStatus = (typeof DEPARTMENT_STATUSES)[number];
 export type Department = {
   code: string;
   parentCode: string | null;
+  /** M12: the unit head (an active person). The person must exist; checked by the runtime, which holds the personnel. */
+  headPersonnelCode: string | null;
   nameTh: string;
   nameEn: string;
   descriptionTh: string;
@@ -73,8 +75,11 @@ export function validateDepartment(input: DepartmentInput, all: Department[], se
     const below = self ? subtreeHeight(self.code, byCode) : 0;
     if (above + 1 + below > MAX_DEPTH) throw new DepartmentInvalid(`the tree may be at most ${MAX_DEPTH} levels deep`);
   }
+  const headRaw = input.headPersonnelCode === undefined || input.headPersonnelCode === "" ? null : input.headPersonnelCode;
+  if (headRaw !== null && !/^RAE-PS-\d{4,}$/.test(headRaw)) throw new DepartmentInvalid("headPersonnelCode is not a personnel code");
   return {
     parentCode,
+    headPersonnelCode: headRaw,
     nameTh: text(input.nameTh, 200, "nameTh", true),
     nameEn: text(input.nameEn, 200, "nameEn", true),
     descriptionTh: text(input.descriptionTh, 1000, "descriptionTh"),
@@ -93,6 +98,7 @@ export function applyDepartmentUpdate(current: Department, input: DepartmentInpu
   const merged = validateDepartment(
     {
       parentCode: input.parentCode === undefined ? current.parentCode : input.parentCode,
+      headPersonnelCode: input.headPersonnelCode === undefined ? current.headPersonnelCode : input.headPersonnelCode,
       nameTh: input.nameTh ?? current.nameTh,
       nameEn: input.nameEn ?? current.nameEn,
       descriptionTh: input.descriptionTh ?? current.descriptionTh,
@@ -108,12 +114,18 @@ export function applyDepartmentUpdate(current: Department, input: DepartmentInpu
 
 export const bySort = <T extends { sortOrder: number; code: string }>(a: T, b: T) => a.sortOrder - b.sortOrder || a.code.localeCompare(b.code);
 
-/** Public tree: published units whose whole chain is published (a hidden parent hides its children). Flat, ordered by sortOrder then code (the page nests it by parentCode). */
-export function publicDepartments(all: Department[]) {
+export type PublicHead = { code: string; prefixTh: string; firstTh: string; lastTh: string; firstEn: string; lastEn: string; positionTh: string; positionEn: string };
+
+/**
+ * Public tree: published units whose whole chain is published. Flat, ordered by sortOrder then code (the page nests it
+ * by parentCode). `heads` holds only people who are themselves public (active, public, consented); a unit whose head
+ * is not public simply shows no head — the head's existence is not disclosed.
+ */
+export function publicDepartments(all: Department[], heads: Map<string, PublicHead> = new Map()) {
   const byCode = new Map(all.map((d) => [d.code, d]));
   const visible = (d: Department, hops = 0): boolean => d.status === "published" && (d.parentCode === null || (hops < MAX_DEPTH + 1 && !!byCode.get(d.parentCode) && visible(byCode.get(d.parentCode)!, hops + 1)));
   return all
     .filter((d) => visible(d))
     .sort(bySort)
-    .map((d) => ({ code: d.code, parentCode: d.parentCode, nameTh: d.nameTh, nameEn: d.nameEn, descriptionTh: d.descriptionTh, descriptionEn: d.descriptionEn, sortOrder: d.sortOrder }));
+    .map((d) => ({ code: d.code, parentCode: d.parentCode, nameTh: d.nameTh, nameEn: d.nameEn, descriptionTh: d.descriptionTh, descriptionEn: d.descriptionEn, sortOrder: d.sortOrder, head: (d.headPersonnelCode && heads.get(d.headPersonnelCode)) || null }));
 }

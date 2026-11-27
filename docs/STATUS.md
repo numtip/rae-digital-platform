@@ -21,6 +21,9 @@ via host nginx). The CMS hook notifies both. Persistence is the hand-written MyS
 **Build note:** export builds (`npm run build:export`) must NOT run in this tree — they wipe `.next` (it broke the admin host for minutes); use a separate clone. Site builds now set `RAE_CMS_API=http://127.0.0.1:3317` at build time (the layout fetches announcements, host build otherwise times out on the container hostname).
 **Operator action pending (backup cron):** crontab still points at the old backup path — see `docs/ops/backup-restore.md` (the auto-mode guard refused the agent's crontab edit).
 
+**Owner decision 2026-11-27 — M12 Personnel APPROVED.** Gate A-4 (PDPA basis/retention) is removed as a development blocker; the owner assumes personnel-data governance, no third-party approval is required. Built: personnel directory + encrypted restricted data + RBAC + audit, M13 head-of-unit (`docs/ops/personnel.md`). Verified data only; nothing seeded. RBAC, public/private separation and audit integrity are tested.
+**Releases:** production now serves `~/rae/current` (SHA-tagged release dirs, isolated builds, spare-port probe, auto-rollback — `docs/ops/releases.md`). Measured cutover downtime 2.4 s (was ~8 min with in-place builds).
+
 **Pending, owner-side:** M365 onboarding (no verified SharePoint link list exists yet; needs the list of existing SharePoint links; tool + guide ready); MJU SSO — countersigned CMS C-14,
 MJU SSO administrator's E2E authorisation + window; Cloudflare Access on `/th|en/cms-admin/*` (leave `/cms-api/*` open).
 Full detail: `docs/reports/2026-11-25-day-closeout.md`. Handoff: `docs/memory/NEXT_SESSION.md`.

@@ -35,6 +35,7 @@ const SECTIONS = [
   "contact",
   "search",
   "directory",
+  "people",
 ] as const;
 
 export type SearchSection = (typeof SECTIONS)[number];

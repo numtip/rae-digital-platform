@@ -8,6 +8,7 @@ import { DashboardDesk } from "@/components/cms/dashboard-desk";
 import { DocumentsDesk } from "@/components/cms/documents-desk";
 import { EventsDesk } from "@/components/cms/events-desk";
 import { DepartmentsDesk } from "@/components/cms/departments-desk";
+import { PersonnelDesk } from "@/components/cms/personnel-desk";
 import { KnowledgeDesk } from "@/components/cms/knowledge-desk";
 import { adminCopy } from "@/lib/cms/admin-copy";
 
@@ -539,6 +540,7 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
       <DashboardDesk apiBase={apiBase} locale={locale} token={token} />
       <DocumentsDesk apiBase={apiBase} locale={locale} token={token} />
       <KnowledgeDesk apiBase={apiBase} locale={locale} token={token} />
+      <PersonnelDesk apiBase={apiBase} locale={locale} token={token} />
       <DepartmentsDesk apiBase={apiBase} locale={locale} token={token} />
       <EventsDesk apiBase={apiBase} locale={locale} token={token} />
       <AnnouncementsDesk apiBase={apiBase} locale={locale} token={token} />

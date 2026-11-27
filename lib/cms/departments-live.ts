@@ -10,6 +10,7 @@ export type PublicDepartment = {
   descriptionTh: string;
   descriptionEn: string;
   sortOrder: number;
+  head: { code: string; prefixTh: string; firstTh: string; lastTh: string; firstEn: string; lastEn: string; positionTh: string; positionEn: string } | null;
 };
 
 export async function readPublicDepartments(): Promise<PublicDepartment[]> {

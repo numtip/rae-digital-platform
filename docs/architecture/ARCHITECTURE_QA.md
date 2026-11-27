@@ -139,7 +139,7 @@ Counts verified: **29 modules** = 23 BUILD + 2 INTEGRATE + 3 HYBRID + 1 DEFER; p
 | U-2 | MySQL or MariaDB, exact version, ngram support | MJU IT | search strategy and migration syntax |
 | U-3 | Entra ID OIDC contract, redirect URIs, group claims | MJU IT | SSO blocked → local-only accounts |
 | U-4 | WTMS data-export cooperation (read-only manifests) | RAE + vendor | content migration becomes manual |
-| U-5 | PDPA basis for the personnel directory; retention | RAE + legal | M12 cannot ship |
+| U-5 | PDPA basis for the personnel directory; retention | RAE + legal | **Resolved 2026-11-27: owner approved M12 and holds governance; no longer blocks** |
 | U-6 | Which systems own assets / rooms / vehicles | RAE + IT | duplicated modules (R7) |
 | U-7 | Photo/asset rights for heroes and staff images | RAE | launch blocker |
 | U-8 | Budget envelope and procurement route | RAE director | scope, not architecture |
