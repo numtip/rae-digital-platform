@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { formatDocumentCode, type RegistryDocument } from "./document-registry.ts";
+import { formatKnowledgeCode, type KnowledgeEntry } from "./knowledge-registry.ts";
 import mysql from "mysql2/promise";
 import type { NewsRecord, PublishedSnapshot } from "./news-workflow.ts";
 import type { RoleName } from "./permissions.ts";
@@ -48,6 +49,11 @@ export type SsoLink = {
 export type DocumentVersionRecord = { version: string; storageUrl: string; changedBy: string; changedAt: number; changeNote: string };
 
 export type Repository = {
+  /** M04 knowledge / FAQ entries. Code assignment is the repository's job. */
+  createKnowledge(entry: Omit<KnowledgeEntry, "code">, audit: Omit<AuditRecord, "createdAt" | "entityId">): Promise<KnowledgeEntry>;
+  listKnowledge(): Promise<KnowledgeEntry[]>;
+  getKnowledge(code: string): Promise<KnowledgeEntry | null>;
+  updateKnowledge(entry: KnowledgeEntry, audit: Omit<AuditRecord, "createdAt">): Promise<void>;
   /** M03 registry. Code assignment is the repository's job so two creators can never share a code. */
   createDocument(doc: Omit<RegistryDocument, "code" | "downloadCount">, audit: Omit<AuditRecord, "createdAt" | "entityId">): Promise<RegistryDocument>;
   listDocuments(): Promise<RegistryDocument[]>;
@@ -167,6 +173,14 @@ type DocRow = {
   note: string; created_by: string; updated_at: Date; download_count: number;
   link_status: "ok" | "broken" | "unreachable" | null; link_checked_at: Date | null;
 };
+type KbRow = {
+  code: string; kind: "faq"; topic: string; question_th: string; question_en: string; answer_th: string; answer_en: string;
+  status: KnowledgeEntry["status"]; sort_order: number; created_by: string; updated_at: Date;
+};
+const toKb = (r: KbRow): KnowledgeEntry => ({
+  code: r.code, kind: r.kind, topic: r.topic, questionTh: r.question_th, questionEn: r.question_en, answerTh: r.answer_th, answerEn: r.answer_en,
+  status: r.status, sortOrder: Number(r.sort_order), createdBy: r.created_by, updatedAt: asMillis(r.updated_at),
+});
 const toDoc = (r: DocRow): RegistryDocument => ({
   code: r.code, category: r.category, titleTh: r.title_th, titleEn: r.title_en, docType: r.doc_type,
   version: r.version, status: r.status, visibility: r.visibility, storageUrl: r.storage_url, note: r.note,
@@ -400,6 +414,56 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
         after: parseJson(row.after_json),
         createdAt: new Date(row.created_at).toISOString(),
       }));
+    },
+
+    async createKnowledge(entry, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM knowledge_entries FOR UPDATE");
+        const code = formatKnowledgeCode(Number((rows as { n: number }[])[0].n) + 1);
+        await connection.query(
+          "INSERT INTO knowledge_entries (code, kind, topic, question_th, question_en, answer_th, answer_en, status, sort_order, created_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [code, entry.kind, entry.topic, entry.questionTh, entry.questionEn, entry.answerTh, entry.answerEn, entry.status, entry.sortOrder, entry.createdBy, asDate(entry.updatedAt)],
+        );
+        await insertAudit(connection, { ...audit, entityId: code });
+        await connection.commit();
+        return { ...entry, code };
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    },
+
+    async listKnowledge() {
+      const [rows] = await pool.query("SELECT * FROM knowledge_entries ORDER BY sort_order, code");
+      return (rows as KbRow[]).map(toKb);
+    },
+
+    async getKnowledge(code) {
+      const [rows] = await pool.query("SELECT * FROM knowledge_entries WHERE code = ?", [code]);
+      const row = (rows as KbRow[])[0];
+      return row ? toKb(row) : null;
+    },
+
+    async updateKnowledge(entry, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        await connection.query(
+          "UPDATE knowledge_entries SET topic = ?, question_th = ?, question_en = ?, answer_th = ?, answer_en = ?, status = ?, sort_order = ?, updated_at = ? WHERE code = ?",
+          [entry.topic, entry.questionTh, entry.questionEn, entry.answerTh, entry.answerEn, entry.status, entry.sortOrder, asDate(entry.updatedAt), entry.code],
+        );
+        await insertAudit(connection, audit);
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
     },
 
     async createDocument(doc, audit) {

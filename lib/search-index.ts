@@ -40,7 +40,7 @@ const SECTIONS = [
 export type SearchSection = (typeof SECTIONS)[number];
 
 export function sectionOf(href: string): SearchSection {
-  const name = href.split("/").filter(Boolean)[1];
+  const name = href.split(/[#?]/)[0].split("/").filter(Boolean)[1];
   return (SECTIONS as readonly string[]).includes(name) ? (name as SearchSection) : "home";
 }
 

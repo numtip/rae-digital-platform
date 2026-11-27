@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { ContentSearch } from "@/components/content-search";
 import { Breadcrumb, PageHero } from "@/components/page-shell";
 import { readPublicDocuments } from "@/lib/cms/documents-live";
+import { readPublicKnowledge } from "@/lib/cms/knowledge-live";
 import { liveNews } from "@/lib/cms/live";
 import { getContent, getSearch, isLocale } from "@/lib/i18n";
 import { buildSearchIndex } from "@/lib/search-index";
@@ -36,6 +37,7 @@ export default async function Search({ params }: Props) {
   const search = getSearch(locale);
   const { items } = await liveNews(locale);
   const registry = await readPublicDocuments();
+  const faqEntries = await readPublicKnowledge();
   // Same shape the index uses, so the client component and the category chips need no special
   // case: a published story is a "news" item like any archive story.
   const published = items.map((item) => ({
@@ -54,6 +56,14 @@ export default async function Search({ params }: Props) {
     href: `/${locale}/documents/${doc.code}`,
   }));
 
+  // FAQ entries (M04): found by question, answer or topic; the result opens the entry on the knowledge page.
+  const faq = faqEntries.map((entry) => ({
+    kind: "item" as const,
+    title: locale === "th" ? entry.questionTh : entry.questionEn,
+    text: [locale === "th" ? entry.answerTh : entry.answerEn, entry.topic, locale === "th" ? entry.questionEn : entry.questionTh].filter(Boolean).join(" · "),
+    href: `/${locale}/knowledge#faq-${entry.code}`,
+  }));
+
   return (
     <main id="main-content" tabIndex={-1}>
       <PageHero title={search.hero.title} lead={search.hero.lead} />
@@ -67,7 +77,7 @@ export default async function Search({ params }: Props) {
             ]}
           />
           <Suspense fallback={<p className="text-neutral-700">{search.labels.empty}</p>}>
-            <ContentSearch entries={[...buildSearchIndex(locale), ...published, ...documents]} labels={search.labels} />
+            <ContentSearch entries={[...buildSearchIndex(locale), ...published, ...documents, ...faq]} labels={search.labels} />
           </Suspense>
         </div>
       </section>

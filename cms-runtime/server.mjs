@@ -23,6 +23,14 @@ import {
   publicDocumentView,
   validateNewDocument,
 } from "../lib/cms/document-registry.ts";
+import {
+  applyKnowledgeUpdate,
+  bySortOrder,
+  formatKnowledgeCode,
+  isPublicKnowledge,
+  publicKnowledgeView,
+  validateKnowledge,
+} from "../lib/cms/knowledge-registry.ts";
 import { createSso } from "./sso.mjs";
 import { clientKey, createIpLimiter } from "../lib/cms/ip-rate-limit.ts";
 import { createMysqlRepository } from "../lib/cms/mysql-repository.ts";
@@ -40,6 +48,7 @@ const ssoLinks = new Map();
 const ssoHandoffs = new Map();
 const throttle = createLoginThrottle();
 const documents = new Map();
+const knowledge = new Map();
 const documentVersions = new Map();
 const downloadByIp = createIpLimiter({ max: 60, windowMs: 60_000 });
 const loginByIp = createIpLimiter({ max: 30, windowMs: 60_000 });
@@ -56,6 +65,7 @@ export function resetRuntime() {
   loginByIp.reset();
   downloadByIp.reset();
   documents.clear();
+  knowledge.clear();
   documentVersions.clear();
   sessions.clear();
   articles.clear();
@@ -132,6 +142,24 @@ export function memoryRepository() {
     },
     async listAudit() {
       return [...audit];
+    },
+    async createKnowledge(entry, audit) {
+      const n = [...knowledge.keys()].reduce((max, code) => Math.max(max, Number(code.slice(7))), 0) + 1;
+      const code = formatKnowledgeCode(n);
+      knowledge.set(code, { ...entry, code });
+      await this.appendAudit({ ...audit, entityId: code });
+      return { ...entry, code };
+    },
+    async listKnowledge() {
+      return [...knowledge.values()].map((e) => ({ ...e })).sort(bySortOrder);
+    },
+    async getKnowledge(code) {
+      const e = knowledge.get(code);
+      return e ? { ...e } : null;
+    },
+    async updateKnowledge(entry, audit) {
+      knowledge.set(entry.code, { ...entry });
+      await this.appendAudit(audit);
     },
     async createDocument(doc, audit) {
       const n = [...documents.keys()].reduce((max, code) => Math.max(max, Number(code.slice(7))), 0) + 1;
@@ -495,6 +523,42 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         const doc = await repo.countDownload(countMatch[1]);
         if (!doc) return send(response, 404, { error: "NOT_FOUND" }, origin);
         return send(response, 200, { url: doc.storageUrl }, origin);
+      }
+      // M04 knowledge / FAQ. Public reads see published entries only.
+      if (request.method === "GET" && url.pathname === "/v1/public/knowledge") {
+        const list = (await repo.listKnowledge()).filter(isPublicKnowledge).sort(bySortOrder);
+        return send(response, 200, { entries: list.map(publicKnowledgeView) }, origin);
+      }
+      if (url.pathname === "/v1/knowledge" || url.pathname.startsWith("/v1/knowledge/")) {
+        const actor = await actorFrom(request, now(), repo);
+        if (!actor) return send(response, 401, { error: "UNAUTHORIZED" }, origin);
+        requirePermission(actor.role, "news:draft");
+        const audit = (action, code) => ({ actorId: actor.id, action, entityType: "knowledge", entityId: code });
+        if (request.method === "GET" && url.pathname === "/v1/knowledge") {
+          return send(response, 200, { entries: await repo.listKnowledge() }, origin);
+        }
+        if (request.method === "POST" && url.pathname === "/v1/knowledge") {
+          const fields = validateKnowledge(await readBody(request));
+          if (fields.status !== "draft") requirePermission(actor.role, "news:publish");
+          const record = await repo.createKnowledge({ ...fields, createdBy: actor.id, updatedAt: now() }, audit("knowledge.create", ""));
+          await notifySite({});
+          return send(response, 201, record, origin);
+        }
+        const kb = /^\/v1\/knowledge\/(RAE-KB-\d{4,})$/.exec(url.pathname);
+        if (kb) {
+          const current = await repo.getKnowledge(kb[1]);
+          if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
+          if (request.method === "GET") return send(response, 200, current, origin);
+          if (request.method === "PATCH") {
+            const next = applyKnowledgeUpdate(current, await readBody(request), now());
+            // Anything that is, or becomes, public is a publisher's decision.
+            if (current.status === "published" || next.status === "published") requirePermission(actor.role, "news:publish");
+            await repo.updateKnowledge(next, audit("knowledge.update", next.code));
+            await notifySite({});
+            return send(response, 200, next, origin);
+          }
+        }
+        return send(response, 404, { error: "NOT_FOUND" }, origin);
       }
       if (url.pathname === "/v1/documents" || url.pathname.startsWith("/v1/documents/")) {
         const actor = await actorFrom(request, now(), repo);
