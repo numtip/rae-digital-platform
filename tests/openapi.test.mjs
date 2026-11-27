@@ -26,6 +26,7 @@ test("documented responses match the live shapes (keys, required fields, no inte
   try {
     await post("/v1/knowledge", { questionTh: "ก", questionEn: "q", answerTh: "ข", answerEn: "a", status: "published" });
     await post("/v1/events", { titleTh: "ก", titleEn: "e", startsAt: "2026-12-05T09:00:00+07:00", status: "published" });
+    await post("/v1/personnel", { firstTh: "ก", lastTh: "ข", positionTh: "ผอ.", isPublic: true, consent: true });
     await post("/v1/departments", { nameTh: "ก", nameEn: "d", status: "published" });
     await post("/v1/announcements", { kind: "banner", titleTh: "ก", titleEn: "a", startsAt: "2020-01-01T00:00:00+07:00", endsAt: "2099-01-01T00:00:00+07:00", status: "published" });
     await post("/v1/documents", { category: "administration", titleTh: "ก", titleEn: "d", storageUrl: "https://maejo365-my.sharepoint.com/:b:/g/personal/rae/Abc/x.pdf", status: "current" });
@@ -44,7 +45,7 @@ test("documented responses match the live shapes (keys, required fields, no inte
         assert.ok(sample, `${concrete}: expected one sample row`);
         for (const key of rowSchema.required) assert.ok(key in sample, `${concrete}: row missing ${key}`);
         for (const key of Object.keys(sample)) assert.ok(key in rowSchema.properties, `${concrete}: undocumented field ${key}`);
-        for (const secret of ["createdBy", "storageUrl", "status", "visibility", "linkStatus"]) assert.ok(!(secret in sample), `${concrete}: leaks ${secret}`);
+        for (const secret of ["createdBy", "storageUrl", "status", "visibility", "linkStatus", "employeeCode", "consentAt", "consentBy", "nationalId", "source", "isPublic"]) assert.ok(!(secret in sample), `${concrete}: leaks ${secret}`);
       }
     }
   } finally {

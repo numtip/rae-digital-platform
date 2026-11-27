@@ -35,6 +35,7 @@ export const thSearch = {
       knowledge: "องค์ความรู้",
       news: "ข่าวสารและกิจกรรม",
       directory: "ระบบสารสนเทศ",
+      people: "บุคลากร",
       contact: "ติดต่อเรา",
       search: "ค้นหา",
     },

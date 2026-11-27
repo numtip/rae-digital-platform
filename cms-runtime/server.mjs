@@ -23,7 +23,21 @@ import {
   publicDocumentView,
   validateNewDocument,
 } from "../lib/cms/document-registry.ts";
+import {
+  PERSONNEL_CODE,
+  applyPersonnelUpdate,
+  byName,
+  createPersonnelCrypto,
+  formatPersonnelCode,
+  isPublicPerson,
+  maskNationalId,
+  publicPersonView,
+  validatePersonnel,
+  validatePrivate,
+} from "../lib/cms/personnel-registry.ts";
 import { buildOpenApi } from "../lib/cms/openapi.ts";
+import { PersonnelInvalid as PersonnelInvalidError } from "../lib/cms/personnel-registry.ts";
+import { DepartmentInvalid } from "../lib/cms/department-registry.ts";
 import { applyDepartmentUpdate, bySort, formatDepartmentCode, publicDepartments, validateDepartment } from "../lib/cms/department-registry.ts";
 import { applyAnnouncementUpdate, byStartDesc, formatAnnouncementCode, isLiveAnnouncement, publicAnnouncementView, validateAnnouncement } from "../lib/cms/announcement-registry.ts";
 import { MAX_PATHS_PER_DAY, bangkokDay, normalizeAnalyticsPath, readAnalyticsConfig } from "../lib/cms/analytics.ts";
@@ -60,6 +74,8 @@ const contactMessages = new Map();
 const pageViews = new Map();
 const announcements = new Map();
 const departments = new Map();
+const personnel = new Map();
+const personnelPrivate = new Map();
 const viewsByIp = createIpLimiter({ max: 120, windowMs: 60_000 });
 const contactByIp = createIpLimiter({ max: 5, windowMs: 10 * 60_000 });
 const documentVersions = new Map();
@@ -84,6 +100,8 @@ export function resetRuntime() {
   pageViews.clear();
   announcements.clear();
   departments.clear();
+  personnel.clear();
+  personnelPrivate.clear();
   viewsByIp.reset();
   contactByIp.reset();
   documentVersions.clear();
@@ -165,6 +183,36 @@ export function memoryRepository() {
     },
     async listAudit() {
       return [...audit];
+    },
+    async createPersonnel(p, audit) {
+      if (p.employeeCode && [...personnel.values()].some((x) => x.employeeCode === p.employeeCode)) throw Object.assign(new Error("employee code is already registered"), { name: "PersonnelInvalid", status: 400 });
+      const n = [...personnel.keys()].reduce((max, code) => Math.max(max, Number(code.slice(7))), 0) + 1;
+      const code = formatPersonnelCode(n);
+      personnel.set(code, { ...p, code, expertise: [...p.expertise] });
+      await this.appendAudit({ ...audit, entityId: code });
+      return { ...p, code };
+    },
+    async listPersonnel() {
+      return [...personnel.values()].map((p) => ({ ...p, expertise: [...p.expertise] }));
+    },
+    async getPersonnel(code) {
+      const p = personnel.get(code);
+      return p ? { ...p, expertise: [...p.expertise] } : null;
+    },
+    async updatePersonnel(p, audit) {
+      if (p.employeeCode && [...personnel.values()].some((x) => x.code !== p.code && x.employeeCode === p.employeeCode)) throw Object.assign(new Error("employee code is already registered"), { name: "PersonnelInvalid", status: 400 });
+      personnel.set(p.code, { ...p, expertise: [...p.expertise] });
+      await this.appendAudit(audit);
+    },
+    async getPersonnelPrivate(code) {
+      const row = personnelPrivate.get(code);
+      return row ? { dataEnc: row.dataEnc, updatedAt: row.updatedAt } : null;
+    },
+    async savePersonnelPrivate(code, dataEnc, nationalIdHash, by, now, audit) {
+      if (nationalIdHash && [...personnelPrivate.entries()].some(([c, r]) => c !== code && r.hash === nationalIdHash)) return "duplicate";
+      personnelPrivate.set(code, { dataEnc, hash: nationalIdHash, updatedAt: now });
+      await this.appendAudit(audit);
+      return "ok";
     },
     async createDepartment(d, audit) {
       const n = [...departments.keys()].reduce((max, code) => Math.max(max, Number(code.slice(7))), 0) + 1;
@@ -559,8 +607,17 @@ function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 }
 
-export function createCmsServer({ now = () => Date.now(), repository = memoryRepository(), sso = null, contact = { enabled: false }, analytics = { enabled: false } } = {}) {
+export function createCmsServer({ now = () => Date.now(), repository = memoryRepository(), sso = null, contact = { enabled: false }, analytics = { enabled: false }, personnelKey = undefined } = {}) {
   const repo = repository;
+  const psCrypto = createPersonnelCrypto(personnelKey);
+  // M13/M12: the head of a unit must be an active person; the public view shows a head only if that person is public.
+  const assertActiveHead = async (code) => {
+    if (code === null) return;
+    const person = await repo.getPersonnel(code);
+    if (!person || person.status !== "active") throw new DepartmentInvalid("the head must be an active person");
+  };
+  const publicHeads = async () =>
+    new Map((await repo.listPersonnel()).filter(isPublicPerson).map((p) => [p.code, { code: p.code, prefixTh: p.prefixTh, firstTh: p.firstTh, lastTh: p.lastTh, firstEn: p.firstEn, lastEn: p.lastEn, positionTh: p.positionTh, positionEn: p.positionEn }]));
   // Retention (M07): old messages are deleted lazily, at most once an hour, whenever the inbox is touched.
   let lastPurge = 0;
   const purgeContact = async () => {
@@ -670,9 +727,97 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
       if (request.method === "GET" && url.pathname === "/v1/public/openapi.json") {
         return send(response, 200, buildOpenApi("/cms-api"), origin);
       }
+      // M12 personnel (desk). Directory fields: personnel:manage. Going/staying public: personnel:publish + recorded consent.
+      // Restricted fields: personnel:private only, always audited, never in lists, public output or audit payloads.
+      if (url.pathname === "/v1/personnel" || url.pathname.startsWith("/v1/personnel/")) {
+        const actor = await actorFrom(request, now(), repo);
+        if (!actor) return send(response, 401, { error: "UNAUTHORIZED" }, origin);
+        requirePermission(actor.role, "personnel:manage");
+        const audit = (action, code, fields) => ({ actorId: actor.id, action, entityType: "personnel", entityId: code, before: {}, after: fields ? { fields } : {} });
+        const assertDepartment = async (code) => {
+          if (code === null) return;
+          const d = await repo.getDepartment(code);
+          if (!d || d.status === "archived") throw new PersonnelInvalidError("departmentCode must be an existing, non-archived unit");
+        };
+        if (request.method === "GET" && url.pathname === "/v1/personnel") {
+          return send(response, 200, { personnel: (await repo.listPersonnel()).sort(byName) }, origin);
+        }
+        if (request.method === "POST" && url.pathname === "/v1/personnel") {
+          const body = await readBody(request);
+          const fields = validatePersonnel(body);
+          await assertDepartment(fields.departmentCode);
+          let consentAt = null;
+          let consentBy = null;
+          if (fields.isPublic) {
+            requirePermission(actor.role, "personnel:publish");
+            if (body.consent !== true) throw new PersonnelInvalidError("publishing a person needs consent: true (the person's consent has been obtained)");
+            consentAt = now();
+            consentBy = actor.id;
+          }
+          const record = await repo.createPersonnel({ ...fields, consentAt, consentBy, source: "manual", createdBy: actor.id, updatedAt: now() }, audit("personnel.create", "", Object.keys(fields)));
+          await notifySite({});
+          return send(response, 201, record, origin);
+        }
+        const ps = /^\/v1\/personnel\/(RAE-PS-\d{4,})(\/private)?$/.exec(url.pathname);
+        if (ps) {
+          const current = await repo.getPersonnel(ps[1]);
+          if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
+          if (ps[2]) {
+            requirePermission(actor.role, "personnel:private");
+            if (!psCrypto) return send(response, 503, { error: "PERSONNEL_KEY_MISSING", message: "the encryption key is not configured; restricted data is unavailable" }, origin);
+            const stored = await repo.getPersonnelPrivate(current.code);
+            const open = stored ? psCrypto.decrypt(current.code, stored.dataEnc) : {};
+            if (request.method === "GET") {
+              const reveal = url.searchParams.get("reveal") === "nationalId";
+              await repo.appendAudit({ actorId: actor.id, action: reveal ? "personnel.private.reveal" : "personnel.private.read", entityType: "personnel", entityId: current.code, before: {}, after: {}, createdAt: new Date(now()).toISOString() });
+              const data = { ...open };
+              if (data.nationalId && !reveal) data.nationalId = maskNationalId(data.nationalId);
+              return send(response, 200, { exists: !!stored, data }, origin);
+            }
+            if (request.method === "PATCH") {
+              const body = await readBody(request);
+              const provided = Object.keys(body).filter((k) => k !== "consent");
+              const checked = validatePrivate(Object.fromEntries(provided.map((k) => [k, body[k]])));
+              const merged = { ...open };
+              for (const k of provided) {
+                const empty = body[k] === "" || body[k] === null || (Array.isArray(body[k]) && body[k].length === 0);
+                if (empty) delete merged[k];
+                else merged[k] = checked[k];
+              }
+              const blob = psCrypto.encrypt(current.code, merged);
+              const hash = merged.nationalId ? psCrypto.nationalIdHash(merged.nationalId) : null;
+              const result = await repo.savePersonnelPrivate(current.code, blob, hash, actor.id, now(), audit("personnel.private.write", current.code, provided));
+              if (result === "duplicate") throw new PersonnelInvalidError("this national id is already registered to another person");
+              return send(response, 200, { saved: provided }, origin);
+            }
+            return send(response, 404, { error: "NOT_FOUND" }, origin);
+          }
+          if (request.method === "GET") return send(response, 200, current, origin);
+          if (request.method === "PATCH") {
+            const body = await readBody(request);
+            const next = applyPersonnelUpdate(current, body, now(), actor.id);
+            if (current.isPublic || next.isPublic || current.consentAt !== next.consentAt) requirePermission(actor.role, "personnel:publish");
+            if (next.departmentCode !== current.departmentCode) await assertDepartment(next.departmentCode);
+            if (next.status === "inactive" && current.status === "active") {
+              const heads = (await repo.listDepartments()).find((d) => d.headPersonnelCode === current.code && d.status !== "archived");
+              if (heads) throw new PersonnelInvalidError(`this person heads ${heads.code}; reassign the head before deactivating`);
+            }
+            const changed = Object.keys(next).filter((k) => JSON.stringify(next[k]) !== JSON.stringify(current[k]) && k !== "updatedAt");
+            await repo.updatePersonnel(next, audit("personnel.update", next.code, changed));
+            await notifySite({});
+            return send(response, 200, next, origin);
+          }
+        }
+        return send(response, 404, { error: "NOT_FOUND" }, origin);
+      }
       // M13 departments. Public: published units whose whole chain is published.
       if (request.method === "GET" && url.pathname === "/v1/public/departments") {
-        return send(response, 200, { departments: publicDepartments(await repo.listDepartments()) }, origin);
+        return send(response, 200, { departments: publicDepartments(await repo.listDepartments(), await publicHeads()) }, origin);
+      }
+      // M12 public directory: active, public, consented people only; no employee code, no restricted data.
+      if (request.method === "GET" && url.pathname === "/v1/public/personnel") {
+        const list = (await repo.listPersonnel()).filter(isPublicPerson).sort(byName);
+        return send(response, 200, { personnel: list.map(publicPersonView) }, origin);
       }
       if (url.pathname === "/v1/departments" || url.pathname.startsWith("/v1/departments/")) {
         const actor = await actorFrom(request, now(), repo);
@@ -684,6 +829,7 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         }
         if (request.method === "POST" && url.pathname === "/v1/departments") {
           const fields = validateDepartment(await readBody(request), await repo.listDepartments(), null);
+          await assertActiveHead(fields.headPersonnelCode);
           if (fields.status !== "draft") requirePermission(actor.role, "news:publish");
           const record = await repo.createDepartment({ ...fields, createdBy: actor.id, updatedAt: now() }, audit("department.create", ""));
           await notifySite({});
@@ -696,6 +842,7 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
           if (request.method === "GET") return send(response, 200, current, origin);
           if (request.method === "PATCH") {
             const next = applyDepartmentUpdate(current, await readBody(request), await repo.listDepartments(), now());
+            if (next.headPersonnelCode !== current.headPersonnelCode) await assertActiveHead(next.headPersonnelCode);
             if (current.status === "published" || next.status === "published") requirePermission(actor.role, "news:publish");
             await repo.updateDepartment(next, audit("department.update", next.code));
             await notifySite({});
@@ -1202,7 +1349,7 @@ export async function startRuntime(env = process.env) {
   const bind = env.RAE_CMS_API_BIND ?? "127.0.0.1";
   const sso = await createSso({ repository, env });
   const contact = readContactConfig(env, (path) => readFileSync(path, "utf8"));
-  const server = createCmsServer({ repository, sso, contact, analytics: readAnalyticsConfig(env) });
+  const server = createCmsServer({ repository, sso, contact, analytics: readAnalyticsConfig(env), personnelKey: env.PERSONNEL_KEY });
   // Daily link health (RAE_DOC_LINK_CHECK_HOURS, 0 turns it off); the first pass waits five minutes
   // so a restart storm does not become a request storm.
   const hours = Number(env.RAE_DOC_LINK_CHECK_HOURS ?? 24);

@@ -5,20 +5,21 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 // M13 desk: the organisation tree. Units are archived, never deleted. Publishing is a publisher's decision.
 const COPY = {
   th: { heading: "โครงสร้างหน่วยงาน (Departments)", hint: "จัดเป็นโครงสร้างแม่–ลูก (ลึกได้ 4 ระดับ) หน่วยที่เก็บถาวรจะไม่ถูกลบ ผู้เผยแพร่เป็นผู้ปล่อยขึ้นหน้า “เกี่ยวกับหน่วยงาน”",
-    parent: "หน่วยงานแม่", none: "(ระดับบนสุด)", nameTh: "ชื่อ (ไทย)", nameEn: "ชื่อ (อังกฤษ)", descTh: "คำอธิบาย (ไทย)", descEn: "คำอธิบาย (อังกฤษ)", order: "ลำดับ",
+    parent: "หน่วยงานแม่", head: "หัวหน้าหน่วย", none: "(ระดับบนสุด)", nameTh: "ชื่อ (ไทย)", nameEn: "ชื่อ (อังกฤษ)", descTh: "คำอธิบาย (ไทย)", descEn: "คำอธิบาย (อังกฤษ)", order: "ลำดับ",
     create: "บันทึกเป็นฉบับร่าง", saved: "บันทึกแล้ว", status: "สถานะ", empty: "ยังไม่มีหน่วยงาน", edit: "แก้ไข", save: "บันทึกการแก้ไข", statuses: { draft: "ฉบับร่าง", published: "เผยแพร่", archived: "เก็บถาวร" } },
   en: { heading: "Organisation structure (Departments)", hint: "A parent/child tree (up to 4 levels). Units are archived, never deleted. A publisher releases them to the About page.",
-    parent: "Parent unit", none: "(top level)", nameTh: "Name (Thai)", nameEn: "Name (English)", descTh: "Description (Thai)", descEn: "Description (English)", order: "Order",
+    parent: "Parent unit", head: "Head of unit", none: "(top level)", nameTh: "Name (Thai)", nameEn: "Name (English)", descTh: "Description (Thai)", descEn: "Description (English)", order: "Order",
     create: "Save as draft", saved: "Saved", status: "Status", empty: "No units yet", edit: "Edit", save: "Save changes", statuses: { draft: "Draft", published: "Published", archived: "Archived" } },
 } as const;
 
-type Dp = { code: string; parentCode: string | null; nameTh: string; nameEn: string; descriptionTh: string; descriptionEn: string; sortOrder: number; status: keyof (typeof COPY)["en"]["statuses"] };
+type Dp = { code: string; parentCode: string | null; headPersonnelCode?: string | null; nameTh: string; nameEn: string; descriptionTh: string; descriptionEn: string; sortOrder: number; status: keyof (typeof COPY)["en"]["statuses"] };
 const FIELD = "w-full rounded-md border border-neutral-300 px-3 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600";
 
 export function DepartmentsDesk({ apiBase, token, locale }: { apiBase: string; token: string; locale: "th" | "en" }) {
   const copy = COPY[locale];
   const [items, setItems] = useState<Dp[] | null>(null);
   const [message, setMessage] = useState("");
+  const [people, setPeople] = useState<{ code: string; prefixTh: string; firstTh: string; lastTh: string; status: string }[]>([]);
   const call = useCallback(
     async (path: string, method = "GET", body?: unknown) => {
       const response = await fetch(`${apiBase}${path}`, { method, headers: { "content-type": "application/json", authorization: `Bearer ${token}` }, body: body === undefined ? undefined : JSON.stringify(body) }).catch(() => null);
@@ -34,6 +35,7 @@ export function DepartmentsDesk({ apiBase, token, locale }: { apiBase: string; t
   useEffect(() => {
     let live = true;
     void call("/v1/departments").then((r) => live && setItems(r.ok ? ((r.payload.departments as Dp[]) ?? []) : null));
+    void call("/v1/personnel").then((r) => live && r.ok && setPeople((r.payload.personnel as typeof people) ?? []));
     return () => {
       live = false;
     };
@@ -41,7 +43,7 @@ export function DepartmentsDesk({ apiBase, token, locale }: { apiBase: string; t
   if (items === null) return null;
 
   const name = (d: Dp) => (locale === "th" ? d.nameTh : d.nameEn);
-  const fields = (d: FormData) => ({ parentCode: d.get("parentCode") || null, nameTh: d.get("nameTh"), nameEn: d.get("nameEn"), descriptionTh: d.get("descriptionTh"), descriptionEn: d.get("descriptionEn"), sortOrder: Number(d.get("sortOrder") || 100) });
+  const fields = (d: FormData) => ({ parentCode: d.get("parentCode") || null, headPersonnelCode: d.get("headPersonnelCode") || null, nameTh: d.get("nameTh"), nameEn: d.get("nameEn"), descriptionTh: d.get("descriptionTh"), descriptionEn: d.get("descriptionEn"), sortOrder: Number(d.get("sortOrder") || 100) });
   const fail = (r: { payload: Record<string, unknown>; status: number }) => String(r.payload.message || r.payload.error || r.status);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>, code?: string) {
@@ -67,6 +69,12 @@ export function DepartmentsDesk({ apiBase, token, locale }: { apiBase: string; t
         <select className={FIELD} defaultValue={d?.parentCode ?? ""} name="parentCode">
           <option value="">{copy.none}</option>
           {items.filter((o) => o.code !== d?.code && o.status !== "archived").map((o) => <option key={o.code} value={o.code}>{name(o)} ({o.code})</option>)}
+        </select>
+      </label>
+      <label className="flex flex-col gap-1 text-sm font-medium">{copy.head}
+        <select className={FIELD} defaultValue={d?.headPersonnelCode ?? ""} name="headPersonnelCode">
+          <option value="">{copy.none}</option>
+          {people.filter((p) => p.status === "active").map((p) => <option key={p.code} value={p.code}>{p.prefixTh}{p.firstTh} {p.lastTh}</option>)}
         </select>
       </label>
       <label className="flex flex-col gap-1 text-sm font-medium">{copy.nameTh}<input className={FIELD} defaultValue={d?.nameTh} maxLength={200} name="nameTh" required /></label>

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { formatDocumentCode, type RegistryDocument } from "./document-registry.ts";
+import { formatPersonnelCode, type Personnel } from "./personnel-registry.ts";
 import { formatDepartmentCode, type Department } from "./department-registry.ts";
 import { formatAnnouncementCode, type Announcement } from "./announcement-registry.ts";
 import { formatContactCode, type ContactMessage, type ContactStatus } from "./contact-registry.ts";
@@ -53,6 +54,14 @@ export type SsoLink = {
 export type DocumentVersionRecord = { version: string; storageUrl: string; changedBy: string; changedAt: number; changeNote: string };
 
 export type Repository = {
+  /** M12 personnel (directory fields) and the encrypted restricted blob. The runtime encrypts; the repository never sees plaintext. */
+  createPersonnel(p: Omit<Personnel, "code">, audit: Omit<AuditRecord, "createdAt" | "entityId">): Promise<Personnel>;
+  listPersonnel(): Promise<Personnel[]>;
+  getPersonnel(code: string): Promise<Personnel | null>;
+  updatePersonnel(p: Personnel, audit: Omit<AuditRecord, "createdAt">): Promise<void>;
+  getPersonnelPrivate(code: string): Promise<{ dataEnc: string; updatedAt: number } | null>;
+  /** Returns "duplicate" if another person already holds this national-id hash. */
+  savePersonnelPrivate(code: string, dataEnc: string, nationalIdHash: string | null, by: string, now: number, audit: Omit<AuditRecord, "createdAt">): Promise<"ok" | "duplicate">;
   /** M18: the newest audit rows (read only; before/after payloads are not returned). */
   recentAudit(limit: number): Promise<{ actorId: string; action: string; entityType: string; entityId: string; createdAt: string }[]>;
   /** M13 departments. Code assignment is the repository's job. */
@@ -203,12 +212,25 @@ type DocRow = {
   note: string; created_by: string; updated_at: Date; download_count: number;
   link_status: "ok" | "broken" | "unreachable" | null; link_checked_at: Date | null;
 };
+type PsRow = {
+  code: string; employee_code: string | null; prefix_th: string; first_th: string; last_th: string; first_en: string; last_en: string;
+  position_th: string; position_en: string; academic_rank: string; level: string; work_group: string; department_code: string | null;
+  email: string; phone_office: string; expertise: string; is_public: number; consent_at: Date | null; consent_by: string | null;
+  status: Personnel["status"]; source: "manual"; created_by: string; updated_at: Date;
+};
+const toPersonnel = (r: PsRow): Personnel => ({
+  code: r.code, employeeCode: r.employee_code, prefixTh: r.prefix_th, firstTh: r.first_th, lastTh: r.last_th, firstEn: r.first_en, lastEn: r.last_en,
+  positionTh: r.position_th, positionEn: r.position_en, academicRank: r.academic_rank, level: r.level, workGroup: r.work_group,
+  departmentCode: r.department_code, email: r.email, phoneOffice: r.phone_office, expertise: ((v) => (Array.isArray(v) ? (v as string[]) : []))(parseJson(r.expertise)),
+  isPublic: Number(r.is_public) === 1, consentAt: r.consent_at ? asMillis(r.consent_at) : null, consentBy: r.consent_by,
+  status: r.status, source: r.source, createdBy: r.created_by, updatedAt: asMillis(r.updated_at),
+});
 type DpRow = {
-  code: string; parent_code: string | null; name_th: string; name_en: string; description_th: string; description_en: string;
+  code: string; parent_code: string | null; head_personnel_code: string | null; name_th: string; name_en: string; description_th: string; description_en: string;
   sort_order: number; status: Department["status"]; created_by: string; updated_at: Date;
 };
 const toDepartment = (r: DpRow): Department => ({
-  code: r.code, parentCode: r.parent_code, nameTh: r.name_th, nameEn: r.name_en, descriptionTh: r.description_th, descriptionEn: r.description_en,
+  code: r.code, parentCode: r.parent_code, headPersonnelCode: r.head_personnel_code ?? null, nameTh: r.name_th, nameEn: r.name_en, descriptionTh: r.description_th, descriptionEn: r.description_en,
   sortOrder: Number(r.sort_order), status: r.status, createdBy: r.created_by, updatedAt: asMillis(r.updated_at),
 });
 type AnRow = {
@@ -486,6 +508,84 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
       }));
     },
 
+    async createPersonnel(p, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM personnel FOR UPDATE");
+        const code = formatPersonnelCode(Number((rows as { n: number }[])[0].n) + 1);
+        await connection.query(
+          "INSERT INTO personnel (code, employee_code, prefix_th, first_th, last_th, first_en, last_en, position_th, position_en, academic_rank, level, work_group, department_code, email, phone_office, expertise, is_public, consent_at, consent_by, status, source, created_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [code, p.employeeCode, p.prefixTh, p.firstTh, p.lastTh, p.firstEn, p.lastEn, p.positionTh, p.positionEn, p.academicRank, p.level, p.workGroup, p.departmentCode, p.email, p.phoneOffice, JSON.stringify(p.expertise), p.isPublic ? 1 : 0, p.consentAt === null ? null : asDate(p.consentAt), p.consentBy, p.status, p.source, p.createdBy, asDate(p.updatedAt)],
+        );
+        await insertAudit(connection, { ...audit, entityId: code });
+        await connection.commit();
+        return { ...p, code };
+      } catch (error) {
+        await connection.rollback();
+        if ((error as { code?: string }).code === "ER_DUP_ENTRY") throw Object.assign(new Error("employee code is already registered"), { name: "PersonnelInvalid", status: 400 });
+        throw error;
+      } finally {
+        connection.release();
+      }
+    },
+
+    async listPersonnel() {
+      const [rows] = await pool.query("SELECT * FROM personnel ORDER BY code");
+      return (rows as PsRow[]).map(toPersonnel);
+    },
+
+    async getPersonnel(code) {
+      const [rows] = await pool.query("SELECT * FROM personnel WHERE code = ?", [code]);
+      const row = (rows as PsRow[])[0];
+      return row ? toPersonnel(row) : null;
+    },
+
+    async updatePersonnel(p, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        await connection.query(
+          "UPDATE personnel SET employee_code = ?, prefix_th = ?, first_th = ?, last_th = ?, first_en = ?, last_en = ?, position_th = ?, position_en = ?, academic_rank = ?, level = ?, work_group = ?, department_code = ?, email = ?, phone_office = ?, expertise = ?, is_public = ?, consent_at = ?, consent_by = ?, status = ?, updated_at = ? WHERE code = ?",
+          [p.employeeCode, p.prefixTh, p.firstTh, p.lastTh, p.firstEn, p.lastEn, p.positionTh, p.positionEn, p.academicRank, p.level, p.workGroup, p.departmentCode, p.email, p.phoneOffice, JSON.stringify(p.expertise), p.isPublic ? 1 : 0, p.consentAt === null ? null : asDate(p.consentAt), p.consentBy, p.status, asDate(p.updatedAt), p.code],
+        );
+        await insertAudit(connection, audit);
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback();
+        if ((error as { code?: string }).code === "ER_DUP_ENTRY") throw Object.assign(new Error("employee code is already registered"), { name: "PersonnelInvalid", status: 400 });
+        throw error;
+      } finally {
+        connection.release();
+      }
+    },
+
+    async getPersonnelPrivate(code) {
+      const [rows] = await pool.query("SELECT data_enc, updated_at FROM personnel_private WHERE personnel_code = ?", [code]);
+      const row = (rows as { data_enc: string; updated_at: Date }[])[0];
+      return row ? { dataEnc: row.data_enc, updatedAt: asMillis(row.updated_at) } : null;
+    },
+
+    async savePersonnelPrivate(code, dataEnc, nationalIdHash, by, now, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        await connection.query(
+          "INSERT INTO personnel_private (personnel_code, data_enc, national_id_hash, updated_by, updated_at) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE data_enc = VALUES(data_enc), national_id_hash = VALUES(national_id_hash), updated_by = VALUES(updated_by), updated_at = VALUES(updated_at)",
+          [code, dataEnc, nationalIdHash, by, asDate(now)],
+        );
+        await insertAudit(connection, audit);
+        await connection.commit();
+        return "ok";
+      } catch (error) {
+        await connection.rollback();
+        if ((error as { code?: string }).code === "ER_DUP_ENTRY") return "duplicate";
+        throw error;
+      } finally {
+        connection.release();
+      }
+    },
+
     async createDepartment(d, audit) {
       const connection = await pool.getConnection();
       try {
@@ -493,8 +593,8 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
         const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM departments FOR UPDATE");
         const code = formatDepartmentCode(Number((rows as { n: number }[])[0].n) + 1);
         await connection.query(
-          "INSERT INTO departments (code, parent_code, name_th, name_en, description_th, description_en, sort_order, status, created_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-          [code, d.parentCode, d.nameTh, d.nameEn, d.descriptionTh, d.descriptionEn, d.sortOrder, d.status, d.createdBy, asDate(d.updatedAt)],
+          "INSERT INTO departments (code, parent_code, head_personnel_code, name_th, name_en, description_th, description_en, sort_order, status, created_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [code, d.parentCode, d.headPersonnelCode, d.nameTh, d.nameEn, d.descriptionTh, d.descriptionEn, d.sortOrder, d.status, d.createdBy, asDate(d.updatedAt)],
         );
         await insertAudit(connection, { ...audit, entityId: code });
         await connection.commit();
@@ -523,8 +623,8 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
       try {
         await connection.beginTransaction();
         await connection.query(
-          "UPDATE departments SET parent_code = ?, name_th = ?, name_en = ?, description_th = ?, description_en = ?, sort_order = ?, status = ?, updated_at = ? WHERE code = ?",
-          [d.parentCode, d.nameTh, d.nameEn, d.descriptionTh, d.descriptionEn, d.sortOrder, d.status, asDate(d.updatedAt), d.code],
+          "UPDATE departments SET parent_code = ?, head_personnel_code = ?, name_th = ?, name_en = ?, description_th = ?, description_en = ?, sort_order = ?, status = ?, updated_at = ? WHERE code = ?",
+          [d.parentCode, d.headPersonnelCode, d.nameTh, d.nameEn, d.descriptionTh, d.descriptionEn, d.sortOrder, d.status, asDate(d.updatedAt), d.code],
         );
         await insertAudit(connection, audit);
         await connection.commit();

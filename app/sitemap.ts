@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { readPublicDocuments } from "@/lib/cms/documents-live";
+import { readPublicPersonnel } from "@/lib/cms/personnel-live";
 import { liveNews, liveSitemap } from "@/lib/cms/live";
 import { eventsPageCount } from "@/components/events-index";
 import { LOCALES, PAGES, SITE_URL, getDocuments, getNews, getNewsPages } from "@/lib/i18n";
@@ -111,8 +112,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   );
 
+  // People directory (M12): listed only once at least one public person exists (an empty page is noindex).
+  const people = (await readPublicPersonnel()).length === 0 ? [] : LOCALES.map((locale) => ({
+    url: `${SITE_URL}/${locale}/people/`,
+    changeFrequency: "monthly" as const,
+    priority: 0.5,
+    alternates: { languages: languagesFor("people") },
+  }));
+
   return [
     ...home,
+    ...people,
     ...pages,
     ...events,
     ...eventsArchivePages,

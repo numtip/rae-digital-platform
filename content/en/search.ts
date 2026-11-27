@@ -36,6 +36,7 @@ export const enSearch: SearchContent = {
       knowledge: "Knowledge",
       news: "News & activities",
       directory: "Information systems",
+      people: "People",
       contact: "Contact",
       search: "Search",
     },

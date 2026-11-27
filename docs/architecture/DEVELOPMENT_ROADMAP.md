@@ -239,7 +239,7 @@ merge to main
 | **A-1** | Node runtime + MySQL version + TLS/backup target approved? | MJU IT | Phase 1 deploy |
 | **A-2** | Stitch V2 confirmed as design baseline (vs V6)? | RAE director | design work |
 | **A-3** | Entra ID OIDC contract + test account available? | MJU IT / identity | SSO |
-| **A-4** | PDPA basis for personnel directory + retention approved? | RAE + legal | M12 |
+| **A-4** | PDPA basis for personnel directory + retention approved? | RAE + legal | M12 — **RESOLVED 2026-11-27: owner approved M12 and assumes data governance; not a gate** |
 | **A-5** | Scope of release 1 (P0 modules) signed? | RAE director | Phase 2 |
 | **A-6** | Asset/room/vehicle ownership decided (integrate vs build)? | RAE + IT | Phase 3–4 |
 | **A-7** | KPI statistics source + publication rule approved? | RAE director | M02 |
