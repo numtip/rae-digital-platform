@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { notFound } from "next/navigation";
+import { Announcements } from "@/components/announcements";
 import { AnalyticsBeacon } from "@/components/analytics-beacon";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -109,6 +110,7 @@ export default async function LocaleLayout({
         >
           {content.a11y.skipToContent}
         </a>
+        <Announcements locale={locale} />
         <SiteHeader locale={locale} content={content} />
         <div className="flex-1">{children}</div>
         <SiteFooter content={content} locale={locale} />

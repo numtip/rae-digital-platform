@@ -46,6 +46,8 @@ export async function POST(request: Request) {
   // M07 contact page (FAQ + form switch).
   revalidatePath("/[locale]/contact", "page");
   revalidateTag("cms-contact", "max");
+  // M17 announcements are in the layout, so every page: drop the cached read; pages refresh within its window.
+  revalidateTag("cms-announcements", "max");
   // M05 events.
   revalidatePath("/[locale]/news/events", "page");
   revalidateTag("cms-events", "max");

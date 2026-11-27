@@ -23,6 +23,7 @@ import {
   publicDocumentView,
   validateNewDocument,
 } from "../lib/cms/document-registry.ts";
+import { applyAnnouncementUpdate, byStartDesc, formatAnnouncementCode, isLiveAnnouncement, publicAnnouncementView, validateAnnouncement } from "../lib/cms/announcement-registry.ts";
 import { MAX_PATHS_PER_DAY, bangkokDay, normalizeAnalyticsPath, readAnalyticsConfig } from "../lib/cms/analytics.ts";
 import { CONTACT_STATUSES, ContactInvalid, formatContactCode, readContactConfig, validateContact } from "../lib/cms/contact-registry.ts";
 import { applyEventUpdate, byStart, formatEventCode, isPublicEvent, publicEventView, validateEvent } from "../lib/cms/event-registry.ts";
@@ -55,6 +56,7 @@ const knowledge = new Map();
 const events = new Map();
 const contactMessages = new Map();
 const pageViews = new Map();
+const announcements = new Map();
 const viewsByIp = createIpLimiter({ max: 120, windowMs: 60_000 });
 const contactByIp = createIpLimiter({ max: 5, windowMs: 10 * 60_000 });
 const documentVersions = new Map();
@@ -77,6 +79,7 @@ export function resetRuntime() {
   events.clear();
   contactMessages.clear();
   pageViews.clear();
+  announcements.clear();
   viewsByIp.reset();
   contactByIp.reset();
   documentVersions.clear();
@@ -155,6 +158,24 @@ export function memoryRepository() {
     },
     async listAudit() {
       return [...audit];
+    },
+    async createAnnouncement(a, audit) {
+      const n = [...announcements.keys()].reduce((max, code) => Math.max(max, Number(code.slice(7))), 0) + 1;
+      const code = formatAnnouncementCode(n);
+      announcements.set(code, { ...a, code });
+      await this.appendAudit({ ...audit, entityId: code });
+      return { ...a, code };
+    },
+    async listAnnouncements() {
+      return [...announcements.values()].map((a) => ({ ...a })).sort(byStartDesc);
+    },
+    async getAnnouncement(code) {
+      const a = announcements.get(code);
+      return a ? { ...a } : null;
+    },
+    async updateAnnouncement(a, audit) {
+      announcements.set(a.code, { ...a });
+      await this.appendAudit(audit);
     },
     async recordPageView(day, path, maxPaths) {
       const todays = [...pageViews.keys()].filter((k) => k.startsWith(`${day}|`));
@@ -597,6 +618,42 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         const doc = await repo.countDownload(countMatch[1]);
         if (!doc) return send(response, 404, { error: "NOT_FOUND" }, origin);
         return send(response, 200, { url: doc.storageUrl }, origin);
+      }
+      // M17 announcements. The public list is decided here, now: published AND inside its window.
+      if (request.method === "GET" && url.pathname === "/v1/public/announcements") {
+        const live = (await repo.listAnnouncements()).filter((a) => isLiveAnnouncement(a, now()));
+        response.setHeader("cache-control", "no-store");
+        return send(response, 200, { announcements: live.map(publicAnnouncementView) }, origin);
+      }
+      if (url.pathname === "/v1/announcements" || url.pathname.startsWith("/v1/announcements/")) {
+        const actor = await actorFrom(request, now(), repo);
+        if (!actor) return send(response, 401, { error: "UNAUTHORIZED" }, origin);
+        requirePermission(actor.role, "news:draft");
+        const audit = (action, code) => ({ actorId: actor.id, action, entityType: "announcement", entityId: code });
+        if (request.method === "GET" && url.pathname === "/v1/announcements") {
+          return send(response, 200, { announcements: await repo.listAnnouncements() }, origin);
+        }
+        if (request.method === "POST" && url.pathname === "/v1/announcements") {
+          const fields = validateAnnouncement(await readBody(request));
+          if (fields.status !== "draft") requirePermission(actor.role, "news:publish");
+          const record = await repo.createAnnouncement({ ...fields, createdBy: actor.id, updatedAt: now() }, audit("announcement.create", ""));
+          await notifySite({});
+          return send(response, 201, record, origin);
+        }
+        const an = /^\/v1\/announcements\/(RAE-AN-\d{4,})$/.exec(url.pathname);
+        if (an) {
+          const current = await repo.getAnnouncement(an[1]);
+          if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
+          if (request.method === "GET") return send(response, 200, current, origin);
+          if (request.method === "PATCH") {
+            const next = applyAnnouncementUpdate(current, await readBody(request), now());
+            if (current.status === "published" || next.status === "published") requirePermission(actor.role, "news:publish");
+            await repo.updateAnnouncement(next, audit("announcement.update", next.code));
+            await notifySite({});
+            return send(response, 200, next, origin);
+          }
+        }
+        return send(response, 404, { error: "NOT_FOUND" }, origin);
       }
       // M08 analytics. Off (404) unless enabled. A page view carries only a public path: no cookie, IP or user agent is kept.
       if (request.method === "POST" && url.pathname === "/v1/public/analytics/hit") {
