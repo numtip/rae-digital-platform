@@ -107,6 +107,7 @@ export function publicEventView(e: EventRecord) {
     startsAt: new Date(e.startsAt).toISOString(),
     endsAt: e.endsAt === null ? null : new Date(e.endsAt).toISOString(),
     cancelled: e.status === "cancelled",
+    updatedAt: new Date(e.updatedAt).toISOString(),
   };
 }
 

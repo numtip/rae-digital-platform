@@ -16,6 +16,7 @@ export type PublicEvent = {
   startsAt: string;
   endsAt: string | null;
   cancelled: boolean;
+  updatedAt: string;
 };
 
 export async function readPublicEvents(): Promise<PublicEvent[]> {
