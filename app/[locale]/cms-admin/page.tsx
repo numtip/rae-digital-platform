@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { NewsDesk } from "@/components/cms/news-desk";
+import { Toaster } from "@/components/ui/sonner";
 import { adminCopy } from "@/lib/cms/admin-copy";
 import { isLocale } from "@/lib/i18n";
 
@@ -37,6 +38,8 @@ export default async function CmsAdmin({ params }: Props) {
             form. */}
         <NewsDesk apiBase={process.env.NEXT_PUBLIC_CMS_API ?? "http://127.0.0.1:3317"} locale={locale} />
       </div>
+      {/* One toast host for every desk. Toasts announce success; failures also stay on the form. */}
+      <Toaster position="top-right" richColors />
     </main>
   );
 }

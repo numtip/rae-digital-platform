@@ -105,6 +105,14 @@ test("an empty export fails instead of passing vacuously", () => {
 
 // --- shadcn-style alias tokens: `--color-x: var(--x)` with the value in :root / the dark media query ---
 
+test("the real shadcn aliases resolve: primary on its foreground passes, primary on primary fails", () => {
+  const ok = run({ "a/index.html": '<div class="bg-primary"><p class="text-primary-foreground">ok</p></div>' });
+  assert.equal(ok.status, 0, ok.output);
+  const bad = run({ "b/index.html": '<div class="bg-primary"><p class="text-primary">same</p></div>' });
+  assert.equal(bad.status, 1);
+  assert.match(bad.output, /primary on primary is 1\.000:1/);
+});
+
 test("an alias is followed to its hex, not graded as inherit", () => {
   const css = ":root { --weak: var(--color-neutral-300); }\n@theme inline { --color-weak: var(--weak); }";
   const { status, output } = run({ "w/index.html": '<div class="bg-white"><p class="text-weak">x</p></div>' }, css);
