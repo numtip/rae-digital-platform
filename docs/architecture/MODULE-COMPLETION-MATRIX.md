@@ -19,9 +19,9 @@ Legend — **Status**: ✅ implemented · 🟡 partial · ⬜ not started · ⛔
 | M01 | Public shell, routing, i18n, design system | BUILD | M15, M20 | 🟡 | `app/[locale]/layout.tsx`, `lib/i18n.ts` (NAV 7 links + search), `components/site-header.tsx`; `/knowledge` still absent | #29, #34 |
 | M02 | Homepage & content sections | BUILD | M14, M18 | 🟡 | `app/[locale]/page.tsx`: hero photo, real CTAs, section links; statistics still labelled sample data | — |
 | M03 | Document Center (public library) | BUILD | M15 | 🟢 core | CMS-backed registry (`documents`, `document_versions`; migrations 009–010): `RAE-DC-####` codes, validated SharePoint links only (ADR-0004), draft/current/obsolete/archived, version history, counted open + redirect, detail pages, sitemap, search, pagination (50), daily link health; verified on the canonical URL 2026-11-25. Pending: real M365 onboarding | #118 #119 #120 #121 #122 |
-| M04 | Knowledge & static pages | BUILD | M14 | 🟡 | `/about`, `/research`, `/services`, `/documents`, `/news`, `/contact`, `/search` exist and carry a breadcrumb + `BreadcrumbList`; no FAQ/knowledge articles | #34 |
-| M05 | Events & calendar | BUILD | M14 | ⬜ | no event route, no event data | — |
-| M06 | Global search | BUILD | M03, M04, M12, M14 | 🟡 | `/search` + `lib/search-index.ts` + `components/content-search.tsx`, header form, indexes document categories, registered documents and contact; `WebSite`+`SearchAction` JSON-LD now advertises it; still no personnel (M12 absent) | #29, #34, #40 |
+| M04 | Knowledge & static pages | BUILD | M14 | 🟢 | CMS-backed FAQ: migration 011, `/v1/knowledge`, desk panel, `/knowledge#faq` hidden while empty, FAQPage JSON-LD, search; empty until editors publish | #125 |
+| M05 | Events & calendar | BUILD | M14 | 🟢 | CMS events: migration 012, `/v1/events`, desk panel (Bangkok time), section on `/news/events` when events exist, cancelled shown flagged, Event JSON-LD, search; empty until published | #126 |
+| M06 | Global search | BUILD | M03, M04, M12, M14 | 🟡 | `/search` + `lib/search-index.ts` + `components/content-search.tsx`, header form, indexes document categories, registered documents and contact; `WebSite`+`SearchAction` JSON-LD now advertises it; still no personnel (M12 absent); results ranked by relevance (title, exact record code), FAQ + events indexed | #29, #34, #40 |
 | M07 | Contact & FAQ | BUILD | M15, M20 | 🟡 | `/contact` renders the verified address/phone and the **single official email `researchmju@mju.ac.th`**; **no form** (needs SMTP + PDPA basis) and no FAQ copy | #34, #38 |
 | M08 | SEO, analytics, accessibility | BUILD | M01 | 🟡 | `app/sitemap.ts` (146 URLs incl. paginated news and document categories), `app/robots.ts`, Organization JSON-LD, per-page canonical/hreflang, `NewsArticle` JSON-LD on news pages, `scripts/check-contrast.mjs` measures WCAG AA on every exported page in both colour schemes (4.5:1 body / 3:1 heading, tokens read from `globals.css`; hover states, alpha backgrounds and client-only branches stay a human check), with 9 fixture tests; no analytics, no axe run (browser-only checks stay manual) | #30 |
 | M14 | News (data shape + detail pages) | BUILD | M15, M10 | 🟡 | 58 news items (title, date, type, body, image) back to 13 Jul 2026, `/news/[nid]` × 2 locales, index paginated 12/page with real URLs, 58/58 English headlines, no machine-translated bodies; no authoring workflow or revisions (needs M10/M15) | #30, #32, #33, #37 |
@@ -41,7 +41,7 @@ Legend — **Status**: ✅ implemented · 🟡 partial · ⬜ not started · ⛔
 | M19 | Reports & exports | BUILD | ⛔ | Phase 3 |
 | M20 | Settings & theming | BUILD | ⛔ | needs DB; today `SITE_URL` is env-driven with `TODO(owner)` in `lib/i18n.ts` |
 | M21 | Audit & activity logs | BUILD | ⛔ | needs M10 |
-| M22 | Backup & restore | BUILD | ⛔ | no job runner |
+| M22 | Backup & restore | BUILD | ⛔ | 🟡 | nightly dump + media (script fixed), weekly restore into a disposable container (`scripts/ops/`, `docs/ops/backup-restore.md`); off-box copy deferred; crontab update pending operator | #124 |
 | M23 | Public API / OpenAPI | BUILD | ⛔ | static export has no server routes; ADR-0001 A-1 (Node runtime) unresolved |
 | M30 | Assets (ครุภัณฑ์) | HYBRID | ⛔ | gate A-6: "INTEGRATE if ERP owns the asset register `[U]`" — undecided |
 | M31 | Vehicles | INTEGRATE | ⛔ | external system API availability is `[U]` |
