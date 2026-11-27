@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
-import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { createHash, randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { assertArticleImage, extensionFor, MediaRejected, SAFE_ID, SAFE_MEDIA_FILE } from "../lib/cms/media.ts";
 import {
@@ -51,6 +51,15 @@ import {
   publicKnowledgeView,
   validateKnowledge,
 } from "../lib/cms/knowledge-registry.ts";
+import {
+  applyMediaUpdate,
+  formatMediaCode,
+  inspectUpload,
+  isPublicMedia,
+  MEDIA_FILE,
+  publicMediaView,
+  validateMediaMeta,
+} from "../lib/cms/media-library.ts";
 import { createSso } from "./sso.mjs";
 import { clientKey, createIpLimiter } from "../lib/cms/ip-rate-limit.ts";
 import { createMysqlRepository } from "../lib/cms/mysql-repository.ts";
@@ -69,6 +78,7 @@ const ssoHandoffs = new Map();
 const throttle = createLoginThrottle();
 const documents = new Map();
 const knowledge = new Map();
+const mediaAssets = new Map();
 const events = new Map();
 const contactMessages = new Map();
 const pageViews = new Map();
@@ -95,6 +105,7 @@ export function resetRuntime() {
   downloadByIp.reset();
   documents.clear();
   knowledge.clear();
+  mediaAssets.clear();
   events.clear();
   contactMessages.clear();
   pageViews.clear();
@@ -315,6 +326,24 @@ export function memoryRepository() {
     },
     async updateKnowledge(entry, audit) {
       knowledge.set(entry.code, { ...entry });
+      await this.appendAudit(audit);
+    },
+    async createMediaAsset(asset, audit) {
+      const n = [...mediaAssets.keys()].reduce((max, code) => Math.max(max, Number(code.slice(7))), 0) + 1;
+      const code = formatMediaCode(n);
+      mediaAssets.set(code, { ...asset, code });
+      await this.appendAudit({ ...audit, entityId: code });
+      return { ...asset, code };
+    },
+    async listMediaAssets() {
+      return [...mediaAssets.values()].map((a) => ({ ...a })).sort((a, b) => b.updatedAt - a.updatedAt || b.code.localeCompare(a.code));
+    },
+    async getMediaAsset(code) {
+      const a = mediaAssets.get(code);
+      return a ? { ...a } : null;
+    },
+    async updateMediaAsset(asset, audit) {
+      mediaAssets.set(asset.code, { ...asset });
       await this.appendAudit(audit);
     },
     async createDocument(doc, audit) {
@@ -1014,6 +1043,96 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
             if (current.status === "published" || next.status === "published") requirePermission(actor.role, "news:publish");
             await repo.updateKnowledge(next, audit("knowledge.update", next.code));
             await notifySite({});
+            return send(response, 200, next, origin);
+          }
+        }
+        return send(response, 404, { error: "NOT_FOUND" }, origin);
+      }
+      // M15 media library: images kept for reuse. Public reads see published assets only; the bytes are served by the
+      // runtime with the stored type (never sniffed). Drafts and archived assets stay behind authentication.
+      if (request.method === "GET" && url.pathname === "/v1/public/media") {
+        const list = (await repo.listMediaAssets()).filter(isPublicMedia);
+        return send(response, 200, { assets: list.map(publicMediaView) }, origin);
+      }
+      const mediaFileRoute = /^\/v1\/(?:public\/media|media-library)\/(RAE-MD-\d{4,})\/([0-9a-f]{16}\.(?:png|jpg|webp))$/.exec(url.pathname);
+      if (request.method === "GET" && mediaFileRoute) {
+        const isPublicRoute = url.pathname.startsWith("/v1/public/");
+        const asset = await repo.getMediaAsset(mediaFileRoute[1]);
+        if (!asset || asset.filename !== mediaFileRoute[2] || !MEDIA_FILE.test(asset.filename)) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        if (isPublicRoute) {
+          if (!isPublicMedia(asset)) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        } else {
+          const reader = await actorFrom(request, now(), repo);
+          if (!reader) return send(response, 401, { error: "UNAUTHORIZED" }, origin);
+          requirePermission(reader.role, "media:upload");
+        }
+        try {
+          const bytes = readFileSync(join(mediaRoot(), "library", asset.code, asset.filename));
+          response.writeHead(200, {
+            "content-type": asset.mime,
+            "content-length": bytes.length,
+            "cache-control": isPublicRoute ? "public, max-age=300" : "private, no-store",
+            "x-content-type-options": "nosniff",
+            "content-security-policy": "default-src 'none'; sandbox",
+            "content-disposition": "inline",
+          });
+          response.end(bytes);
+        } catch {
+          send(response, 404, { error: "NOT_FOUND" }, origin);
+        }
+        return;
+      }
+      if (url.pathname === "/v1/media-library" || url.pathname.startsWith("/v1/media-library/")) {
+        const actor = await actorFrom(request, now(), repo);
+        if (!actor) return send(response, 401, { error: "UNAUTHORIZED" }, origin);
+        requirePermission(actor.role, "media:upload");
+        const audit = (action, code) => ({ actorId: actor.id, action, entityType: "media", entityId: code });
+        if (request.method === "GET" && url.pathname === "/v1/media-library") {
+          return send(response, 200, { assets: await repo.listMediaAssets() }, origin);
+        }
+        if (request.method === "POST" && url.pathname === "/v1/media-library") {
+          const body = await readBody(request);
+          const meta = validateMediaMeta(body);
+          // Going live is a publisher's decision, as with news.
+          if (meta.status !== "draft") requirePermission(actor.role, "news:publish");
+          let upload;
+          try {
+            upload = inspectUpload(body.dataBase64);
+          } catch (error) {
+            if (error instanceof MediaRejected) return send(response, 400, { error: "MediaRejected", message: error.message }, origin);
+            throw error;
+          }
+          const sha256 = createHash("sha256").update(upload.bytes).digest("hex");
+          const same = (await repo.listMediaAssets()).find((a) => a.sha256 === sha256 && a.status !== "archived");
+          if (same) return send(response, 409, { error: "DUPLICATE", message: `this image is already in the library as ${same.code}`, code: same.code }, origin);
+          const filename = `${randomBytes(8).toString("hex")}.${upload.ext}`;
+          // Stage the bytes, create the row (which assigns the code), then move the file into its code directory.
+          const staging = join(mediaRoot(), "library", ".incoming");
+          mkdirSync(staging, { recursive: true });
+          writeFileSync(join(staging, filename), upload.bytes);
+          const record = await repo.createMediaAsset(
+            { ...meta, filename, mime: upload.mime, bytes: upload.bytes.length, sha256, createdBy: actor.id, updatedAt: now() },
+            audit("media.create", ""),
+          );
+          try {
+            mkdirSync(join(mediaRoot(), "library", record.code), { recursive: true });
+            renameSync(join(staging, filename), join(mediaRoot(), "library", record.code, filename));
+          } catch (error) {
+            await repo.updateMediaAsset({ ...record, status: "archived", updatedAt: now() }, audit("media.file-missing", record.code));
+            throw error;
+          }
+          return send(response, 201, record, origin);
+        }
+        const md = /^\/v1\/media-library\/(RAE-MD-\d{4,})$/.exec(url.pathname);
+        if (md) {
+          const current = await repo.getMediaAsset(md[1]);
+          if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
+          if (request.method === "GET") return send(response, 200, current, origin);
+          if (request.method === "PATCH") {
+            const next = applyMediaUpdate(current, await readBody(request), now());
+            // Anything that is, or becomes, public is a publisher's decision.
+            if (current.status === "published" || next.status === "published") requirePermission(actor.role, "news:publish");
+            await repo.updateMediaAsset(next, audit("media.update", next.code));
             return send(response, 200, next, origin);
           }
         }
