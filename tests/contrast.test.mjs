@@ -7,14 +7,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const SCRIPT = "scripts/check-contrast.mjs";
 
 // pages: { "<relative file>": "<body markup>" } — each wrapped in a minimal document.
-function run(pages) {
+// extraCss: appended to the real app/globals.css and passed as THEME_CSS, to pin how aliases resolve.
+function run(pages, extraCss) {
   const dir = mkdtempSync(join(tmpdir(), "rae-contrast-"));
   try {
     for (const [file, markup] of Object.entries(pages)) {
@@ -25,9 +26,15 @@ function run(pages) {
         `<!DOCTYPE html><html lang="th"><body class="bg-surface-50 text-neutral-900">${markup}</body></html>`,
       );
     }
+    const env = { ...process.env, EXPORT_DIR: dir };
+    if (extraCss !== undefined) {
+      const theme = join(dir, "theme.css");
+      writeFileSync(theme, `${readFileSync("app/globals.css", "utf8")}\n${extraCss}\n`);
+      env.THEME_CSS = theme;
+    }
     const out = spawnSync(process.execPath, [SCRIPT], {
       cwd: process.cwd(),
-      env: { ...process.env, EXPORT_DIR: dir },
+      env,
       encoding: "utf8",
     });
     return { status: out.status, output: `${out.stdout}${out.stderr}` };
@@ -94,4 +101,50 @@ test("an empty export fails instead of passing vacuously", () => {
   const { status, output } = run({});
   assert.equal(status, 1);
   assert.match(output, /no text found/);
+});
+
+// --- shadcn-style alias tokens: `--color-x: var(--x)` with the value in :root / the dark media query ---
+
+test("an alias is followed to its hex, not graded as inherit", () => {
+  const css = ":root { --weak: var(--color-neutral-300); }\n@theme inline { --color-weak: var(--weak); }";
+  const { status, output } = run({ "w/index.html": '<div class="bg-white"><p class="text-weak">x</p></div>' }, css);
+  assert.equal(status, 1);
+  assert.match(output, /weak on white is 1\.4\d+:1/);
+});
+
+test("the dark pass reads the alias value from the prefers-color-scheme: dark block", () => {
+  // Light value is dark enough on white; the dark override (#0a0a0a) vanishes on the dark page.
+  const css = [
+    ":root { --sem: #171717; }",
+    "@media (prefers-color-scheme: dark) { :root { --sem: #0a0a0a; } }",
+    "@theme inline { --color-sem: var(--sem); }",
+  ].join("\n");
+  const { status, output } = run({ "d/index.html": '<div class="bg-white dark:bg-neutral-950"><p class="text-sem">x</p></div>' }, css);
+  assert.equal(status, 1);
+  assert.match(output, /dark: sem on neutral-950 is 1\.0\d+:1/);
+  assert.doesNotMatch(output, /(^|\n)\s*- [^\n]*: sem on white/); // the light pass is fine
+});
+
+test("an alias chain through another alias resolves in both modes", () => {
+  const css = [
+    ":root { --inner: #ffffff; --outer: var(--inner); }",
+    "@media (prefers-color-scheme: dark) { :root { --inner: #000000; } }",
+    "@theme inline { --color-chain: var(--outer); }",
+  ].join("\n");
+  // white-on-brand-700 passes in light; in dark the same text is black on neutral-950.
+  const { status, output } = run({ "c/index.html": '<div class="bg-brand-700 dark:bg-neutral-950"><p class="text-chain">x</p></div>' }, css);
+  assert.equal(status, 1);
+  assert.match(output, /dark: chain on neutral-950/);
+});
+
+test("an alias that cannot be resolved, a 3-digit hex and a cycle are errors, not silent", () => {
+  const missing = run({ "m/index.html": "<p>x</p>" }, "@theme inline { --color-ghost: var(--nowhere); }");
+  assert.equal(missing.status, 1);
+  assert.match(missing.output, /--nowhere is not declared/);
+  const short = run({ "s/index.html": "<p>x</p>" }, ":root { --tiny: #fff; }\n@theme inline { --color-tiny: var(--tiny); }");
+  assert.equal(short.status, 1);
+  assert.match(short.output, /6-digit hex/);
+  const loop = run({ "l/index.html": "<p>x</p>" }, ":root { --a: var(--b); --b: var(--a); }\n@theme inline { --color-loop: var(--a); }");
+  assert.equal(loop.status, 1);
+  assert.match(loop.output, /alias cycle/);
 });
