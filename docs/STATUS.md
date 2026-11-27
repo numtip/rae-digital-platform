@@ -3,12 +3,12 @@
 | | |
 |---|---|
 | **GitHub `main`** | `623913e624c3` + docs (docs only, not redeployed) |
-| **Production runtime (deployed SHA)** | **`623913e624c3`** — CMS runtime and both site builds (release `623913e624c3`, previous `cb64016694f8` kept for rollback) |
+| **Production runtime (deployed SHA)** | **`cc05a18e5c53`** — site builds (PR #149: shadcn setup, toast + confirm dialogs in the documents desk); CMS runtime unchanged at `623913e624c3`. Previous release `623913e624c3` kept for rollback |
 | RAE_UNIFIED_PLATFORM_READY | **YES** |
 | M03_PRODUCTION_READY | **YES** |
 | BACKUP_CRON_INSTALLED | **YES** (owner, 2026-11-27 06:06Z; crontab == proposed file; server TZ UTC) |
 | BACKUP_SCHEDULE_VERIFIED | **PENDING** — until 2026-11-28 02:45Z backup and 2026-11-29 04:30Z weekly restore both succeed (`docs/ops/backup-restore.md`) |
-| MJU SSO | **PENDING_EXTERNAL_APPROVAL** — built, deployed, `MJU_SSO_ENABLED=false` |
+| MJU SSO | **LIVE (owner pilot, 2026-11-27)** — `MJU_SSO_ENABLED=true`, adapter rc.6, `citizenID` HMAC, one approved link (existing admin user); local login unchanged. Record, container-DNS fix and rollback: `docs/ops/mju-sso-live-e2e.md` |
 
 **Architecture (verified):** one VPS (VPS190, 10.1.245.190), one CMS runtime (`rae-cms-runtime`, 127.0.0.1:3317), one database (`rae_cms` in
 `rae-cms-db`). Two renderers of the same code: `rae-digital-next` (127.0.0.1:3417, root build, admin host `rae-cms.raemanagemju.net` via the
@@ -36,6 +36,5 @@ Known gaps: withdrawn.json contains test entries (uat-withdraw-0 through -7, new
 **PERSONNEL_KEY:** `~/rae/rae-cms-secrets/personnel.key` (also in runtime.env). DB dumps hold ciphertext only — the owner must keep an offline copy of the key; a lost key cannot be recovered.
 **Releases:** production now serves `~/rae/current` (SHA-tagged release dirs, isolated builds, spare-port probe, auto-rollback — `docs/ops/releases.md`). Measured cutover downtime 2.4 s (was ~8 min with in-place builds).
 
-**Pending, owner-side:** M365 onboarding (no verified SharePoint link list exists yet; needs the list of existing SharePoint links; tool + guide ready); MJU SSO — countersigned CMS C-14,
-MJU SSO administrator's E2E authorisation + window; Cloudflare Access on `/th|en/cms-admin/*` (leave `/cms-api/*` open).
+**Pending, owner-side:** M365 onboarding (no verified SharePoint link list exists yet; needs the list of existing SharePoint links; tool + guide ready); Cloudflare Access on `/th|en/cms-admin/*` (leave `/cms-api/*` open).
 Full detail: `docs/reports/2026-11-25-day-closeout.md`. Handoff: `docs/memory/NEXT_SESSION.md`.

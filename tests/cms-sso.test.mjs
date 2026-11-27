@@ -186,3 +186,94 @@ test("a consumed login code stays consumed across a restart with the file store"
   // durable required but memory configured: refuse to start
   await assert.rejects(() => createSso({ repository: memoryRepository(), env: { ...ENV, MJU_SSO_STORE_REQUIRE_DURABLE: "true" } }));
 });
+
+// --- the production configuration: citizenID (C-08), C-14 lawful-basis flag, ADR-006 owner risk acceptance ---
+// The live CMS runs citizenID in production mode on an unverified contract with an owner risk acceptance.
+// Everything above uses humanID outside production, so this pins the path that is actually deployed. The
+// "citizenID" below is a synthetic 13-digit value; nothing here talks to sso.mju.ac.th.
+const SYNTHETIC_CITIZEN_ID = "9999999999999";
+const citizenProvider = () => ({
+  kind: "mju-token-client",
+  async exchange() {
+    return { citizenID: SYNTHETIC_CITIZEN_ID };
+  },
+});
+
+async function bootProduction({ lawfulBasis = true, acceptance = true } = {}) {
+  const { mkdtempSync, readFileSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const dir = mkdtempSync(join(tmpdir(), "sso-prod-"));
+  const record = JSON.parse(readFileSync(new URL("../deploy/production/sso-risk-acceptance.cms.DRAFT.json", import.meta.url), "utf8"));
+  const file = join(dir, "risk-acceptance.json");
+  writeFileSync(file, JSON.stringify({ ...record, decision: "accepted-owner-risk", authorisedBy: "test fixture", date: "2026-01-01" }));
+  const env = {
+    MJU_SSO_MODULE: MODULE,
+    MJU_SSO_ENABLED: "true",
+    MJU_CLIENT_ID: "00000000-test-client",
+    MJU_SSO_APP_ID: "rae-cms",
+    MJU_SSO_HMAC_KEY: "k".repeat(48),
+    NODE_ENV: "production",
+    MJU_SSO_ALLOW_UNVERIFIED_CONTRACT: "true",
+    MJU_SSO_SUBJECT_CLAIM: "citizenID",
+    MJU_SSO_LAWFUL_BASIS_APPROVED: lawfulBasis ? "true" : "false",
+    ...(acceptance ? { MJU_SSO_OWNER_RISK_ACCEPTANCE: file } : {}),
+    MJU_SSO_STORE_DRIVER: "file",
+    MJU_SSO_STORE_FILE_ROOT: dir,
+    MJU_SSO_STORE_REQUIRE_DURABLE: "true",
+  };
+  resetRuntime();
+  addUser({ id: "admin", role: "admin", password: "admin-password-123" });
+  const repository = memoryRepository();
+  const sso = await createSso({ repository, env, adapterDeps: { tokenClient: citizenProvider() } });
+  const server = createCmsServer({ repository, sso });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  return { base: `http://127.0.0.1:${server.address().port}`, repository, close: () => new Promise((r) => server.close(r)), env };
+}
+
+test("production config: citizenID is HMAC-only, an approved link signs in, a replayed code does not", { skip }, async () => {
+  const ctx = await bootProduction();
+  try {
+    const first = await signIn(ctx.base);
+    assert.match(first.callback.headers.get("location"), /sso_error=SSO_IDENTITY_UNLINKED/);
+    const links = await ctx.repository.listSsoLinks();
+    assert.equal(links.length, 1);
+    assert.match(links[0].subjectKey, /^[0-9a-f]{64}$/);
+    assert.ok(!JSON.stringify(links).includes(SYNTHETIC_CITIZEN_ID), "the raw citizenID must never reach the repository");
+
+    const adminLogin = await (await fetch(`${ctx.base}/v1/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ userId: "admin", password: "admin-password-123" }) })).json();
+    const admin = { authorization: `Bearer ${adminLogin.token}`, "content-type": "application/json" };
+    const listed = await (await fetch(`${ctx.base}/v1/sso/links`, { headers: admin })).json();
+    assert.ok(!JSON.stringify(listed).includes(SYNTHETIC_CITIZEN_ID));
+    assert.equal((await fetch(`${ctx.base}/v1/sso/links/${listed.links[0].id}/approve`, { method: "POST", headers: admin, body: JSON.stringify({ userId: "admin" }) })).status, 200);
+
+    // a real sign-in with the approved link; keep the attempt cookie so the same code can be replayed
+    const start = await fetch(`${ctx.base}/v1/sso/login`, { redirect: "manual" });
+    const attempt = cookieJar(start).mju_sso_attempt;
+    const code = "0123456789ABCDEF0123456789ABCDEF";
+    const ok = await fetch(`${ctx.base}/v1/sso/callback?ac=${code}`, { redirect: "manual", headers: { cookie: `mju_sso_attempt=${attempt}` } });
+    assert.match(ok.headers.get("location"), /\?sso=1$/);
+    assert.ok(cookieJar(ok).rae_sso_handoff);
+    for (const header of ["cache-control", "x-content-type-options", "referrer-policy"]) assert.ok(ok.headers.get(header), `${header} missing on the SSO callback`);
+
+    // replay of the very same code and attempt: refused, and no second handoff is minted
+    const replay = await fetch(`${ctx.base}/v1/sso/callback?ac=${code}`, { redirect: "manual", headers: { cookie: `mju_sso_attempt=${attempt}` } });
+    assert.match(replay.headers.get("location"), /sso_error=/);
+    assert.equal(cookieJar(replay).rae_sso_handoff, undefined);
+  } finally {
+    await ctx.close();
+  }
+});
+
+test("production config: without the C-14 flag citizenID never signs anyone in; without the acceptance it does not start", { skip }, async () => {
+  const noBasis = await bootProduction({ lawfulBasis: false });
+  try {
+    const { callback } = await signIn(noBasis.base);
+    assert.match(callback.headers.get("location"), /sso_error=/);
+    assert.equal(cookieJar(callback).rae_sso_handoff, undefined);
+    assert.equal((await noBasis.repository.listSsoLinks()).length, 0, "no pending link may be recorded when the lawful basis is not approved");
+  } finally {
+    await noBasis.close();
+  }
+  await assert.rejects(() => bootProduction({ acceptance: false }));
+});
