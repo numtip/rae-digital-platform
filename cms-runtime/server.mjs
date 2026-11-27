@@ -23,6 +23,7 @@ import {
   publicDocumentView,
   validateNewDocument,
 } from "../lib/cms/document-registry.ts";
+import { CONTACT_STATUSES, ContactInvalid, formatContactCode, readContactConfig, validateContact } from "../lib/cms/contact-registry.ts";
 import { applyEventUpdate, byStart, formatEventCode, isPublicEvent, publicEventView, validateEvent } from "../lib/cms/event-registry.ts";
 import {
   applyKnowledgeUpdate,
@@ -51,6 +52,8 @@ const throttle = createLoginThrottle();
 const documents = new Map();
 const knowledge = new Map();
 const events = new Map();
+const contactMessages = new Map();
+const contactByIp = createIpLimiter({ max: 5, windowMs: 10 * 60_000 });
 const documentVersions = new Map();
 const downloadByIp = createIpLimiter({ max: 60, windowMs: 60_000 });
 const loginByIp = createIpLimiter({ max: 30, windowMs: 60_000 });
@@ -69,6 +72,8 @@ export function resetRuntime() {
   documents.clear();
   knowledge.clear();
   events.clear();
+  contactMessages.clear();
+  contactByIp.reset();
   documentVersions.clear();
   sessions.clear();
   articles.clear();
@@ -145,6 +150,28 @@ export function memoryRepository() {
     },
     async listAudit() {
       return [...audit];
+    },
+    async createContactMessage(m, audit) {
+      const n = [...contactMessages.keys()].reduce((max, code) => Math.max(max, Number(code.slice(7))), 0) + 1;
+      const code = formatContactCode(n);
+      contactMessages.set(code, { ...m, code });
+      await this.appendAudit({ ...audit, entityId: code });
+      return { ...m, code };
+    },
+    async listContactMessages() {
+      return [...contactMessages.values()].map((m) => ({ ...m })).sort((a, b) => b.createdAt - a.createdAt || b.code.localeCompare(a.code));
+    },
+    async setContactStatus(code, status, audit) {
+      const m = contactMessages.get(code);
+      if (!m) return false;
+      m.status = status;
+      await this.appendAudit(audit);
+      return true;
+    },
+    async purgeContactMessages(cutoff) {
+      let n = 0;
+      for (const [code, m] of contactMessages) if (m.createdAt < cutoff) { contactMessages.delete(code); n += 1; }
+      return n;
     },
     async createEvent(event, audit) {
       const n = [...events.keys()].reduce((max, code) => Math.max(max, Number(code.slice(7))), 0) + 1;
@@ -472,8 +499,20 @@ function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 }
 
-export function createCmsServer({ now = () => Date.now(), repository = memoryRepository(), sso = null } = {}) {
+export function createCmsServer({ now = () => Date.now(), repository = memoryRepository(), sso = null, contact = { enabled: false } } = {}) {
   const repo = repository;
+  // Retention (M07): old messages are deleted lazily, at most once an hour, whenever the inbox is touched.
+  let lastPurge = 0;
+  const purgeContact = async () => {
+    if (!contact.enabled || now() - lastPurge < 3600_000) return;
+    lastPurge = now();
+    await repo.purgeContactMessages(now() - contact.retentionDays * 86400_000);
+  };
+  const corsFor = (origin) => (contact.enabled && origin && contact.allowedOrigins.includes(origin) ? { "access-control-allow-origin": origin, vary: "Origin" } : {});
+  const sendContact = (response, status, body, origin) => {
+    response.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...corsFor(origin) });
+    response.end(JSON.stringify(body));
+  };
   return createServer(async (request, response) => {
     try {
       const url = new URL(request.url ?? "/", "http://127.0.0.1");
@@ -492,7 +531,7 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
       }
       const origin = request.headers.origin;
       if (request.method === "OPTIONS") {
-        const headers = { "access-control-allow-methods": "GET,POST,PATCH,OPTIONS", "access-control-allow-headers": "content-type, authorization" };
+        const headers = { "access-control-allow-methods": "GET,POST,PATCH,OPTIONS", "access-control-allow-headers": "content-type, authorization", ...(url.pathname.startsWith("/v1/public/contact") ? corsFor(origin) : {}) };
         if (origin && /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(origin)) headers["access-control-allow-origin"] = origin;
         response.writeHead(204, headers);
         response.end();
@@ -544,6 +583,46 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         const doc = await repo.countDownload(countMatch[1]);
         if (!doc) return send(response, 404, { error: "NOT_FOUND" }, origin);
         return send(response, 200, { url: doc.storageUrl }, origin);
+      }
+      // M07 contact form. Off (404) until the owner has configured notice + retention; stores only what was typed.
+      if (request.method === "GET" && url.pathname === "/v1/public/contact/config") {
+        return sendContact(response, 200, contact.enabled ? { enabled: true, notice: contact.notice } : { enabled: false }, origin);
+      }
+      if (request.method === "POST" && url.pathname === "/v1/public/contact") {
+        if (!contact.enabled) return sendContact(response, 404, { error: "NOT_FOUND" }, origin);
+        const over = contactByIp.hit(clientKey(request.headers, request.socket?.remoteAddress), now());
+        if (over.limited) {
+          response.setHeader("retry-after", String(over.retryAfterSeconds));
+          return sendContact(response, 429, { error: "TOO_MANY_REQUESTS" }, origin);
+        }
+        const input = await readBody(request);
+        // Honeypot: a field no person sees. Answer as if it worked, store nothing.
+        if (typeof input.website === "string" && input.website !== "") return sendContact(response, 202, { received: true }, origin);
+        const fields = validateContact(input, contact.notice);
+        await purgeContact();
+        const stamp = now();
+        const record = await repo.createContactMessage(
+          { ...fields, noticeVersion: contact.notice.version, consentedAt: stamp, status: "new", createdAt: stamp },
+          { actorId: "public", action: "contact.receive", entityType: "contact", before: {}, after: {} },
+        );
+        return sendContact(response, 202, { received: true, reference: record.code }, origin);
+      }
+      if (url.pathname === "/v1/contact-messages" || url.pathname.startsWith("/v1/contact-messages/")) {
+        const actor = await actorFrom(request, now(), repo);
+        if (!actor) return send(response, 401, { error: "UNAUTHORIZED" }, origin);
+        requirePermission(actor.role, "news:review");
+        await purgeContact();
+        if (request.method === "GET" && url.pathname === "/v1/contact-messages") {
+          return send(response, 200, { messages: await repo.listContactMessages(), enabled: contact.enabled }, origin);
+        }
+        const one = /^\/v1\/contact-messages\/(RAE-CT-\d{5,})$/.exec(url.pathname);
+        if (one && request.method === "PATCH") {
+          const { status } = await readBody(request);
+          if (!CONTACT_STATUSES.includes(status)) throw new ContactInvalid("unknown status");
+          const ok = await repo.setContactStatus(one[1], status, { actorId: actor.id, action: "contact.status", entityType: "contact", entityId: one[1], before: {}, after: { status } });
+          return send(response, ok ? 200 : 404, ok ? { code: one[1], status } : { error: "NOT_FOUND" }, origin);
+        }
+        return send(response, 404, { error: "NOT_FOUND" }, origin);
       }
       // M05 events. Public reads see published and cancelled events only.
       if (request.method === "GET" && url.pathname === "/v1/public/events") {
@@ -946,7 +1025,8 @@ export async function startRuntime(env = process.env) {
   // published on 127.0.0.1 only, so nothing is reachable from outside the host.
   const bind = env.RAE_CMS_API_BIND ?? "127.0.0.1";
   const sso = await createSso({ repository, env });
-  const server = createCmsServer({ repository, sso });
+  const contact = readContactConfig(env, (path) => readFileSync(path, "utf8"));
+  const server = createCmsServer({ repository, sso, contact });
   // Daily link health (RAE_DOC_LINK_CHECK_HOURS, 0 turns it off); the first pass waits five minutes
   // so a restart storm does not become a request storm.
   const hours = Number(env.RAE_DOC_LINK_CHECK_HOURS ?? 24);

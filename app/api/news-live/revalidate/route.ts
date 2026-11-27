@@ -43,6 +43,9 @@ export async function POST(request: Request) {
   // M04 FAQ entries: the knowledge page and its cached read.
   revalidatePath("/[locale]/knowledge", "page");
   revalidateTag("cms-knowledge", "max");
+  // M07 contact page (FAQ + form switch).
+  revalidatePath("/[locale]/contact", "page");
+  revalidateTag("cms-contact", "max");
   // M05 events.
   revalidatePath("/[locale]/news/events", "page");
   revalidateTag("cms-events", "max");

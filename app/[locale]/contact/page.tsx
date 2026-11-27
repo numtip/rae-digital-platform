@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Breadcrumb, CARD, PageHero, SourceLine } from "@/components/page-shell";
+import { ContactForm } from "@/components/contact-form";
+import { FaqSection } from "@/components/faq-section";
+import { readContactConfig } from "@/lib/cms/contact-live";
+import { readPublicKnowledge } from "@/lib/cms/knowledge-live";
 import { getAbout, getContent, isLocale } from "@/lib/i18n";
 import { telHref } from "@/lib/phone";
 
-// Rendered only from copy that is already in the repo: the office's own contact
-// details from content/<locale>/site.ts `footer` — none of it invented. There is no
-// contact form on purpose: a form needs an SMTP target and a privacy basis, neither
-// of which exists yet.
+// Contact details come only from copy already in the repo (content/<locale>/about.ts) — none invented.
+// The contact form (M07) and the FAQ (M04) are CMS-driven: the form appears only once the owner has set an
+// approved privacy notice and retention period; the FAQ appears only once entries are published.
+export const revalidate = 60;
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -34,6 +38,8 @@ export default async function Contact({ params }: Props) {
   if (!isLocale(locale)) notFound();
   const site = getContent(locale);
   const about = getAbout(locale);
+  const config = await readContactConfig();
+  const faq = await readPublicKnowledge();
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -84,11 +90,15 @@ export default async function Contact({ params }: Props) {
             </dl>
           </div>
 
+          {config.enabled ? <ContactForm apiBase={process.env.NEXT_PUBLIC_CONTACT_API ?? "/cms-api"} locale={locale} notice={config.notice} /> : null}
+
           <div className="mt-10">
             <SourceLine {...about.source} />
           </div>
         </div>
       </section>
+
+      <FaqSection entries={faq} locale={locale} />
     </main>
   );
 }

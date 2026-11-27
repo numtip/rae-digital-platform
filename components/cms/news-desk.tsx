@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { ContactDesk } from "@/components/cms/contact-desk";
 import { DocumentsDesk } from "@/components/cms/documents-desk";
 import { EventsDesk } from "@/components/cms/events-desk";
 import { KnowledgeDesk } from "@/components/cms/knowledge-desk";
@@ -534,6 +535,7 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
       <DocumentsDesk apiBase={apiBase} locale={locale} token={token} />
       <KnowledgeDesk apiBase={apiBase} locale={locale} token={token} />
       <EventsDesk apiBase={apiBase} locale={locale} token={token} />
+      <ContactDesk apiBase={apiBase} locale={locale} token={token} />
     </section>
   );
 }
