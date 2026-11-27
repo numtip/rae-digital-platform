@@ -23,6 +23,7 @@ import {
   publicDocumentView,
   validateNewDocument,
 } from "../lib/cms/document-registry.ts";
+import { MAX_PATHS_PER_DAY, bangkokDay, normalizeAnalyticsPath, readAnalyticsConfig } from "../lib/cms/analytics.ts";
 import { CONTACT_STATUSES, ContactInvalid, formatContactCode, readContactConfig, validateContact } from "../lib/cms/contact-registry.ts";
 import { applyEventUpdate, byStart, formatEventCode, isPublicEvent, publicEventView, validateEvent } from "../lib/cms/event-registry.ts";
 import {
@@ -53,6 +54,8 @@ const documents = new Map();
 const knowledge = new Map();
 const events = new Map();
 const contactMessages = new Map();
+const pageViews = new Map();
+const viewsByIp = createIpLimiter({ max: 120, windowMs: 60_000 });
 const contactByIp = createIpLimiter({ max: 5, windowMs: 10 * 60_000 });
 const documentVersions = new Map();
 const downloadByIp = createIpLimiter({ max: 60, windowMs: 60_000 });
@@ -73,6 +76,8 @@ export function resetRuntime() {
   knowledge.clear();
   events.clear();
   contactMessages.clear();
+  pageViews.clear();
+  viewsByIp.reset();
   contactByIp.reset();
   documentVersions.clear();
   sessions.clear();
@@ -150,6 +155,15 @@ export function memoryRepository() {
     },
     async listAudit() {
       return [...audit];
+    },
+    async recordPageView(day, path, maxPaths) {
+      const todays = [...pageViews.keys()].filter((k) => k.startsWith(`${day}|`));
+      const key = `${day}|${path}`;
+      const target = !pageViews.has(key) && todays.length >= maxPaths ? `${day}|/other` : key;
+      pageViews.set(target, (pageViews.get(target) ?? 0) + 1);
+    },
+    async listPageViews(sinceDay) {
+      return [...pageViews.entries()].map(([k, hits]) => ({ day: k.split("|")[0], path: k.split("|")[1], hits })).filter((r) => r.day >= sinceDay).sort((a, b) => b.day.localeCompare(a.day) || b.hits - a.hits);
     },
     async createContactMessage(m, audit) {
       const n = [...contactMessages.keys()].reduce((max, code) => Math.max(max, Number(code.slice(7))), 0) + 1;
@@ -499,7 +513,7 @@ function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 }
 
-export function createCmsServer({ now = () => Date.now(), repository = memoryRepository(), sso = null, contact = { enabled: false } } = {}) {
+export function createCmsServer({ now = () => Date.now(), repository = memoryRepository(), sso = null, contact = { enabled: false }, analytics = { enabled: false } } = {}) {
   const repo = repository;
   // Retention (M07): old messages are deleted lazily, at most once an hour, whenever the inbox is touched.
   let lastPurge = 0;
@@ -583,6 +597,26 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         const doc = await repo.countDownload(countMatch[1]);
         if (!doc) return send(response, 404, { error: "NOT_FOUND" }, origin);
         return send(response, 200, { url: doc.storageUrl }, origin);
+      }
+      // M08 analytics. Off (404) unless enabled. A page view carries only a public path: no cookie, IP or user agent is kept.
+      if (request.method === "POST" && url.pathname === "/v1/public/analytics/hit") {
+        if (!analytics.enabled) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        if (analytics.allowedOrigins.length > 0 && origin && !analytics.allowedOrigins.includes(origin)) return send(response, 204, {}, origin);
+        if (viewsByIp.hit(clientKey(request.headers, request.socket?.remoteAddress), now()).limited) return send(response, 204, {}, origin);
+        // The beacon sends text/plain (a simple cross-origin request); readBody parses the JSON either way.
+        const path = normalizeAnalyticsPath((await readBody(request)).path);
+        if (path) await repo.recordPageView(bangkokDay(now()), path, MAX_PATHS_PER_DAY);
+        response.writeHead(204);
+        response.end();
+        return;
+      }
+      if (request.method === "GET" && url.pathname === "/v1/analytics") {
+        const actor = await actorFrom(request, now(), repo);
+        if (!actor) return send(response, 401, { error: "UNAUTHORIZED" }, origin);
+        requirePermission(actor.role, "news:review");
+        const days = Math.min(90, Math.max(1, Number(url.searchParams.get("days") ?? 30)));
+        const rows = await repo.listPageViews(bangkokDay(now() - (days - 1) * 86400_000));
+        return send(response, 200, { enabled: analytics.enabled, days, rows }, origin);
       }
       // M07 contact form. Off (404) until the owner has configured notice + retention; stores only what was typed.
       if (request.method === "GET" && url.pathname === "/v1/public/contact/config") {
@@ -1026,7 +1060,7 @@ export async function startRuntime(env = process.env) {
   const bind = env.RAE_CMS_API_BIND ?? "127.0.0.1";
   const sso = await createSso({ repository, env });
   const contact = readContactConfig(env, (path) => readFileSync(path, "utf8"));
-  const server = createCmsServer({ repository, sso, contact });
+  const server = createCmsServer({ repository, sso, contact, analytics: readAnalyticsConfig(env) });
   // Daily link health (RAE_DOC_LINK_CHECK_HOURS, 0 turns it off); the first pass waits five minutes
   // so a restart storm does not become a request storm.
   const hours = Number(env.RAE_DOC_LINK_CHECK_HOURS ?? 24);
