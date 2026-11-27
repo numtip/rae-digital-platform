@@ -42,7 +42,15 @@ test("the events route is reachable, bilingual and indexed", () => {
   assert.match(sitemap, /news\/events/);
   const newsIndex = readFileSync("components/news-index.tsx", "utf8");
   assert.match(newsIndex, /\/news\/events/);
-  const page = readFileSync("app/[locale]/news/events/page.tsx", "utf8");
+  const page = readFileSync("components/events-index.tsx", "utf8");
   assert.match(page, /splitActivities/);
   assert.match(page, /upcoming\.length > 0/);
+});
+
+test("the archive is paged at 10 per page with real URLs for pages 2..N", () => {
+  const page = readFileSync("components/events-index.tsx", "utf8");
+  assert.match(page, /EVENTS_PAGE_SIZE = 10/);
+  assert.match(page, /past\.slice\(\(current - 1\) \* EVENTS_PAGE_SIZE, current \* EVENTS_PAGE_SIZE\)/);
+  assert.match(readFileSync("app/[locale]/news/events/page/[page]/page.tsx", "utf8"), /dynamicParams = false/);
+  assert.match(readFileSync("app/sitemap.ts", "utf8"), /news\/events\/page\//);
 });

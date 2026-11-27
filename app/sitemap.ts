@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { readPublicDocuments } from "@/lib/cms/documents-live";
 import { liveNews, liveSitemap } from "@/lib/cms/live";
+import { eventsPageCount } from "@/components/events-index";
 import { LOCALES, PAGES, SITE_URL, getDocuments, getNews, getNewsPages } from "@/lib/i18n";
 
 // Two builds share this file. A server revalidates it (`revalidate`), so a story published a
@@ -70,6 +71,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     alternates: { languages: languagesFor("news/events") },
   }));
 
+  // Events archive pages 2..N (10 per page); page 1 is /news/events/ above.
+  const eventsArchivePages = Array.from({ length: Math.max(0, eventsPageCount("th") - 1) }, (_, index) => index + 2).flatMap((page) =>
+    LOCALES.map((locale) => ({
+      url: `${SITE_URL}/${locale}/news/events/page/${page}/`,
+      changeFrequency: "monthly" as const,
+      priority: 0.3,
+      alternates: { languages: languagesFor(`news/events/page/${page}`) },
+    })),
+  );
+
   // News index pages 2..N; page 1 is already in PAGES as /news/.
   const newsPageCount = getNewsPages("th").length;
   const newsIndexPages = Array.from({ length: Math.max(0, newsPageCount - 1) }, (_, index) => index + 2)
@@ -104,6 +115,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...home,
     ...pages,
     ...events,
+    ...eventsArchivePages,
     ...newsItems,
     ...docCategories,
     ...registered,
