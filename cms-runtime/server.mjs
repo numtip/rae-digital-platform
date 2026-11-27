@@ -23,6 +23,7 @@ import {
   publicDocumentView,
   validateNewDocument,
 } from "../lib/cms/document-registry.ts";
+import { buildOpenApi } from "../lib/cms/openapi.ts";
 import { applyDepartmentUpdate, bySort, formatDepartmentCode, publicDepartments, validateDepartment } from "../lib/cms/department-registry.ts";
 import { applyAnnouncementUpdate, byStartDesc, formatAnnouncementCode, isLiveAnnouncement, publicAnnouncementView, validateAnnouncement } from "../lib/cms/announcement-registry.ts";
 import { MAX_PATHS_PER_DAY, bangkokDay, normalizeAnalyticsPath, readAnalyticsConfig } from "../lib/cms/analytics.ts";
@@ -664,6 +665,10 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         };
         if (hasPermission(actor.role, "audit:read")) body.recent = await repo.recentAudit(10);
         return send(response, 200, body, origin);
+      }
+      // M23 public API description (OpenAPI 3.0.3) — read-only public endpoints only.
+      if (request.method === "GET" && url.pathname === "/v1/public/openapi.json") {
+        return send(response, 200, buildOpenApi("/cms-api"), origin);
       }
       // M13 departments. Public: published units whose whole chain is published.
       if (request.method === "GET" && url.pathname === "/v1/public/departments") {
