@@ -56,6 +56,7 @@ import {
   formatMediaCode,
   inspectUpload,
   isPublicMedia,
+  MEDIA_CODE as MEDIA_CODE_RE,
   MEDIA_FILE,
   publicMediaView,
   validateMediaMeta,
@@ -1410,6 +1411,63 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         };
         await repo.saveMedia(record);
         await repo.appendAudit({ actorId: actor.id, action: "news.media", entityType: "news", entityId: id });
+        return send(response, 201, record, origin);
+      }
+
+      // Reuse a released library image in this article: the bytes are copied into the article's own gallery, so the
+      // article keeps serving, snapshotting and withdrawing exactly as an uploaded image does, whatever happens to the
+      // library entry afterwards. Same rules as an upload: the author, while the article is a draft, at most 5 images.
+      if (request.method === "POST" && url.pathname === `/v1/news/${id}/media/from-library`) {
+        requirePermission(actor.role, "news:draft");
+        if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
+        if (current.authorId !== actor.id) {
+          return send(response, 403, { error: "PermissionDenied", message: "only the author can add images" }, origin);
+        }
+        if (current.status !== "draft") {
+          return send(response, 400, { error: "LOCKED", message: "images are added while the article is a draft" }, origin);
+        }
+        const body = await readBody(request);
+        const asset = MEDIA_CODE_RE.test(String(body.code ?? "")) ? await repo.getMediaAsset(String(body.code)) : null;
+        if (!asset || !isPublicMedia(asset)) {
+          return send(response, 400, { error: "MediaRejected", message: "only a published library image can be added" }, origin);
+        }
+        if (!SAFE_ID.test(id)) return send(response, 400, { error: "INVALID_ID" }, origin);
+        const existing = await repo.listMedia(id);
+        if (existing.length >= 5) {
+          return send(response, 400, { error: "MediaRejected", message: "an article carries at most 5 images" }, origin);
+        }
+        let bytes;
+        try {
+          bytes = readFileSync(join(mediaRoot(), "library", asset.code, asset.filename));
+        } catch {
+          return send(response, 404, { error: "NOT_FOUND", message: "the library file is missing" }, origin);
+        }
+        let mime;
+        try {
+          mime = assertArticleImage(bytes.subarray(0, 16), bytes.length); // judged again: the file on disk is not trusted either
+        } catch (error) {
+          if (error instanceof MediaRejected) return send(response, 400, { error: "MediaRejected", message: error.message }, origin);
+          throw error;
+        }
+        const position = existing.length + 1;
+        const filename = `${String(position).padStart(2, "0")}-${randomUUID().slice(0, 8)}.${extensionFor(mime)}`;
+        const directory = join(mediaRoot(), id);
+        mkdirSync(directory, { recursive: true });
+        writeFileSync(join(directory, filename), bytes);
+        const record = {
+          id: randomUUID(),
+          articleId: id,
+          position,
+          filename,
+          mime,
+          bytes: bytes.length,
+          captionTh: String(body.captionTh ?? asset.captionTh),
+          captionEn: String(body.captionEn ?? asset.captionEn),
+          altTh: asset.altTh,
+          altEn: asset.altEn,
+        };
+        await repo.saveMedia(record);
+        await repo.appendAudit({ actorId: actor.id, action: "news.media.library", entityType: "news", entityId: id });
         return send(response, 201, record, origin);
       }
 
