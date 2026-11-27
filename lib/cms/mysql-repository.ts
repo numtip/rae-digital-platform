@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { formatDocumentCode, type RegistryDocument } from "./document-registry.ts";
+import { formatEventCode, type EventRecord } from "./event-registry.ts";
 import { formatKnowledgeCode, type KnowledgeEntry } from "./knowledge-registry.ts";
 import mysql from "mysql2/promise";
 import type { NewsRecord, PublishedSnapshot } from "./news-workflow.ts";
@@ -49,6 +50,11 @@ export type SsoLink = {
 export type DocumentVersionRecord = { version: string; storageUrl: string; changedBy: string; changedAt: number; changeNote: string };
 
 export type Repository = {
+  /** M05 events. Code assignment is the repository's job. */
+  createEvent(event: Omit<EventRecord, "code">, audit: Omit<AuditRecord, "createdAt" | "entityId">): Promise<EventRecord>;
+  listEvents(): Promise<EventRecord[]>;
+  getEvent(code: string): Promise<EventRecord | null>;
+  updateEvent(event: EventRecord, audit: Omit<AuditRecord, "createdAt">): Promise<void>;
   /** M04 knowledge / FAQ entries. Code assignment is the repository's job. */
   createKnowledge(entry: Omit<KnowledgeEntry, "code">, audit: Omit<AuditRecord, "createdAt" | "entityId">): Promise<KnowledgeEntry>;
   listKnowledge(): Promise<KnowledgeEntry[]>;
@@ -173,6 +179,15 @@ type DocRow = {
   note: string; created_by: string; updated_at: Date; download_count: number;
   link_status: "ok" | "broken" | "unreachable" | null; link_checked_at: Date | null;
 };
+type EvRow = {
+  code: string; title_th: string; title_en: string; description_th: string; description_en: string; location_th: string; location_en: string;
+  starts_at: Date; ends_at: Date | null; status: EventRecord["status"]; created_by: string; updated_at: Date;
+};
+const toEvent = (r: EvRow): EventRecord => ({
+  code: r.code, titleTh: r.title_th, titleEn: r.title_en, descriptionTh: r.description_th, descriptionEn: r.description_en,
+  locationTh: r.location_th, locationEn: r.location_en, startsAt: asMillis(r.starts_at), endsAt: r.ends_at ? asMillis(r.ends_at) : null,
+  status: r.status, createdBy: r.created_by, updatedAt: asMillis(r.updated_at),
+});
 type KbRow = {
   code: string; kind: "faq"; topic: string; question_th: string; question_en: string; answer_th: string; answer_en: string;
   status: KnowledgeEntry["status"]; sort_order: number; created_by: string; updated_at: Date;
@@ -414,6 +429,56 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
         after: parseJson(row.after_json),
         createdAt: new Date(row.created_at).toISOString(),
       }));
+    },
+
+    async createEvent(event, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM events FOR UPDATE");
+        const code = formatEventCode(Number((rows as { n: number }[])[0].n) + 1);
+        await connection.query(
+          "INSERT INTO events (code, title_th, title_en, description_th, description_en, location_th, location_en, starts_at, ends_at, status, created_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [code, event.titleTh, event.titleEn, event.descriptionTh, event.descriptionEn, event.locationTh, event.locationEn, asDate(event.startsAt), event.endsAt === null ? null : asDate(event.endsAt), event.status, event.createdBy, asDate(event.updatedAt)],
+        );
+        await insertAudit(connection, { ...audit, entityId: code });
+        await connection.commit();
+        return { ...event, code };
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    },
+
+    async listEvents() {
+      const [rows] = await pool.query("SELECT * FROM events ORDER BY starts_at, code");
+      return (rows as EvRow[]).map(toEvent);
+    },
+
+    async getEvent(code) {
+      const [rows] = await pool.query("SELECT * FROM events WHERE code = ?", [code]);
+      const row = (rows as EvRow[])[0];
+      return row ? toEvent(row) : null;
+    },
+
+    async updateEvent(event, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        await connection.query(
+          "UPDATE events SET title_th = ?, title_en = ?, description_th = ?, description_en = ?, location_th = ?, location_en = ?, starts_at = ?, ends_at = ?, status = ?, updated_at = ? WHERE code = ?",
+          [event.titleTh, event.titleEn, event.descriptionTh, event.descriptionEn, event.locationTh, event.locationEn, asDate(event.startsAt), event.endsAt === null ? null : asDate(event.endsAt), event.status, asDate(event.updatedAt), event.code],
+        );
+        await insertAudit(connection, audit);
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
     },
 
     async createKnowledge(entry, audit) {
