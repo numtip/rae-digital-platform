@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| **GitHub `main`** | `cb64016` (+ docs PRs #145 closeout) |
-| **Production runtime (deployed SHA)** | **`8a61dfc`** — via symlink system (`~/rae/current → releases/<sha>`), CMS + both site builds |
+| **GitHub `main`** | `623913e624c3` + docs (docs only, not redeployed) |
+| **Production runtime (deployed SHA)** | **`623913e624c3`** — CMS runtime and both site builds (release `623913e624c3`, previous `cb64016694f8` kept for rollback) |
 | RAE_UNIFIED_PLATFORM_READY | **YES** |
 | M03_PRODUCTION_READY | **YES** |
 | MJU SSO | **PENDING_EXTERNAL_APPROVAL** — built, deployed, `MJU_SSO_ENABLED=false` |
@@ -15,7 +15,7 @@ via host nginx). The CMS hook notifies both. Persistence is the hand-written MyS
 
 **Deploy system:** symlink-based releases (`~/rae/releases/<sha> → ~/rae/current`). Containers mount `~/rae/current:/app`. Verified with `readlink ~/rae/current`, not `docker inspect` SHA. Backups: `~/rae/rae-cms-backups/pre-*` + nightly `daily/`. Static landing backup: `~/rae/rae-landing-static-backup/`.
 
-**Migrations on `rae_cms`:** 001–005, 007, 008 (SSO links/handoffs), 009 (documents), 010 (link health), 011 (knowledge/FAQ), 012 (events), 013 (contact inbox), 014 (analytics), 015 (announcements), 016 (departments). DDL applied by hand with root inside DB container after backup. **No schema_migrations tracking table** — verify migrations by comparing file names vs actual table names in DB.
+**Migrations on `rae_cms`:** 001–005, 007, 008 (SSO links/handoffs), 009 (documents), 010 (link health), 011 (knowledge/FAQ), 012 (events), 013 (contact inbox), 014 (analytics), 015 (announcements), 016 (departments), 017 (personnel). DDL applied by hand with root inside DB container after backup. **No schema_migrations tracking table** — verify migrations by comparing file names vs actual table names in DB.
 
 ## 2026-11-27 Deploy Summary
 
@@ -30,6 +30,8 @@ Known gaps: withdrawn.json contains test entries (uat-withdraw-0 through -7, new
 **Operator action pending (backup cron):** crontab still points at the old backup path — see `docs/ops/backup-restore.md` (the auto-mode guard refused the agent's crontab edit).
 
 **Owner decision 2026-11-27 — M12 Personnel APPROVED.** Gate A-4 (PDPA basis/retention) is removed as a development blocker; the owner assumes personnel-data governance, no third-party approval is required. Built: personnel directory + encrypted restricted data + RBAC + audit, M13 head-of-unit (`docs/ops/personnel.md`). Verified data only; nothing seeded. RBAC, public/private separation and audit integrity are tested.
+**Stabilization 2026-11-27 (PRs #140–#146):** releases, M05 month view, M17 landmark names, M12 personnel + M13 head of unit. Live acceptance of M12 caught and fixed a real defect (duplicate national id overwrote another person's restricted row — PR #146, DB-backed regression test). Measured downtime per switch ≈ 2.4–4 s (container restart); with the runtime restart the visible window was 11–17 s. Rollback tested (switch back and forward, month route 404↔200). Axe: 0 violations on 24 runs (6 pages × light/dark × desktop/phone) with live records incl. identical announcement titles. Backup 04:56Z verified (17 tables restored). Backup cron still the owner's step.
+**PERSONNEL_KEY:** `~/rae/rae-cms-secrets/personnel.key` (also in runtime.env). DB dumps hold ciphertext only — the owner must keep an offline copy of the key; a lost key cannot be recovered.
 **Releases:** production now serves `~/rae/current` (SHA-tagged release dirs, isolated builds, spare-port probe, auto-rollback — `docs/ops/releases.md`). Measured cutover downtime 2.4 s (was ~8 min with in-place builds).
 
 **Pending, owner-side:** M365 onboarding (no verified SharePoint link list exists yet; needs the list of existing SharePoint links; tool + guide ready); MJU SSO — countersigned CMS C-14,
