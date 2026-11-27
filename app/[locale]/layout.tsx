@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { notFound } from "next/navigation";
+import { AnalyticsBeacon } from "@/components/analytics-beacon";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { LOCALES, SITE_URL, getContent, isLocale } from "@/lib/i18n";
@@ -111,6 +112,7 @@ export default async function LocaleLayout({
         <SiteHeader locale={locale} content={content} />
         <div className="flex-1">{children}</div>
         <SiteFooter content={content} locale={locale} />
+        <AnalyticsBeacon />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLdScript(orgJsonLd) }}

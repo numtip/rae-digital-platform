@@ -15,7 +15,8 @@
     "build:export": "NEXT_PAGES_PREVIEW=1 next build",
     "check:export": "node scripts/check-export.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
-    "qa": "npm test && npm run lint && npm run typecheck && npm run build && npm run build:export && npm run check:export && npm run check:contrast"
+    "qa": "npm test && npm run lint && npm run typecheck && npm run build && npm run build:export && npm run check:export && npm run check:contrast && npm run check:a11y",
+    "check:a11y": "node scripts/check-a11y.mjs"
   },
   "dependencies": {
     "mysql2": "^3.24.6",

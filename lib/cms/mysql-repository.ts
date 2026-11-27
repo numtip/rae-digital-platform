@@ -51,6 +51,9 @@ export type SsoLink = {
 export type DocumentVersionRecord = { version: string; storageUrl: string; changedBy: string; changedAt: number; changeNote: string };
 
 export type Repository = {
+  /** M08 analytics: +1 for (day, path); paths beyond the per-day cap are folded into "/other". */
+  recordPageView(day: string, path: string, maxPaths: number): Promise<void>;
+  listPageViews(sinceDay: string): Promise<{ day: string; path: string; hits: number }[]>;
   /** M07 contact inbox. */
   createContactMessage(m: Omit<ContactMessage, "code">, audit: Omit<AuditRecord, "createdAt" | "entityId">): Promise<ContactMessage>;
   listContactMessages(): Promise<ContactMessage[]>;
@@ -444,6 +447,21 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
         after: parseJson(row.after_json),
         createdAt: new Date(row.created_at).toISOString(),
       }));
+    },
+
+    async recordPageView(day, path, maxPaths) {
+      const [exists] = await pool.query("SELECT 1 FROM analytics_daily WHERE day = ? AND path = ?", [day, path]);
+      let target = path;
+      if ((exists as unknown[]).length === 0) {
+        const [count] = await pool.query("SELECT COUNT(*) AS n FROM analytics_daily WHERE day = ?", [day]);
+        if (Number((count as { n: number }[])[0].n) >= maxPaths) target = "/other";
+      }
+      await pool.query("INSERT INTO analytics_daily (day, path, hits) VALUES (?, ?, 1) ON DUPLICATE KEY UPDATE hits = hits + 1", [day, target]);
+    },
+
+    async listPageViews(sinceDay) {
+      const [rows] = await pool.query("SELECT DATE_FORMAT(day, '%Y-%m-%d') AS day, path, hits FROM analytics_daily WHERE day >= ? ORDER BY day DESC, hits DESC", [sinceDay]);
+      return (rows as { day: string; path: string; hits: number }[]).map((r) => ({ day: r.day, path: r.path, hits: Number(r.hits) }));
     },
 
     async createContactMessage(m, audit) {
