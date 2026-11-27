@@ -70,9 +70,14 @@ export default async function EventsMonth({ params }: Props) {
       <section className="bg-white py-10">
         <div className="mx-auto w-full max-w-7xl px-4">
           <nav aria-label={copy.title} className="mb-4 flex flex-wrap items-center gap-4">
-            <Link className={link} href={`/${locale}/news/events/month/${shiftMonth(ym, -1)}`} rel="prev">‹ {copy.prev}</Link>
-            <Link className={link} href={`/${locale}/news/events/month/${currentMonth()}`}>{copy.today}</Link>
-            <Link className={link} href={`/${locale}/news/events/month/${shiftMonth(ym, 1)}`} rel="next">{copy.next} ›</Link>
+            {/* The Pages preview bakes one month; other months exist only on a server, so no dead links there. */}
+            {staticExportOnly ? null : (
+              <>
+                <Link className={link} href={`/${locale}/news/events/month/${shiftMonth(ym, -1)}`} rel="prev">‹ {copy.prev}</Link>
+                <Link className={link} href={`/${locale}/news/events/month/${currentMonth()}`}>{copy.today}</Link>
+                <Link className={link} href={`/${locale}/news/events/month/${shiftMonth(ym, 1)}`} rel="next">{copy.next} ›</Link>
+              </>
+            )}
             <Link className={`${link} ml-auto`} href={`/${locale}/news/events`}>{copy.list}</Link>
           </nav>
           <div className="overflow-x-auto">
