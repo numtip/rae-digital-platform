@@ -162,7 +162,7 @@ test("every path in the repository is either Apache-licensed or named as exclude
   // silently reading as Apache-2.0 licensed.
   const LICENSED = [
     "app", "cms-runtime", "components", "deploy", "lib", "scripts", "tests",
-    "package.json", "next.config.ts", "tsconfig.json", "postcss.config.mjs", "eslint.config.mjs",
+    "package.json", "next.config.ts", "tsconfig.json", "postcss.config.mjs", "eslint.config.mjs", "components.json",
     "Dockerfile.staging", "docker-compose.staging.yml",
   ];
   // Generated or non-creative files: Next writes next-env.d.ts and the tsbuildinfo cache,

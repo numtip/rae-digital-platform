@@ -27,7 +27,7 @@ A2. Original application source code — licensed under Apache-2.0.
         app/  components/  lib/  scripts/  tests/  deploy/staging/  cms-runtime/
 
     together with the original build and configuration files at the repository
-    root: package.json, next.config.ts, tsconfig.json, postcss.config.mjs,
+    root: package.json, next.config.ts, tsconfig.json, postcss.config.mjs, components.json,
     eslint.config.mjs, Dockerfile.staging, docker-compose.staging.yml,
     .dockerignore, .env.staging.example. Data files that describe dependencies
     (package-lock.json) and repository metadata (.gitignore, .nvmrc) carry no

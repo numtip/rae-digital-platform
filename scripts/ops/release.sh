@@ -57,6 +57,9 @@ deps_dir() { # shared node_modules keyed by the lockfile hash
     mkdir -p "$d"
     git -C "$REPO" show "$SHA:package.json" > "$d/package.json"
     git -C "$REPO" show "$SHA:package-lock.json" > "$d/package-lock.json"
+    # Install the FULL tree — never add --omit=dev / NODE_ENV=production here. `next build` needs the
+    # devDependencies: app/globals.css imports shadcn/tailwind.css (package `shadcn`, a devDependency) and
+    # tailwindcss/@tailwindcss/postcss. Omitting dev makes the build fail on that @import.
     (cd "$d" && npm ci --no-audit --no-fund >/dev/null)
   fi
   echo "$d"

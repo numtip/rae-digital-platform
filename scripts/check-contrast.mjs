@@ -29,7 +29,7 @@ import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const OUT = process.env.EXPORT_DIR ?? "out";
-const THEME = "app/globals.css";
+const THEME = process.env.THEME_CSS ?? "app/globals.css";
 
 if (!existsSync(OUT) || !existsSync(THEME)) {
   console.error(`check-contrast: needs ${OUT}/ and ${THEME} — run the preview export build first`);
@@ -53,9 +53,74 @@ const PALETTE = {
   "red-700": "#b91c1c",
 };
 
-const tokens = { ...PALETTE };
-for (const m of readFileSync(THEME, "utf8").matchAll(/--color-([\w-]+):\s*(#[0-9a-fA-F]{6})\s*;/g)) {
-  tokens[m[1]] = m[2];
+// Colour tokens, resolved per mode. A token is either a hex (`--color-brand-600: #014D35`) or an alias
+// (`--color-primary: var(--primary)`, with `--primary: var(--color-brand-600)` in :root and a different
+// value inside `@media (prefers-color-scheme: dark)`). An alias is followed until it reaches a hex, in the
+// light declarations for the light pass and the dark overrides on top of them for the dark pass.
+// Anything that does not end in a 6-digit hex is a hard error: grading it as "inherit" is the silent
+// failure this gate exists to prevent.
+const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");
+
+function splitDark(css) {
+  let light = "";
+  let dark = "";
+  let rest = css;
+  const open = /@media\s*\(\s*prefers-color-scheme\s*:\s*dark\s*\)\s*\{/;
+  for (let m = open.exec(rest); m; m = open.exec(rest)) {
+    let depth = 1;
+    let i = m.index + m[0].length;
+    while (i < rest.length && depth > 0) {
+      if (rest[i] === "{") depth++;
+      else if (rest[i] === "}") depth--;
+      i++;
+    }
+    light += rest.slice(0, m.index);
+    dark += rest.slice(m.index + m[0].length, i - 1);
+    rest = rest.slice(i);
+  }
+  return { light: light + rest, dark };
+}
+
+const declarations = (css) => {
+  const map = new Map();
+  for (const m of css.matchAll(/(--[\w-]+)\s*:\s*([^;{}]+);/g)) map.set(m[1], m[2].trim());
+  return map;
+};
+
+const themeSource = splitDark(stripComments(readFileSync(THEME, "utf8")));
+const lightDecls = declarations(themeSource.light);
+const darkDecls = new Map([...lightDecls, ...declarations(themeSource.dark)]);
+
+const resolveErrors = [];
+function resolveColour(name, decls, trail = []) {
+  if (trail.includes(name)) throw new Error(`alias cycle ${[...trail, name].join(" -> ")}`);
+  const raw = decls.get(name) ?? (name.startsWith("--color-") ? PALETTE[name.slice("--color-".length)] : undefined);
+  if (raw === undefined) throw new Error(`${name} is not declared in ${THEME} and is not a Tailwind palette colour`);
+  if (/^#[0-9a-fA-F]{6}$/.test(raw)) return raw.toLowerCase();
+  const alias = raw.match(/^var\(\s*(--[\w-]+)\s*\)$/);
+  if (alias) return resolveColour(alias[1], decls, [...trail, name]);
+  throw new Error(`${name}: ${raw} is neither a 6-digit hex nor a single var() alias`);
+}
+
+const colourNames = new Set([
+  ...Object.keys(PALETTE),
+  ...[...darkDecls.keys()].filter((n) => n.startsWith("--color-")).map((n) => n.slice("--color-".length)),
+]);
+const tokens = {}; // light
+const darkTokens = {};
+for (const name of colourNames) {
+  for (const [target, decls] of [[tokens, lightDecls], [darkTokens, darkDecls]]) {
+    try {
+      target[name] = resolveColour(`--color-${name}`, decls);
+    } catch (error) {
+      resolveErrors.push(`${target === tokens ? "light" : "dark"}: ${error.message}`);
+    }
+  }
+}
+if (resolveErrors.length > 0) {
+  console.error(`check-contrast: ${resolveErrors.length} colour token(s) in ${THEME} cannot be resolved to a hex:`);
+  for (const item of [...new Set(resolveErrors)]) console.error(`  - ${item}`);
+  process.exit(1);
 }
 for (const required of ["brand-500", "brand-600", "brand-700", "gold-500", "cream-50", "surface-50"]) {
   if (!tokens[required]) {
@@ -124,12 +189,12 @@ for (const file of htmlFiles) {
       textNodes++;
       const need = current.large ? 3 : 4.5;
       const pairs = [
-        ["", current.fg, current.bg],
-        ["dark: ", current.dfg, current.dbg],
+        ["", current.fg, current.bg, tokens],
+        ["dark: ", current.dfg, current.dbg, darkTokens],
       ];
-      for (const [label, fg, bg] of pairs) {
+      for (const [label, fg, bg, palette] of pairs) {
         if (fg.startsWith("?") || bg.startsWith("?")) continue;
-        const ratio = contrast(tokens[fg], tokens[bg]);
+        const ratio = contrast(palette[fg], palette[bg]);
         if (ratio < need) {
           failures.push(
             `${page}: ${label}${fg} on ${bg} is ${ratio.toFixed(3)}:1, needs ${need}:1 — "${text.slice(0, 50)}"`,
