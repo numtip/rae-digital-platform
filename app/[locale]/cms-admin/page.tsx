@@ -26,8 +26,10 @@ export default async function CmsAdmin({ params }: Props) {
   if (!isLocale(locale)) notFound();
   const copy = adminCopy[locale];
 
+  // The desk is a light-only surface (white panels on surface-50). Without an explicit text colour the panels inherit the
+  // body's dark-mode text (neutral-100) and become unreadable on white, so the text colour and form-control scheme are pinned.
   return (
-    <main className="bg-surface-50 py-10" id="main-content" tabIndex={-1}>
+    <main className="bg-surface-50 py-10 text-neutral-900 [color-scheme:light]" id="main-content" tabIndex={-1}>
       <div className="mx-auto grid max-w-3xl gap-6 px-4">
         <header>
           <h1 className="text-3xl font-bold text-neutral-800">{copy.title}</h1>
