@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CmsEvents } from "@/components/cms-events";
+import { currentMonth } from "@/lib/calendar";
 import { Breadcrumb, PageHero, SourceLine } from "@/components/page-shell";
 import { Pagination } from "@/components/pagination";
 import { readPublicEvents, splitPublicEvents } from "@/lib/cms/events-live";
@@ -72,6 +73,13 @@ export async function EventsIndex({ locale, current }: { locale: Locale; current
 
       <section className="bg-white py-12">
         <div className="mx-auto w-full max-w-7xl px-4">
+          {first ? (
+            <p className="mb-6">
+              <Link className="text-sm font-medium text-brand-600 underline underline-offset-2" href={`/${locale}/news/events/month/${currentMonth()}`}>
+                {locale === "th" ? "ดูปฏิทินรายเดือน" : "Month calendar view"}
+              </Link>
+            </p>
+          ) : null}
           {first ? <CmsEvents events={cmsEvents} locale={locale} {...cmsSplit} /> : null}
           <p className="mb-8 max-w-3xl text-sm text-neutral-600">{news.events.snapshotNote}</p>
 

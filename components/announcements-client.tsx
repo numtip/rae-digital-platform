@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-type Props = { code: string; title: string; body: string; link: string; endsAt: string; locale: "th" | "en" };
+type Props = { code: string; title: string; body: string; link: string; endsAt: string; locale: "th" | "en"; label?: string };
 const COPY = {
   th: { dismiss: "ปิดประกาศ", more: "ดูรายละเอียด", pause: "หยุดข้อความเลื่อน", play: "เลื่อนข้อความต่อ", region: "ประกาศ" },
   en: { dismiss: "Dismiss announcement", more: "Read more", pause: "Pause scrolling text", play: "Resume scrolling text", region: "Announcement" },
@@ -23,7 +23,7 @@ function More({ link, locale, className }: { link: string; locale: "th" | "en"; 
   );
 }
 
-export function AnnouncementBanner({ title, body, link, endsAt, locale }: Props) {
+export function AnnouncementBanner({ title, body, link, endsAt, locale, label }: Props) {
   const [hidden, setHidden] = useState(false);
   const [late, setLate] = useState(() => expired(endsAt));
   useEffect(() => {
@@ -34,7 +34,7 @@ export function AnnouncementBanner({ title, body, link, endsAt, locale }: Props)
   }, [endsAt]);
   if (hidden || late) return null;
   return (
-    <section aria-label={`${COPY[locale].region}: ${title}`} className="border-b border-brand-700 bg-brand-700 text-white">
+    <section aria-label={label ?? `${COPY[locale].region}: ${title}`} className="border-b border-brand-700 bg-brand-700 text-white">
       <div className="mx-auto flex w-full max-w-7xl items-start gap-3 px-4 py-2 text-sm">
         <p className="flex-1">
           <strong>{title}</strong>
@@ -48,7 +48,7 @@ export function AnnouncementBanner({ title, body, link, endsAt, locale }: Props)
   );
 }
 
-export function AnnouncementTicker({ title, body, link, endsAt, locale }: Props) {
+export function AnnouncementTicker({ title, body, link, endsAt, locale, label }: Props) {
   const [paused, setPaused] = useState(false);
   const [late, setLate] = useState(() => expired(endsAt));
   useEffect(() => {
@@ -59,7 +59,7 @@ export function AnnouncementTicker({ title, body, link, endsAt, locale }: Props)
   }, [endsAt]);
   if (late) return null;
   return (
-    <section aria-label={`${COPY[locale].region}: ${title}`} className="border-b border-neutral-200 bg-surface-50 text-neutral-800">
+    <section aria-label={label ?? `${COPY[locale].region}: ${title}`} className="border-b border-neutral-200 bg-surface-50 text-neutral-800">
       <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-2 text-sm">
         <div className="rae-ticker min-w-0 flex-1 overflow-hidden whitespace-nowrap" data-paused={paused}>
           <span className="rae-ticker-track inline-block">
