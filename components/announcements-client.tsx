@@ -34,7 +34,7 @@ export function AnnouncementBanner({ title, body, link, endsAt, locale }: Props)
   }, [endsAt]);
   if (hidden || late) return null;
   return (
-    <section aria-label={COPY[locale].region} className="border-b border-brand-700 bg-brand-700 text-white">
+    <section aria-label={`${COPY[locale].region}: ${title}`} className="border-b border-brand-700 bg-brand-700 text-white">
       <div className="mx-auto flex w-full max-w-7xl items-start gap-3 px-4 py-2 text-sm">
         <p className="flex-1">
           <strong>{title}</strong>
@@ -59,7 +59,7 @@ export function AnnouncementTicker({ title, body, link, endsAt, locale }: Props)
   }, [endsAt]);
   if (late) return null;
   return (
-    <section aria-label={COPY[locale].region} className="border-b border-neutral-200 bg-surface-50 text-neutral-800">
+    <section aria-label={`${COPY[locale].region}: ${title}`} className="border-b border-neutral-200 bg-surface-50 text-neutral-800">
       <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-2 text-sm">
         <div className="rae-ticker min-w-0 flex-1 overflow-hidden whitespace-nowrap" data-paused={paused}>
           <span className="rae-ticker-track inline-block">

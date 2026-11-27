@@ -2,7 +2,7 @@ import type { PublicDepartment } from "@/lib/cms/departments-live";
 import type { Locale } from "@/lib/i18n";
 
 // M13: the organisation tree published through the CMS. Renders nothing while no unit is published.
-const TITLE = { th: "โครงสร้างหน่วยงาน", en: "Organisation structure" } as const;
+const TITLE = { th: "หน่วยงานภายใน (เผยแพร่ผ่านระบบ CMS)", en: "Units and sections (from the CMS)" } as const;
 
 function Branch({ parent, all, locale }: { parent: string | null; all: PublicDepartment[]; locale: Locale }) {
   const kids = all.filter((d) => d.parentCode === parent);
@@ -23,7 +23,7 @@ function Branch({ parent, all, locale }: { parent: string | null; all: PublicDep
 export function OrgStructure({ departments, locale }: { departments: PublicDepartment[]; locale: Locale }) {
   if (departments.length === 0) return null;
   return (
-    <section aria-labelledby="org-structure-heading" className="py-12" id="org-structure">
+    <section aria-labelledby="org-structure-heading" className="bg-surface-50 py-12" id="org-structure">
       <div className="mx-auto w-full max-w-4xl px-4">
         <h2 className="text-2xl font-bold text-neutral-800" id="org-structure-heading">{TITLE[locale]}</h2>
         <div className="mt-4"><Branch all={departments} locale={locale} parent={null} /></div>
