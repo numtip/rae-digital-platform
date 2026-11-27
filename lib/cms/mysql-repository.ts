@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { formatDocumentCode, type RegistryDocument } from "./document-registry.ts";
+import { formatContactCode, type ContactMessage, type ContactStatus } from "./contact-registry.ts";
 import { formatEventCode, type EventRecord } from "./event-registry.ts";
 import { formatKnowledgeCode, type KnowledgeEntry } from "./knowledge-registry.ts";
 import mysql from "mysql2/promise";
@@ -50,6 +51,12 @@ export type SsoLink = {
 export type DocumentVersionRecord = { version: string; storageUrl: string; changedBy: string; changedAt: number; changeNote: string };
 
 export type Repository = {
+  /** M07 contact inbox. */
+  createContactMessage(m: Omit<ContactMessage, "code">, audit: Omit<AuditRecord, "createdAt" | "entityId">): Promise<ContactMessage>;
+  listContactMessages(): Promise<ContactMessage[]>;
+  setContactStatus(code: string, status: ContactStatus, audit: Omit<AuditRecord, "createdAt">): Promise<boolean>;
+  /** Deletes messages created before the cutoff (retention); returns how many. */
+  purgeContactMessages(cutoff: number): Promise<number>;
   /** M05 events. Code assignment is the repository's job. */
   createEvent(event: Omit<EventRecord, "code">, audit: Omit<AuditRecord, "createdAt" | "entityId">): Promise<EventRecord>;
   listEvents(): Promise<EventRecord[]>;
@@ -179,6 +186,14 @@ type DocRow = {
   note: string; created_by: string; updated_at: Date; download_count: number;
   link_status: "ok" | "broken" | "unreachable" | null; link_checked_at: Date | null;
 };
+type CtRow = {
+  code: string; name: string; email: string; subject: string; message: string; locale: "th" | "en";
+  notice_version: string; consented_at: Date; status: ContactStatus; created_at: Date;
+};
+const toContact = (r: CtRow): ContactMessage => ({
+  code: r.code, name: r.name, email: r.email, subject: r.subject, message: r.message, locale: r.locale,
+  noticeVersion: r.notice_version, consentedAt: asMillis(r.consented_at), status: r.status, createdAt: asMillis(r.created_at),
+});
 type EvRow = {
   code: string; title_th: string; title_en: string; description_th: string; description_en: string; location_th: string; location_en: string;
   starts_at: Date; ends_at: Date | null; status: EventRecord["status"]; created_by: string; updated_at: Date;
@@ -429,6 +444,57 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
         after: parseJson(row.after_json),
         createdAt: new Date(row.created_at).toISOString(),
       }));
+    },
+
+    async createContactMessage(m, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM contact_messages FOR UPDATE");
+        const code = formatContactCode(Number((rows as { n: number }[])[0].n) + 1);
+        await connection.query(
+          "INSERT INTO contact_messages (code, name, email, subject, message, locale, notice_version, consented_at, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [code, m.name, m.email, m.subject, m.message, m.locale, m.noticeVersion, asDate(m.consentedAt), m.status, asDate(m.createdAt)],
+        );
+        await insertAudit(connection, { ...audit, entityId: code });
+        await connection.commit();
+        return { ...m, code };
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    },
+
+    async listContactMessages() {
+      const [rows] = await pool.query("SELECT * FROM contact_messages ORDER BY created_at DESC, code DESC");
+      return (rows as CtRow[]).map(toContact);
+    },
+
+    async setContactStatus(code, status, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        const [result] = await connection.query("UPDATE contact_messages SET status = ? WHERE code = ?", [status, code]);
+        if ((result as { affectedRows: number }).affectedRows !== 1) {
+          await connection.rollback();
+          return false;
+        }
+        await insertAudit(connection, audit);
+        await connection.commit();
+        return true;
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    },
+
+    async purgeContactMessages(cutoff) {
+      const [result] = await pool.query("DELETE FROM contact_messages WHERE created_at < ?", [asDate(cutoff)]);
+      return (result as { affectedRows: number }).affectedRows;
     },
 
     async createEvent(event, audit) {
