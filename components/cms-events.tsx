@@ -1,3 +1,4 @@
+import { asset } from "@/lib/assets";
 import type { PublicEvent } from "@/lib/cms/events-live";
 import type { Locale } from "@/lib/i18n";
 import { jsonLdScript } from "@/lib/json-ld";
@@ -5,8 +6,8 @@ import { jsonLdScript } from "@/lib/json-ld";
 // M05: events published through the CMS. Rendered only when there is at least one; the page it sits on
 // keeps its archive-derived lists either way.
 const COPY = {
-  th: { upcoming: "กิจกรรมที่กำลังจะมาถึง (จากระบบ CMS)", past: "กิจกรรมที่ผ่านมา (จากระบบ CMS)", cancelled: "ยกเลิก", where: "สถานที่", until: "ถึง" },
-  en: { upcoming: "Upcoming events (from the CMS)", past: "Past events (from the CMS)", cancelled: "Cancelled", where: "Location", until: "to" },
+  th: { upcoming: "กิจกรรมที่กำลังจะมาถึง (จากระบบ CMS)", past: "กิจกรรมที่ผ่านมา (จากระบบ CMS)", cancelled: "ยกเลิก", where: "สถานที่", until: "ถึง", ics: "เพิ่มลงปฏิทิน (.ics)", feed: "ติดตามปฏิทินกิจกรรมทั้งหมด (.ics)" },
+  en: { upcoming: "Upcoming events (from the CMS)", past: "Past events (from the CMS)", cancelled: "Cancelled", where: "Location", until: "to", ics: "Add to calendar (.ics)", feed: "Subscribe to all events (.ics)" },
 } as const;
 
 const fmt = (iso: string, locale: Locale) =>
@@ -29,11 +30,13 @@ export function CmsEvents({ events, upcoming, past, locale }: { events: PublicEv
       </p>
       {pick(e.locationTh, e.locationEn) ? <p className="mt-1 text-sm text-neutral-700">{copy.where}: {pick(e.locationTh, e.locationEn)}</p> : null}
       {pick(e.descriptionTh, e.descriptionEn) ? <p className="mt-2 whitespace-pre-line text-neutral-700">{pick(e.descriptionTh, e.descriptionEn)}</p> : null}
+      <p className="mt-2"><a className="text-sm font-medium text-brand-600 underline underline-offset-2" href={asset(`/${locale}/news/events/${e.code}.ics`)}>{copy.ics}<span className="sr-only"> — {pick(e.titleTh, e.titleEn)}</span></a></p>
     </article>
   );
 
   return (
     <div className="mb-10 grid gap-8" id="cms-events">
+      <p><a className="text-sm font-medium text-brand-600 underline underline-offset-2" href={asset(`/${locale}/news/events/calendar.ics`)}>{copy.feed}</a></p>
       {upcoming.length > 0 ? (
         <div>
           <h2 className="mb-4 text-2xl font-bold text-neutral-800">{copy.upcoming}</h2>
