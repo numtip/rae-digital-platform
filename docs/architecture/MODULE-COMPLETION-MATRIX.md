@@ -1,6 +1,6 @@
 # Blueprint module completion matrix
 
-Status snapshot: **2026-10-26**, `main` @ `67969f1` (PRs #32–#37 merged) plus the open PRs named in the last column.
+Status snapshot: **2026-11-27 (end of day)**, `main` @ `35cb736`, deployed `35cb73653153`. Rows were refreshed for the modules shipped today (M03–M08, M12, M13, M15, M17, M18, M22, M23) and for MJU SSO; the original 2026-10-26 evidence text elsewhere is kept as written.
 Verified against the tree (routes, files, workflows), not against the planning documents alone.
 
 Legend — **Status**: ✅ implemented · 🟡 partial · ⬜ not started · ⛔ blocked
@@ -30,14 +30,15 @@ Legend — **Status**: ✅ implemented · 🟡 partial · ⬜ not started · ⛔
 | M18 | Admin shell & dashboard | BUILD | M10 | 🟡 | desk overview (`/v1/dashboard`): per-module counts, upcoming events, live announcements, broken document links, new contact messages, 7-day views (analytics on), recent activity for audit readers. Weather/clock widgets and a full admin shell are not built | #135 |
 | M23 | Public API / OpenAPI | BUILD | — | 🟢 | `GET /cms-api/v1/public/openapi.json` (OpenAPI 3.0.3) for the read-only public endpoints; contract test ties spec to the runtime and to the public field set (`docs/ops/public-api.md`). Not JWT (ADR-0006 session tokens); desk API is not part of the contract | #137 |
 | M14 | News (data shape + detail pages) | BUILD | M15, M10 | 🟡 | 58 news items (title, date, type, body, image) back to 13 Jul 2026, `/news/[nid]` × 2 locales, index paginated 12/page with real URLs, 58/58 English headlines, no machine-translated bodies; no authoring workflow or revisions (needs M10/M15) | #30, #32, #33, #37 |
+| M15 | Media library & uploads | BUILD | 🟢 | Owner decision 2026-11-27: use the existing CMS media volume (no new storage target), official documents stay in SharePoint (ADR-0004). Migration 018 `media_assets`; images only (png/jpeg/webp, 8 MB, signature-checked); officer+ upload, publisher releases (alt text in both languages required); duplicate bytes refused; `/v1/public/media` serves released assets with the stored type; news authors copy released images into a draft (`/v1/news/{id}/media/from-library`); codes never reused; nightly backup already tars the volume. `docs/ops/media-library.md`. Not yet shown on public pages | #152, #154, #155 |
 
 ## Deferred / blocked modules
 
 | ID | Module | Class | Status | Blocker |
 |---|---|---|---|---|
-| M10 | Auth, sessions, MFA, SSO | HYBRID | ⛔ | ADR-0003 still *Proposed* (gate A-3): Entra ID OIDC contract and a test account are not available |
+| M10 | Auth, sessions, MFA, SSO | HYBRID | 🟡 | Local accounts + RBAC in production; **MJU SSO live as an owner pilot** (2026-11-27, adapter rc.6, one approved link, local login kept: `docs/ops/mju-sso-live-e2e.md`). Entra ID OIDC (ADR-0003, gate A-3) is still *Proposed* and not started; MFA not built |
 | M11 | Users, roles, permissions | BUILD | ⛔ | needs M10 |
-| M15 | Media library & uploads | BUILD | ⛔ | no storage target approved; ADR-0004 keeps master files in SharePoint and forbids a Graph runtime in v1 |
+
 | M16 | Correspondence registry | BUILD | ⛔ | Phase 3; needs M10, M15 |
 | M19 | Reports & exports | BUILD | ⛔ | Phase 3 |
 | M20 | Settings & theming | BUILD | ⛔ | needs DB; today `SITE_URL` is env-driven with `TODO(owner)` in `lib/i18n.ts` |
