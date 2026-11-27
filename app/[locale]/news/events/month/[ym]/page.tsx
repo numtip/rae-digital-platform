@@ -11,7 +11,6 @@ import { getActivityItems, getContent, getNews, isLocale, type Locale } from "@/
 // CMS and the archive's activity news (each by its own date). Month pages are unbounded (prev/next forever), so they
 // are noindex and not in the sitemap; the upcoming list on /news/events/ stays the indexed page.
 export const revalidate = 60;
-export const dynamicParams = true;
 
 type Props = { params: Promise<{ locale: string; ym: string }> };
 
@@ -22,7 +21,7 @@ const COPY = {
 
 export function generateStaticParams() {
   // The Pages preview needs one baked path for a dynamic route; a server renders any month on demand.
-  return staticExportOnly ? [{ locale: "th", ym: currentMonth() }] : [];
+  return staticExportOnly ? (["th", "en"] as const).map((locale) => ({ locale, ym: currentMonth() })) : [];
 }
 
 const monthName = (ym: string, locale: Locale) => {
@@ -92,7 +91,7 @@ export default async function EventsMonth({ params }: Props) {
                 {weeks.map((week, w) => (
                   <tr key={w}>
                     {week.map((day, i) => (
-                      <td className={`h-24 border border-neutral-300 p-1 align-top ${day === today ? "bg-brand-50" : ""}`} key={i}>
+                      <td className={`h-24 border border-neutral-300 p-1 align-top ${day === today ? "outline outline-2 -outline-offset-2 outline-brand-600" : ""}`} key={i}>
                         {day ? (
                           <>
                             <p className={`font-semibold ${day === today ? "text-brand-700" : "text-neutral-800"}`}>
