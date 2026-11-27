@@ -52,6 +52,8 @@ export type SsoLink = {
 export type DocumentVersionRecord = { version: string; storageUrl: string; changedBy: string; changedAt: number; changeNote: string };
 
 export type Repository = {
+  /** M18: the newest audit rows (read only; before/after payloads are not returned). */
+  recentAudit(limit: number): Promise<{ actorId: string; action: string; entityType: string; entityId: string; createdAt: string }[]>;
   /** M17 announcements. Code assignment is the repository's job. */
   createAnnouncement(a: Omit<Announcement, "code">, audit: Omit<AuditRecord, "createdAt" | "entityId">): Promise<Announcement>;
   listAnnouncements(): Promise<Announcement[]>;
@@ -442,6 +444,13 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
 
     async appendAudit(record) {
       await insertAudit(pool, record);
+    },
+
+    async recentAudit(limit) {
+      const [rows] = await pool.query("SELECT actor_id, action, entity_type, entity_id, created_at FROM audit_logs ORDER BY created_at DESC LIMIT ?", [Math.max(1, Math.min(50, limit))]);
+      return (rows as { actor_id: string; action: string; entity_type: string; entity_id: string; created_at: Date }[]).map((r) => ({
+        actorId: r.actor_id, action: r.action, entityType: r.entity_type, entityId: r.entity_id, createdAt: new Date(r.created_at).toISOString(),
+      }));
     },
 
     async listAudit() {

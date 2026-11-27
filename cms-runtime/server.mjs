@@ -156,6 +156,9 @@ export function memoryRepository() {
     async appendAudit(record) {
       audit.push(record);
     },
+    async recentAudit(limit) {
+      return audit.slice(-Math.max(1, Math.min(50, limit))).reverse().map((r) => ({ actorId: r.actorId, action: r.action, entityType: r.entityType, entityId: r.entityId, createdAt: r.createdAt ?? "" }));
+    },
     async listAudit() {
       return [...audit];
     },
@@ -618,6 +621,28 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         const doc = await repo.countDownload(countMatch[1]);
         if (!doc) return send(response, 404, { error: "NOT_FOUND" }, origin);
         return send(response, 200, { url: doc.storageUrl }, origin);
+      }
+      // M18 dashboard: counts per module and (for roles with audit:read) the newest activity. Read only.
+      if (request.method === "GET" && url.pathname === "/v1/dashboard") {
+        const actor = await actorFrom(request, now(), repo);
+        if (!actor) return send(response, 401, { error: "UNAUTHORIZED" }, origin);
+        requirePermission(actor.role, "news:review");
+        const tally = (list, key) => list.reduce((acc, item) => ({ ...acc, [item[key]]: (acc[item[key]] ?? 0) + 1 }), {});
+        const t = now();
+        const [news, docs, faq, evs, ann, msgs] = await Promise.all([repo.listArticles(), repo.listDocuments(), repo.listKnowledge(), repo.listEvents(), repo.listAnnouncements(), repo.listContactMessages()]);
+        const body = {
+          generatedAt: new Date(t).toISOString(),
+          news: tally(news, "status"),
+          documents: tally(docs, "status"),
+          documentLinksBroken: docs.filter((d) => d.linkStatus === "broken").length,
+          knowledge: tally(faq, "status"),
+          events: { ...tally(evs, "status"), upcoming: evs.filter((e) => e.status === "published" && (e.endsAt ?? e.startsAt) >= t).length },
+          announcements: { ...tally(ann, "status"), liveNow: ann.filter((a) => isLiveAnnouncement(a, t)).length },
+          contact: { enabled: contact.enabled, new: msgs.filter((m) => m.status === "new").length, total: msgs.length },
+          views7d: analytics.enabled ? (await repo.listPageViews(bangkokDay(t - 6 * 86400_000))).reduce((n, r) => n + r.hits, 0) : null,
+        };
+        if (hasPermission(actor.role, "audit:read")) body.recent = await repo.recentAudit(10);
+        return send(response, 200, body, origin);
       }
       // M17 announcements. The public list is decided here, now: published AND inside its window.
       if (request.method === "GET" && url.pathname === "/v1/public/announcements") {

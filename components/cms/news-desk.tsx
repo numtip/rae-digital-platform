@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { AnnouncementsDesk } from "@/components/cms/announcements-desk";
 import { AnalyticsDesk } from "@/components/cms/analytics-desk";
 import { ContactDesk } from "@/components/cms/contact-desk";
+import { DashboardDesk } from "@/components/cms/dashboard-desk";
 import { DocumentsDesk } from "@/components/cms/documents-desk";
 import { EventsDesk } from "@/components/cms/events-desk";
 import { KnowledgeDesk } from "@/components/cms/knowledge-desk";
@@ -534,6 +535,7 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
           <p role="status">{message}</p>
         </div>
       </div>
+      <DashboardDesk apiBase={apiBase} locale={locale} token={token} />
       <DocumentsDesk apiBase={apiBase} locale={locale} token={token} />
       <KnowledgeDesk apiBase={apiBase} locale={locale} token={token} />
       <EventsDesk apiBase={apiBase} locale={locale} token={token} />
