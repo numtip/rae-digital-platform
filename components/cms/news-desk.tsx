@@ -14,6 +14,7 @@ import { DepartmentsDesk } from "@/components/cms/departments-desk";
 import { PersonnelDesk } from "@/components/cms/personnel-desk";
 import { KnowledgeDesk } from "@/components/cms/knowledge-desk";
 import { MediaDesk } from "@/components/cms/media-desk";
+import { NewsLibraryPicker } from "@/components/cms/news-library-picker";
 import { adminCopy } from "@/lib/cms/admin-copy";
 
 const FOCUS =
@@ -563,6 +564,7 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
               {busy ? copy.uploading : copy.upload}
             </button>
           </form>
+          {selected ? <NewsLibraryPicker apiBase={apiBase} articleId={selected.id} locale={locale} onAdded={() => loadMedia(selected)} token={token} /> : null}
           <p role="status">{message}</p>
           <DeskError locale={locale} message={deskError} />
         </div>

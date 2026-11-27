@@ -109,3 +109,36 @@ test("library lifecycle: drafts are private, a publisher releases, the public se
     assert.equal((await call("GET", "/v1/media-library/RAE-MD-0099", publisher)).status, 404);
   });
 });
+
+test("news integration: a released library image is copied into the author's draft; nothing else is", async () => {
+  await withServer(async ({ call, officer, publisher, viewer }) => {
+    const article = { id: "n-lib-1", titleTh: "ข่าว", titleEn: "News", source: "https://rae.mju.ac.th/x" };
+    assert.equal((await call("POST", "/v1/news", officer, article)).status, 201);
+    const asset = await (await call("POST", "/v1/media-library", officer, upload(PNG, { altTh: "ภาพ", altEn: "image", captionEn: "from library" }))).json();
+    const add = (token, body = { code: asset.code }) => call("POST", "/v1/news/n-lib-1/media/from-library", token, body);
+
+    assert.equal((await add(null)).status, 401);
+    assert.equal((await add(viewer)).status, 403);
+    assert.equal((await add(officer)).status, 400, "a draft library image cannot be used");
+    assert.equal((await call("PATCH", `/v1/media-library/${asset.code}`, publisher, { status: "published", altTh: "ภาพ", altEn: "image" })).status, 200);
+    assert.equal((await add(officer, { code: "RAE-MD-0099" })).status, 400, "unknown code");
+    assert.equal((await add(officer, { code: "../../etc/passwd" })).status, 400, "not a code");
+    assert.equal((await add(publisher)).status, 403, "only the article's author may add images");
+
+    const added = await (await add(officer)).json();
+    assert.equal(added.position, 1);
+    assert.equal(added.mime, "image/png");
+    assert.equal(added.altEn, "image");
+    assert.equal(added.captionEn, "from library");
+    const list = (await (await call("GET", "/v1/news/n-lib-1/media", officer)).json()).media;
+    assert.equal(list.length, 1);
+    const served = await call("GET", `/v1/media/n-lib-1/${added.filename}`, officer);
+    assert.equal(served.status, 200);
+    assert.deepEqual(Buffer.from(await served.arrayBuffer()), PNG);
+
+    // the copy is independent: archiving the library entry does not touch the article's gallery
+    assert.equal((await call("PATCH", `/v1/media-library/${asset.code}`, publisher, { status: "archived" })).status, 200);
+    assert.equal((await call("GET", `/v1/media/n-lib-1/${added.filename}`, officer)).status, 200);
+    assert.equal((await add(officer)).status, 400, "an archived library image can no longer be added");
+  });
+});

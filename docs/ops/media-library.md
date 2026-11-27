@@ -14,6 +14,13 @@ bytes (signature), never by file name or the browser's type. Official documents 
 | Duplicates | the same bytes (sha256) cannot be uploaded twice while the first is not archived (409 with its code) |
 | Audit | `media.create`, `media.update` (and `media.file-missing` if the file move failed after the row was written; the row is archived) |
 
+## Use in news
+In the news desk, an author can add a **published** library image to their own draft (`POST /v1/news/{id}/media/from-library`
+with `{ "code": "RAE-MD-0001" }`, or the "Add an image from the library" form). The runtime **copies** the bytes into the article's
+own gallery (same limits as an upload: author only, draft only, 5 images, judged again by signature), taking the alt text and
+caption from the library entry. The article therefore keeps serving, snapshotting and withdrawing exactly like an uploaded image,
+and archiving the library entry later does not touch articles that already use it. Audit action: `news.media.library`.
+
 ## Access control
 `media:upload` (officer, editor, publisher, admin) reads and writes the library; going live or editing a live asset needs
 `news:publish`. A viewer sees nothing. Drafts and archived files are reachable only with a session.
