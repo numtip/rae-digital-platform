@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { toast } from "sonner";
+import { DeskError, FEEDBACK, StatusConfirm, needsConfirm, type ConfirmStatus } from "@/components/cms/desk-feedback";
 
 // M04 desk: write FAQ entries (Thai + English), keep them as drafts, and let a publisher release,
 // edit or archive them. The CMS decides who may do what; a refusal is shown as is.
@@ -27,7 +29,8 @@ const FIELD = "w-full rounded-md border border-neutral-300 px-3 py-2 focus-visib
 export function KnowledgeDesk({ apiBase, token, locale }: { apiBase: string; token: string; locale: "th" | "en" }) {
   const copy = COPY[locale];
   const [entries, setEntries] = useState<Entry[] | null>(null);
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [pending, setPending] = useState<{ code: string; status: ConfirmStatus } | null>(null);
 
   const call = useCallback(
     async (path: string, method = "GET", body?: unknown) => {
@@ -72,7 +75,9 @@ export function KnowledgeDesk({ apiBase, token, locale }: { apiBase: string; tok
     const result = code
       ? await call(`/v1/knowledge/${code}`, "PATCH", fields(new FormData(form)))
       : await call("/v1/knowledge", "POST", fields(new FormData(form)));
-    setMessage(result.ok ? copy.saved : fail(result));
+    setError(result.ok ? "" : fail(result));
+    if (result.ok) toast.success(copy.saved);
+    else toast.error(`${FEEDBACK[locale].errorTitle}: ${fail(result)}`);
     if (result.ok) {
       if (!code) form.reset();
       await refresh();
@@ -81,8 +86,16 @@ export function KnowledgeDesk({ apiBase, token, locale }: { apiBase: string; tok
 
   async function setStatus(code: string, status: string) {
     const result = await call(`/v1/knowledge/${code}`, "PATCH", { status });
-    setMessage(result.ok ? "" : fail(result));
+    setError(result.ok ? "" : fail(result));
+    if (result.ok) toast.success(FEEDBACK[locale].statusChanged);
+    else toast.error(`${FEEDBACK[locale].errorTitle}: ${fail(result)}`);
     await refresh();
+  }
+
+  // Going live, archiving and cancelling are the moves readers notice, so they ask first.
+  function onStatusChange(code: string, status: string) {
+    if (needsConfirm(status)) setPending({ code, status });
+    else void setStatus(code, status);
   }
 
   const form = (entry?: Entry) => (
@@ -102,7 +115,7 @@ export function KnowledgeDesk({ apiBase, token, locale }: { apiBase: string; tok
       <h2 className="text-xl font-bold" id="knowledge-desk">{copy.heading}</h2>
       <p className="mt-1 text-sm text-neutral-700">{copy.hint}</p>
       {form()}
-      <p className="mt-2 text-sm" role="status">{message}</p>
+      <DeskError locale={locale} message={error} />
       <ul className="mt-4 divide-y divide-neutral-200">
         {entries.length === 0 ? <li className="py-2 text-sm text-neutral-600">{copy.none}</li> : null}
         {entries.map((entry) => (
@@ -117,7 +130,7 @@ export function KnowledgeDesk({ apiBase, token, locale }: { apiBase: string; tok
             </div>
             <label className="flex items-center gap-2 text-sm">
               {copy.status}
-              <select className="h-10 rounded-md border border-neutral-300 px-2" onChange={(event) => void setStatus(entry.code, event.target.value)} value={entry.status}>
+              <select className="h-10 rounded-md border border-neutral-300 px-2" onChange={(event) => onStatusChange(entry.code, event.target.value)} value={entry.status}>
                 {Object.entries(copy.statuses).map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>
                 ))}
@@ -126,6 +139,12 @@ export function KnowledgeDesk({ apiBase, token, locale }: { apiBase: string; tok
           </li>
         ))}
       </ul>
+      <StatusConfirm
+        locale={locale}
+        onCancel={() => setPending(null)}
+        onConfirm={(code, status) => { setPending(null); void setStatus(code, status); }}
+        pending={pending}
+      />
     </section>
   );
 }

@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { toast } from "sonner";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { DeskError, FEEDBACK } from "@/components/cms/desk-feedback";
 import { AnnouncementsDesk } from "@/components/cms/announcements-desk";
 import { AnalyticsDesk } from "@/components/cms/analytics-desk";
 import { ContactDesk } from "@/components/cms/contact-desk";
@@ -19,6 +22,12 @@ const FOCUS =
 const FIELD = `h-11 w-full shrink-0 rounded-md border border-neutral-300 px-3 ${FOCUS}`;
 const AREA = `min-h-24 w-full rounded-md border border-neutral-300 px-3 py-2 ${FOCUS}`;
 const LABEL = "flex flex-col gap-1 text-sm font-medium";
+
+// Wording for the two moves that change what readers see. Publish reuses the shared desk wording.
+const CONFIRM_UNPUBLISH = {
+  th: { title: "ถอนการเผยแพร่ข่าวนี้?", body: "ข่าวจะถูกถอนออกจากเว็บไซต์สาธารณะ การถอนเป็นที่สิ้นสุด: ข่าวที่ถอนแล้วเผยแพร่ซ้ำด้วยรหัสเดิมไม่ได้ (เปิดฉบับแก้ไขขณะยังเผยแพร่อยู่แทน)", action: "ถอนการเผยแพร่" },
+  en: { title: "Unpublish this story?", body: "It is withdrawn from the public website. A withdrawn story cannot be republished under the same id (open a revision while it is still published instead).", action: "Unpublish" },
+} as const;
 
 type Article = {
   id: string;
@@ -109,6 +118,9 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
   const [busy, setBusy] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState("");
+  // A failed action stays on the desk until the next one (the toast alone disappears).
+  const [deskError, setDeskError] = useState("");
+  const [confirmAction, setConfirmAction] = useState<"publish" | "unpublish" | null>(null);
   // MJU SSO is offered only when the runtime says it is enabled; local login always stays.
   const [ssoEnabled, setSsoEnabled] = useState(false);
   const [csrf, setCsrf] = useState("");
@@ -171,7 +183,10 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
       signOut(copy.sessionExpired);
       return;
     }
-    setMessage(describe(result));
+    const text = describe(result);
+    setMessage("");
+    setDeskError(text);
+    toast.error(`${FEEDBACK[locale].errorTitle}: ${text}`);
   }
 
   async function loadMedia(article: Article | null, nextToken = token) {
@@ -236,6 +251,8 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
       return;
     }
     setMessage(body.id);
+    setDeskError("");
+    toast.success(FEEDBACK[locale].saved);
     setSelected(result.payload as Article);
     await refresh();
   }
@@ -274,6 +291,8 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
     setBusy(false);
     setPending([]);
     setMessage(copy.uploaded);
+    setDeskError("");
+    toast.success(copy.uploaded);
     await loadMedia(selected);
   }
 
@@ -295,8 +314,17 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
     }
     if (action === "return" || action === "unpublish") setReason("");
     setMessage(String(result.payload.status ?? ""));
+    setDeskError("");
+    toast.success(FEEDBACK[locale].statusChanged);
     setSelected(result.payload as Article);
     await refresh();
+  }
+
+  // Publishing and unpublishing ask first. With nothing selected (or no reason for an unpublish) the action
+  // runs as before so the usual "select a story / give a reason" message appears instead of a dialog.
+  function ask(action: "publish" | "unpublish") {
+    if (!selected || (action === "unpublish" && !reason.trim())) void act(action, reason);
+    else setConfirmAction(action);
   }
 
   // Before a session exists the page is a login card and nothing else: no list, no editor, nothing
@@ -432,7 +460,7 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
               <button className={`h-11 rounded-md border px-4 text-sm ${FOCUS}`} type="button" onClick={() => act("approve")}>
                 {copy.approve}
               </button>
-              <button className={`h-11 rounded-md border px-4 text-sm ${FOCUS}`} type="button" onClick={() => act("publish")}>
+              <button className={`h-11 rounded-md border px-4 text-sm ${FOCUS}`} type="button" onClick={() => ask("publish")}>
                 {copy.publish}
               </button>
               {selected?.status === "published" ? (
@@ -440,7 +468,7 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
                   <button className={`h-11 rounded-md border px-4 text-sm ${FOCUS}`} type="button" onClick={() => act("revise")}>
                     {copy.revise}
                   </button>
-                  <button className={`h-11 rounded-md border px-4 text-sm ${FOCUS}`} type="button" onClick={() => act("unpublish", reason)}>
+                  <button className={`h-11 rounded-md border px-4 text-sm ${FOCUS}`} type="button" onClick={() => ask("unpublish")}>
                     {copy.unpublish}
                   </button>
                 </>
@@ -535,6 +563,7 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
             </button>
           </form>
           <p role="status">{message}</p>
+          <DeskError locale={locale} message={deskError} />
         </div>
       </div>
       <DashboardDesk apiBase={apiBase} locale={locale} token={token} />
@@ -546,6 +575,20 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
       <AnnouncementsDesk apiBase={apiBase} locale={locale} token={token} />
       <ContactDesk apiBase={apiBase} locale={locale} token={token} />
       <AnalyticsDesk apiBase={apiBase} locale={locale} token={token} />
+      <AlertDialog onOpenChange={(open) => { if (!open) setConfirmAction(null); }} open={confirmAction !== null}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmAction === "unpublish" ? CONFIRM_UNPUBLISH[locale].title : FEEDBACK[locale].published.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmAction === "unpublish" ? CONFIRM_UNPUBLISH[locale].body : FEEDBACK[locale].published.body}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{FEEDBACK[locale].keep}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { const action = confirmAction; if (action) void act(action, reason); }}>
+              {confirmAction === "unpublish" ? CONFIRM_UNPUBLISH[locale].action : FEEDBACK[locale].published.action}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }

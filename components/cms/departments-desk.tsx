@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { toast } from "sonner";
+import { DeskError, FEEDBACK, StatusConfirm, needsConfirm, type ConfirmStatus } from "@/components/cms/desk-feedback";
 
 // M13 desk: the organisation tree. Units are archived, never deleted. Publishing is a publisher's decision.
 const COPY = {
@@ -18,7 +20,8 @@ const FIELD = "w-full rounded-md border border-neutral-300 px-3 py-2 focus-visib
 export function DepartmentsDesk({ apiBase, token, locale }: { apiBase: string; token: string; locale: "th" | "en" }) {
   const copy = COPY[locale];
   const [items, setItems] = useState<Dp[] | null>(null);
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [pending, setPending] = useState<{ code: string; status: ConfirmStatus } | null>(null);
   const [people, setPeople] = useState<{ code: string; prefixTh: string; firstTh: string; lastTh: string; status: string }[]>([]);
   const call = useCallback(
     async (path: string, method = "GET", body?: unknown) => {
@@ -51,7 +54,9 @@ export function DepartmentsDesk({ apiBase, token, locale }: { apiBase: string; t
     const form = event.currentTarget;
     const body = fields(new FormData(form));
     const r = code ? await call(`/v1/departments/${code}`, "PATCH", body) : await call("/v1/departments", "POST", body);
-    setMessage(r.ok ? copy.saved : fail(r));
+    setError(r.ok ? "" : fail(r));
+    if (r.ok) toast.success(copy.saved);
+    else toast.error(`${FEEDBACK[locale].errorTitle}: ${fail(r)}`);
     if (r.ok) {
       if (!code) form.reset();
       await refresh();
@@ -59,8 +64,16 @@ export function DepartmentsDesk({ apiBase, token, locale }: { apiBase: string; t
   }
   async function setStatus(code: string, status: string) {
     const r = await call(`/v1/departments/${code}`, "PATCH", { status });
-    setMessage(r.ok ? "" : fail(r));
+    setError(r.ok ? "" : fail(r));
+    if (r.ok) toast.success(FEEDBACK[locale].statusChanged);
+    else toast.error(`${FEEDBACK[locale].errorTitle}: ${fail(r)}`);
     await refresh();
+  }
+
+  // Going live, archiving and cancelling are the moves readers notice, so they ask first.
+  function onStatusChange(code: string, status: string) {
+    if (needsConfirm(status)) setPending({ code, status });
+    else void setStatus(code, status);
   }
 
   const form = (d?: Dp) => (
@@ -91,7 +104,7 @@ export function DepartmentsDesk({ apiBase, token, locale }: { apiBase: string; t
       <h2 className="text-xl font-bold" id="departments-desk">{copy.heading}</h2>
       <p className="mt-1 text-sm text-neutral-700">{copy.hint}</p>
       {form()}
-      <p className="mt-2 text-sm" role="status">{message}</p>
+      <DeskError locale={locale} message={error} />
       <ul className="mt-4 divide-y divide-neutral-200">
         {items.length === 0 ? <li className="py-2 text-sm text-neutral-600">{copy.empty}</li> : null}
         {items.map((d) => (
@@ -102,13 +115,19 @@ export function DepartmentsDesk({ apiBase, token, locale }: { apiBase: string; t
               <details className="mt-1"><summary className="cursor-pointer text-xs text-neutral-700">{copy.edit}</summary>{form(d)}</details>
             </div>
             <label className="flex items-center gap-2 text-sm">{copy.status}
-              <select className="h-10 rounded-md border border-neutral-300 px-2" onChange={(event) => void setStatus(d.code, event.target.value)} value={d.status}>
+              <select className="h-10 rounded-md border border-neutral-300 px-2" onChange={(event) => onStatusChange(d.code, event.target.value)} value={d.status}>
                 {Object.entries(copy.statuses).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
             </label>
           </li>
         ))}
       </ul>
+      <StatusConfirm
+        locale={locale}
+        onCancel={() => setPending(null)}
+        onConfirm={(code, status) => { setPending(null); void setStatus(code, status); }}
+        pending={pending}
+      />
     </section>
   );
 }

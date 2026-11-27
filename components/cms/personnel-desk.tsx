@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { toast } from "sonner";
+import { DeskError, FEEDBACK, StatusConfirm, needsConfirm, type ConfirmStatus } from "@/components/cms/desk-feedback";
 
 // M12 desk. Directory fields (editors and above); publishing a person needs a publisher and the consent box;
 // restricted data (national id, birth date, gender, address, LINE, Facebook, personal phone, CV) is loaded only on
@@ -30,7 +32,8 @@ export function PersonnelDesk({ apiBase, token, locale }: { apiBase: string; tok
   const copy = COPY[locale];
   const [people, setPeople] = useState<Ps[] | null>(null);
   const [units, setUnits] = useState<Unit[]>([]);
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [pending, setPending] = useState<{ code: string; status: ConfirmStatus } | null>(null);
   const call = useCallback(
     async (path: string, method = "GET", body?: unknown) => {
       const response = await fetch(`${apiBase}${path}`, { method, headers: { "content-type": "application/json", authorization: `Bearer ${token}` }, body: body === undefined ? undefined : JSON.stringify(body) }).catch(() => null);
@@ -73,7 +76,9 @@ export function PersonnelDesk({ apiBase, token, locale }: { apiBase: string; tok
     const form = event.currentTarget;
     const body = fields(new FormData(form));
     const r = code ? await call(`/v1/personnel/${code}`, "PATCH", body) : await call("/v1/personnel", "POST", body);
-    setMessage(r.ok ? copy.saved : fail(r));
+    setError(r.ok ? "" : fail(r));
+    if (r.ok) toast.success(copy.saved);
+    else toast.error(`${FEEDBACK[locale].errorTitle}: ${fail(r)}`);
     if (r.ok) {
       if (!code) form.reset();
       await refresh();
@@ -81,8 +86,16 @@ export function PersonnelDesk({ apiBase, token, locale }: { apiBase: string; tok
   }
   async function setStatus(code: string, status: string) {
     const r = await call(`/v1/personnel/${code}`, "PATCH", { status });
-    setMessage(r.ok ? "" : fail(r));
+    setError(r.ok ? "" : fail(r));
+    if (r.ok) toast.success(FEEDBACK[locale].statusChanged);
+    else toast.error(`${FEEDBACK[locale].errorTitle}: ${fail(r)}`);
     await refresh();
+  }
+
+  // Going live, archiving and cancelling are the moves readers notice, so they ask first.
+  function onStatusChange(code: string, status: string) {
+    if (needsConfirm(status)) setPending({ code, status });
+    else void setStatus(code, status);
   }
 
   const unitName = (u: Unit) => (locale === "th" ? u.nameTh : u.nameEn);
@@ -109,7 +122,7 @@ export function PersonnelDesk({ apiBase, token, locale }: { apiBase: string; tok
       <h2 className="text-xl font-bold" id="personnel-desk">{copy.heading}</h2>
       <p className="mt-1 text-sm text-neutral-700">{copy.hint}</p>
       {form()}
-      <p className="mt-2 text-sm" role="status">{message}</p>
+      <DeskError locale={locale} message={error} />
       <ul className="mt-4 divide-y divide-neutral-200">
         {people.length === 0 ? <li className="py-2 text-sm text-neutral-600">{copy.empty}</li> : null}
         {people.map((p) => (
@@ -124,7 +137,7 @@ export function PersonnelDesk({ apiBase, token, locale }: { apiBase: string; tok
               </details>
             </div>
             <label className="flex items-center gap-2 text-sm">{copy.status}
-              <select className="h-10 rounded-md border border-neutral-300 px-2" onChange={(event) => void setStatus(p.code, event.target.value)} value={p.status}>
+              <select className="h-10 rounded-md border border-neutral-300 px-2" onChange={(event) => onStatusChange(p.code, event.target.value)} value={p.status}>
                 <option value="active">{copy.active}</option>
                 <option value="inactive">{copy.inactive}</option>
               </select>
@@ -132,6 +145,12 @@ export function PersonnelDesk({ apiBase, token, locale }: { apiBase: string; tok
           </li>
         ))}
       </ul>
+      <StatusConfirm
+        locale={locale}
+        onCancel={() => setPending(null)}
+        onConfirm={(code, status) => { setPending(null); void setStatus(code, status); }}
+        pending={pending}
+      />
     </section>
   );
 }
