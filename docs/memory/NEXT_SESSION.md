@@ -1,11 +1,17 @@
-# Next session — RAE digital platform (closeout 2026-11-25) — Hermes handoff
+# Next session — RAE digital platform (closeout 2026-11-27) — Hermes handoff
 
-**Deployed = `f093f35` (2026-11-27). `main` = that + docs.** Read `docs/STATUS.md`, then `docs/reports/2026-11-25-day-closeout.md`.
+**Deployed = `8a61dfc` (release tooling, symlink system). GitHub `main` = `cb64016` (+ docs PR #145).** Read `docs/STATUS.md`, then `docs/reports/2026-11-27-day-closeout.md`.
 
-State: one VPS (190), one CMS, one DB `rae_cms`. Canonical site `https://raeservice.mju.ac.th/rae-landing/` = CMS-backed Next (3418); admin/API host `https://rae-cms.raemanagemju.net` (3417, noindex). News + M03 Document Center verified live on both. RAE_UNIFIED_PLATFORM_READY=YES, M03_PRODUCTION_READY=YES.
+State: one VPS (VPS190), one CMS runtime, one DB `rae_cms`. Canonical site `https://raeservice.mju.ac.th/rae-landing/` = CMS-backed Next (3418); admin host `rae-cms.raemanagemju.net` (3417, noindex, Access still open). News + M03 Document Center + M04 Knowledge/FAQ + M05 Events/.ics + M06 ranking + M07 contact (dark) + M08 analytics (dark) + M13 departments + M17 announcements + M18 dashboard + M23 OpenAPI + M12 personnel directory — all **deployed**. sitemap **164 loc**. Deploy via symlink (`~/rae/current → releases/<sha>`), cutover 2.4 s.
 
-Do not: enable MJU SSO (needs countersigned CMS C-14 + MJU admin E2E authorisation, nothing assumed or signed for anyone), edit `/etc/cloudflared/config.yml` for routing (dashboard-managed), run nginx/sudo or merge PRs without the operator's explicit say-so, put the private adapter or any citizen id/secret in the public repo, run `cms-runtime/rollback.sql` on `rae_cms`.
+Do not: enable MJU SSO (needs CMS C-14 + MJU admin E2E authorisation; nothing assumed or signed for anyone), edit `/etc/cloudflared/config.yml` (dashboard-managed), run nginx/sudo or merge PRs without operator approval, put private adapter/citizen id/secret in public repo, run `cms-runtime/rollback.sql` on `rae_cms`, deploy code-only changes automatically (docs-only merges do NOT redeploy).
 
-Done 2026-11-27: M04 FAQ, M05 events, M06 ranking, M22 backup fix (PRs #124–#127; deploy is user systemd units + `~/rae/rae-cms-runtime/app` checkout + both builds from this tree — see 2026-11-27 closeout). Also done: events paging, M07 contact (dark), M08 analytics (dark) + a11y gate. Owner steps open: `crontab ~/rae/ops/crontab.rae-admin.proposed` (backup cron), contact notice/retention/SMTP, `ANALYTICS_ENABLED`. Evening: M05 ics, M17, M18, M13, M23 deployed; M15/M12 blocked externally. Rebuild recipe: `~/…/scratchpad/build-both.sh` equivalent — stop units, rm `.next*`, build root then landing with `RAE_CMS_API=http://127.0.0.1:3317`, start units. Next, in order: (1) get the SharePoint link list → `scripts/import-m365-links.mjs` dry run → drafts → publisher review; (2) on receipt of the two SSO approvals: set `NODE_ENV=production`, `MJU_SSO_ALLOW_UNVERIFIED_CONTRACT=true`, `MJU_SSO_OWNER_RISK_ACCEPTANCE=/opt/mju-sso/risk-acceptance.json`, `MJU_SSO_LAWFUL_BASIS_APPROVED=true`, `MJU_SSO_ENABLED=true` in `~/rae/rae-cms-secrets/runtime.env`, restart `rae-cms-runtime`, run `deploy/production/sso-e2e-preflight.sh`, support owner E2E (`prinya`, admin); (3) Cloudflare Access on the admin pages; (4) next Phase 2 modules.
+## Pending next steps (in order)
+1. **M365 onboarding** — get SharePoint link list → `scripts/import-m365-links.mjs` dry run → drafts → publisher review (unlocks M03 real documents)
+2. **Clear withdrawn.json test data** — uat-withdraw-0 through -7 + news test ids残留 in `~/rae/rae-cms-data/withdrawn.json`
+3. **Cloudflare Access** on `/th|en/cms-admin/*` (leave `/cms-api/*` open for SSO routes + local login)
+4. **Backup cron verification** — crontab guard prevented automated edits; operator must verify path is correct
+5. **Owner approves M15 media library storage target** (ADR-0004 keeps master files in SharePoint)
+6. **Phase 2 content completion** — more pages, search improvement, etc. per Blueprint
 
-Deploy recipe and rollback points: closeout report §4 and the staging handoff. Agent Core (`rae-digital-platform` identity) is advisory only.
+Agent Core identity = `rae-digital-platform`, advisory only. CRITICAL: `schema_migrations` table does NOT exist on production DB — track migrations by comparing file names vs actual tables only. Test audit rows intentionally kept for integrity.
