@@ -23,7 +23,7 @@ RUNTIME_APP="$RAE_HOME/rae-cms-runtime/app"
 UA="Mozilla/5.0 (release-check)"
 export PATH="$NODE_BIN:$PATH"
 
-log() { echo "[release $(date -u +%H:%M:%S)] $*"; }
+log() { echo "[release $(date -u +%H:%M:%S)] $*" >&2; }
 die() { echo "release: $*" >&2; exit 1; }
 
 short() { git -C "$REPO" rev-parse --short=12 "$1^{commit}"; }
@@ -105,7 +105,7 @@ start_check_containers() { # start_check_containers <dir>
 cmd_check() {
   local ref="${1:?sha or current}"
   local dir
-  if [ "$ref" = current ]; then dir="$(readlink -f "$CUR")"; else dir="$REL/$(short "$ref")"; fi
+  if [ "$ref" = current ]; then dir="$(readlink "$CUR")"; else dir="$REL/$(short "$ref")"; fi
   [ -d "$dir/.next" ] || die "$dir is not built"
   log "checking $(basename "$dir") on spare ports 3427/3428 (the serving release is not touched)"
   start_check_containers "$dir"
@@ -133,8 +133,8 @@ restart_units() {
 
 cmd_switch() {
   local ref="${1:?sha}"; local sha; sha="$(short "$ref")"
-  cmd_check "$sha" || die "pre-switch check failed; $(basename "$(readlink -f "$CUR")") keeps serving"
-  local prev; prev="$(basename "$(readlink -f "$CUR")")"
+  cmd_check "$sha" || die "pre-switch check failed; $(basename "$(readlink "$CUR")") keeps serving"
+  local prev; prev="$(basename "$(readlink "$CUR")")"
   echo "$prev" > "$REL/.previous"
   point_current "$REL/$sha"
   log "switched current -> $sha (previous $prev); restarting units"
@@ -152,7 +152,7 @@ cmd_rollback() {
   [ -n "$target" ] || die "no previous release recorded"
   target="$(basename "$REL/$target")"
   [ -d "$REL/$target/.next" ] || die "release $target is not built"
-  local was; was="$(basename "$(readlink -f "$CUR")")"
+  local was; was="$(basename "$(readlink "$CUR")")"
   point_current "$REL/$target"
   echo "$was" > "$REL/.previous"
   log "rolling back $was -> $target"
@@ -171,14 +171,14 @@ cmd_runtime() {
 }
 
 cmd_status() {
-  echo "serving : $(basename "$(readlink -f "$CUR")")"
+  echo "serving : $(basename "$(readlink "$CUR")")"
   echo "previous: $(cat "$REL/.previous" 2>/dev/null || echo -)"
   echo "runtime : $(git -C "$RUNTIME_APP" rev-parse --short=12 HEAD)"
   ls -1 "$REL" | grep -v '^\.' | sed 's/^/release : /'
 }
 
 cmd_prune() {
-  local keep=3 serving prev; serving="$(basename "$(readlink -f "$CUR")")"; prev="$(cat "$REL/.previous" 2>/dev/null || true)"
+  local keep=3 serving prev; serving="$(basename "$(readlink "$CUR")")"; prev="$(cat "$REL/.previous" 2>/dev/null || true)"
   # newest by mtime, never the serving or previous one
   for d in $(ls -1t "$REL" | grep -v '^\.' | tail -n +$((keep + 1))); do
     [ "$d" = "$serving" ] || [ "$d" = "$prev" ] && continue
