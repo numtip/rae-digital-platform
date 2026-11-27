@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CmsEvents } from "@/components/cms-events";
 import { Breadcrumb, PageHero, SourceLine } from "@/components/page-shell";
+import { readPublicEvents, splitPublicEvents } from "@/lib/cms/events-live";
 import { getContent, getNews, isLocale, splitActivities } from "@/lib/i18n";
 
 // Events (M05). Only activities the office has already published are listed, taken from
 // the news archive by the type the office assigns. The upcoming section renders only when
 // a published item carries a future date — today none does, so it is absent rather than
 // filled with a guessed calendar.
+
+// CMS-published events (M05) are read live and shown above the archive lists once any exist.
+export const revalidate = 60;
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -64,6 +69,8 @@ export default async function NewsEvents({ params }: Props) {
   const news = getNews(locale);
   const site = getContent(locale);
   const { upcoming, past } = splitActivities(locale);
+  const cmsEvents = await readPublicEvents();
+  const cmsSplit = splitPublicEvents(cmsEvents);
   const thaiTitles = new Map(getNews("th").items.map((entry) => [entry.nid, entry.title]));
 
   return (
@@ -85,6 +92,7 @@ export default async function NewsEvents({ params }: Props) {
 
       <section className="bg-white py-12">
         <div className="mx-auto w-full max-w-7xl px-4">
+          <CmsEvents events={cmsEvents} locale={locale} {...cmsSplit} />
           <p className="mb-8 max-w-3xl text-sm text-neutral-600">{news.events.snapshotNote}</p>
 
           {upcoming.length > 0 && (

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { ContentSearch } from "@/components/content-search";
 import { Breadcrumb, PageHero } from "@/components/page-shell";
 import { readPublicDocuments } from "@/lib/cms/documents-live";
+import { readPublicEvents } from "@/lib/cms/events-live";
 import { readPublicKnowledge } from "@/lib/cms/knowledge-live";
 import { liveNews } from "@/lib/cms/live";
 import { getContent, getSearch, isLocale } from "@/lib/i18n";
@@ -38,6 +39,7 @@ export default async function Search({ params }: Props) {
   const { items } = await liveNews(locale);
   const registry = await readPublicDocuments();
   const faqEntries = await readPublicKnowledge();
+  const eventList = await readPublicEvents();
   // Same shape the index uses, so the client component and the category chips need no special
   // case: a published story is a "news" item like any archive story.
   const published = items.map((item) => ({
@@ -64,6 +66,14 @@ export default async function Search({ params }: Props) {
     href: `/${locale}/knowledge#faq-${entry.code}`,
   }));
 
+  // Events (M05): found by title, place or description; the result opens the event on the news/events page.
+  const events = eventList.map((e) => ({
+    kind: "item" as const,
+    title: locale === "th" ? e.titleTh : e.titleEn,
+    text: [locale === "th" ? e.locationTh : e.locationEn, locale === "th" ? e.descriptionTh : e.descriptionEn, locale === "th" ? e.titleEn : e.titleTh].filter(Boolean).join(" · "),
+    href: `/${locale}/news/events#ev-${e.code}`,
+  }));
+
   return (
     <main id="main-content" tabIndex={-1}>
       <PageHero title={search.hero.title} lead={search.hero.lead} />
@@ -77,7 +87,7 @@ export default async function Search({ params }: Props) {
             ]}
           />
           <Suspense fallback={<p className="text-neutral-700">{search.labels.empty}</p>}>
-            <ContentSearch entries={[...buildSearchIndex(locale), ...published, ...documents, ...faq]} labels={search.labels} />
+            <ContentSearch entries={[...buildSearchIndex(locale), ...published, ...documents, ...faq, ...events]} labels={search.labels} />
           </Suspense>
         </div>
       </section>

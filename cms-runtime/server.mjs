@@ -23,6 +23,7 @@ import {
   publicDocumentView,
   validateNewDocument,
 } from "../lib/cms/document-registry.ts";
+import { applyEventUpdate, byStart, formatEventCode, isPublicEvent, publicEventView, validateEvent } from "../lib/cms/event-registry.ts";
 import {
   applyKnowledgeUpdate,
   bySortOrder,
@@ -49,6 +50,7 @@ const ssoHandoffs = new Map();
 const throttle = createLoginThrottle();
 const documents = new Map();
 const knowledge = new Map();
+const events = new Map();
 const documentVersions = new Map();
 const downloadByIp = createIpLimiter({ max: 60, windowMs: 60_000 });
 const loginByIp = createIpLimiter({ max: 30, windowMs: 60_000 });
@@ -66,6 +68,7 @@ export function resetRuntime() {
   downloadByIp.reset();
   documents.clear();
   knowledge.clear();
+  events.clear();
   documentVersions.clear();
   sessions.clear();
   articles.clear();
@@ -142,6 +145,24 @@ export function memoryRepository() {
     },
     async listAudit() {
       return [...audit];
+    },
+    async createEvent(event, audit) {
+      const n = [...events.keys()].reduce((max, code) => Math.max(max, Number(code.slice(7))), 0) + 1;
+      const code = formatEventCode(n);
+      events.set(code, { ...event, code });
+      await this.appendAudit({ ...audit, entityId: code });
+      return { ...event, code };
+    },
+    async listEvents() {
+      return [...events.values()].map((e) => ({ ...e })).sort(byStart);
+    },
+    async getEvent(code) {
+      const e = events.get(code);
+      return e ? { ...e } : null;
+    },
+    async updateEvent(event, audit) {
+      events.set(event.code, { ...event });
+      await this.appendAudit(audit);
     },
     async createKnowledge(entry, audit) {
       const n = [...knowledge.keys()].reduce((max, code) => Math.max(max, Number(code.slice(7))), 0) + 1;
@@ -523,6 +544,42 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         const doc = await repo.countDownload(countMatch[1]);
         if (!doc) return send(response, 404, { error: "NOT_FOUND" }, origin);
         return send(response, 200, { url: doc.storageUrl }, origin);
+      }
+      // M05 events. Public reads see published and cancelled events only.
+      if (request.method === "GET" && url.pathname === "/v1/public/events") {
+        const list = (await repo.listEvents()).filter(isPublicEvent).sort(byStart);
+        return send(response, 200, { events: list.map(publicEventView) }, origin);
+      }
+      if (url.pathname === "/v1/events" || url.pathname.startsWith("/v1/events/")) {
+        const actor = await actorFrom(request, now(), repo);
+        if (!actor) return send(response, 401, { error: "UNAUTHORIZED" }, origin);
+        requirePermission(actor.role, "news:draft");
+        const audit = (action, code) => ({ actorId: actor.id, action, entityType: "event", entityId: code });
+        if (request.method === "GET" && url.pathname === "/v1/events") {
+          return send(response, 200, { events: await repo.listEvents() }, origin);
+        }
+        if (request.method === "POST" && url.pathname === "/v1/events") {
+          const fields = validateEvent(await readBody(request));
+          if (fields.status !== "draft") requirePermission(actor.role, "news:publish");
+          const record = await repo.createEvent({ ...fields, createdBy: actor.id, updatedAt: now() }, audit("event.create", ""));
+          await notifySite({});
+          return send(response, 201, record, origin);
+        }
+        const ev = /^\/v1\/events\/(RAE-EV-\d{4,})$/.exec(url.pathname);
+        if (ev) {
+          const current = await repo.getEvent(ev[1]);
+          if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
+          if (request.method === "GET") return send(response, 200, current, origin);
+          if (request.method === "PATCH") {
+            const next = applyEventUpdate(current, await readBody(request), now());
+            // Anything that is, or becomes, public is a publisher's decision.
+            if (isPublicEvent(current) || isPublicEvent(next)) requirePermission(actor.role, "news:publish");
+            await repo.updateEvent(next, audit("event.update", next.code));
+            await notifySite({});
+            return send(response, 200, next, origin);
+          }
+        }
+        return send(response, 404, { error: "NOT_FOUND" }, origin);
       }
       // M04 knowledge / FAQ. Public reads see published entries only.
       if (request.method === "GET" && url.pathname === "/v1/public/knowledge") {
