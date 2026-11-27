@@ -570,10 +570,15 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
       const connection = await pool.getConnection();
       try {
         await connection.beginTransaction();
-        await connection.query(
-          "INSERT INTO personnel_private (personnel_code, data_enc, national_id_hash, updated_by, updated_at) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE data_enc = VALUES(data_enc), national_id_hash = VALUES(national_id_hash), updated_by = VALUES(updated_by), updated_at = VALUES(updated_at)",
-          [code, dataEnc, nationalIdHash, by, asDate(now)],
-        );
+        // Not `INSERT … ON DUPLICATE KEY UPDATE`: that fires on ANY unique key, so a national id already held by
+        // someone else would silently overwrite THEIR row. Look the row up by primary key, then UPDATE or INSERT;
+        // a clash on the national-id hash then surfaces as ER_DUP_ENTRY and is reported as a duplicate.
+        const [existing] = await connection.query("SELECT 1 FROM personnel_private WHERE personnel_code = ? FOR UPDATE", [code]);
+        if ((existing as unknown[]).length > 0) {
+          await connection.query("UPDATE personnel_private SET data_enc = ?, national_id_hash = ?, updated_by = ?, updated_at = ? WHERE personnel_code = ?", [dataEnc, nationalIdHash, by, asDate(now), code]);
+        } else {
+          await connection.query("INSERT INTO personnel_private (personnel_code, data_enc, national_id_hash, updated_by, updated_at) VALUES (?, ?, ?, ?, ?)", [code, dataEnc, nationalIdHash, by, asDate(now)]);
+        }
         await insertAudit(connection, audit);
         await connection.commit();
         return "ok";
