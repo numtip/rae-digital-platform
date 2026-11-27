@@ -27,6 +27,7 @@ Legend — **Status**: ✅ implemented · 🟡 partial · ⬜ not started · ⛔
 | M13 | Departments / org structure | BUILD | — | 🟡 | CMS tree (migration 016, `/v1/departments`, desk panel, `/about#org-structure` hidden while empty): parent/child ≤4 levels, loops/depth refused, archived never deleted, child hidden with its parent, search. Head-of-unit link waits for M12; logo/colour waits for M15. Existing static unit lists on about/research/services are unchanged | #136 |
 | M17 | Announcements & banners | BUILD | M14 | 🟢 | CMS banner / popup / ticker (migration 015): schedule + mandatory expiry enforced by the server clock, popup once per session (native dialog), ticker pausable and static under reduced motion, links restricted to `/th\|en` paths or https, empty until published | #134 |
 | M18 | Admin shell & dashboard | BUILD | M10 | 🟡 | desk overview (`/v1/dashboard`): per-module counts, upcoming events, live announcements, broken document links, new contact messages, 7-day views (analytics on), recent activity for audit readers. Weather/clock widgets and a full admin shell are not built | #135 |
+| M23 | Public API / OpenAPI | BUILD | — | 🟢 | `GET /cms-api/v1/public/openapi.json` (OpenAPI 3.0.3) for the read-only public endpoints; contract test ties spec to the runtime and to the public field set (`docs/ops/public-api.md`). Not JWT (ADR-0006 session tokens); desk API is not part of the contract | #137 |
 | M14 | News (data shape + detail pages) | BUILD | M15, M10 | 🟡 | 58 news items (title, date, type, body, image) back to 13 Jul 2026, `/news/[nid]` × 2 locales, index paginated 12/page with real URLs, 58/58 English headlines, no machine-translated bodies; no authoring workflow or revisions (needs M10/M15) | #30, #32, #33, #37 |
 
 ## Deferred / blocked modules
@@ -42,7 +43,6 @@ Legend — **Status**: ✅ implemented · 🟡 partial · ⬜ not started · ⛔
 | M20 | Settings & theming | BUILD | ⛔ | needs DB; today `SITE_URL` is env-driven with `TODO(owner)` in `lib/i18n.ts` |
 | M21 | Audit & activity logs | BUILD | ⛔ | needs M10 |
 | M22 | Backup & restore | BUILD | ⛔ | 🟡 | nightly dump + media (script fixed), weekly restore into a disposable container (`scripts/ops/`, `docs/ops/backup-restore.md`); off-box copy deferred; crontab update pending operator | #124 |
-| M23 | Public API / OpenAPI | BUILD | ⛔ | static export has no server routes; ADR-0001 A-1 (Node runtime) unresolved |
 | M30 | Assets (ครุภัณฑ์) | HYBRID | ⛔ | gate A-6: "INTEGRATE if ERP owns the asset register `[U]`" — undecided |
 | M31 | Vehicles | INTEGRATE | ⛔ | external system API availability is `[U]` |
 | M32 | Meeting rooms | INTEGRATE | ⛔ | external system API availability is `[U]` |
