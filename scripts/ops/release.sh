@@ -163,7 +163,7 @@ cmd_runtime() {
   local sha; sha="$(short "${1:?sha}")"
   local prev; prev="$(git -C "$RUNTIME_APP" rev-parse HEAD)"
   echo "$prev" > "$REL/.runtime-previous"
-  git -C "$RUNTIME_APP" fetch -q origin main
+  for attempt in 1 2 3 4; do git -C "$RUNTIME_APP" fetch -q origin main && break; [ "$attempt" = 4 ] && die "git fetch failed 4 times"; sleep 5; done # DNS to github.com is occasionally flaky
   git -C "$RUNTIME_APP" checkout -q --detach "$sha"
   log "runtime $prev -> $sha; restarting"
   systemctl --user restart rae-cms-runtime.service
