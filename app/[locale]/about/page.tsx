@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { asset } from "@/lib/assets";
+import { OrgStructure } from "@/components/org-structure";
 import { Breadcrumb } from "@/components/page-shell";
+import { readPublicDepartments } from "@/lib/cms/departments-live";
 import { SITE_URL, getAbout, getContent, isLocale } from "@/lib/i18n";
 import { telHref } from "@/lib/phone";
 
@@ -12,6 +14,9 @@ import { telHref } from "@/lib/phone";
 const CARD = "rounded-lg border border-neutral-200 bg-white p-6 shadow-sm";
 
 type Props = { params: Promise<{ locale: string }> };
+
+// CMS-published organisation structure (M13) is read live and shown below the verified office details once any unit is published.
+export const revalidate = 60;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
@@ -36,6 +41,8 @@ export default async function About({ params }: Props) {
   if (!isLocale(locale)) notFound();
   const about = getAbout(locale);
   const sourceLabel = about.source.label;
+
+  const departments = await readPublicDepartments();
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -189,6 +196,7 @@ export default async function About({ params }: Props) {
           </div>
         </div>
       </section>
+      <OrgStructure departments={departments} locale={locale} />
     </main>
   );
 }
