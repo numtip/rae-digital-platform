@@ -1,8 +1,8 @@
 # RAE Digital Platform — DAY_CLOSEOUT 2026-11-27
 
-**Result:** `DAY_20261127_CLOSED` · `RAE_UNIFIED_PLATFORM_READY = YES` · `M03_PRODUCTION_READY = YES` · MJU SSO `PENDING_EXTERNAL_APPROVAL`
+**Result:** `DAY_20261127_CLOSED` · `RAE_UNIFIED_PLATFORM_READY = YES` · `M03_PRODUCTION_READY = YES` · `M15_PRODUCTION_READY = YES` · `M15_NEWS_INTEGRATION_READY = YES` · `CMS_DARK_MODE_PASS = YES` · MJU SSO **LIVE (owner pilot)** — final state in §10 (the earlier session sections below are kept as written)
 
-**Deployed = `8a61dfc` (release tooling). GitHub `main` = same + docs-only.**
+**Final: deployed = `35cb73653153` (release, runtime and both site builds). Earlier today: `8a61dfc`, then `623913e`. See §10.**
 
 ## 1. PR ที่ merge วันนี้ (CI green ทั้งหมด)
 
@@ -139,3 +139,55 @@ Static landing: ~/rae/rae-landing-static-backup/
 4. **M12 Personnel & PDPA** — เริ่ม build หลังจาก owner approve
 5. **Module Phases ตาม roadmap**: M05 events/.ics (done) · M04 knowledge/FAQ (done) · next: more content pages, search improvement
 6. **Backup cron verification** — operator ตรวจสอบว่า crontab pointing ไปถูก path หลัง release
+
+---
+
+## 10. Later session, 07:00–09:00 UTC — shadcn desks, MJU SSO live, M15 media library (final state)
+
+### 10.1 PRs merged after §1 (all CI green; `main` ends at `35cb736`)
+| PR | Merge | What |
+|---|---|---|
+| #149 | `cc05a18` | shadcn/ui setup (`components.json`, `lib/utils.ts`, tokens that only alias brand colours, `[data-slot]` border reset) + toast and confirm dialogs in the documents desk |
+| #150 | `54dc65f` | SSO production-config tests, live-pilot record, container DNS fix, rollback (`docs/ops/mju-sso-live-e2e.md`), STATUS |
+| #151 | `6fca1e0` | toast + persistent inline error + confirm dialogs on **every** desk (`components/cms/desk-feedback.tsx`) |
+| #152 | `c76a31f` | **M15 media library**: migration 018, `/v1/media-library`, `/v1/public/media`, desk panel, OpenAPI, MariaDB tests |
+| #153 | `3ea3218` | admin desk readable under `prefers-color-scheme: dark` (text colour + form scheme pinned) |
+| #154 | `a8dc8b2` | news ← library images (`POST /v1/news/{id}/media/from-library`) + picker in the news desk |
+| #155 | `35cb736` | toast contrast (drop `richColors`); media codes never reused (max of rows and audit trail) |
+Not merged, not ours to close: #144 (an earlier draft of this closeout, superseded by #145/#147), #115 and #98 (older docs PRs).
+
+### 10.2 Migration
+`018_media_library.sql` (table `media_assets`, additive, starts empty). Applied to production after a dump
+(`~/rae/rae-cms-backups/pre-m15-*`: SQL + media tar + runtime.env); applied clean with migrations 001–018 on a disposable
+`mariadb:10.6` first, and 018 re-applies idempotently. There is still no `schema_migrations` table (see §8).
+
+### 10.3 Deployments (all through `release.sh`; measured switch gap 2.5–3.7 s)
+`cc05a18e5c53` (shadcn + documents desk) → `c76a31fea41c` (M15; runtime moved too) → `a8dc8b2497bc` (news ← library, dark fix) →
+**`35cb73653153`** (toast contrast, code non-reuse; runtime + web). Runtime and web are on the same SHA.
+
+### 10.4 MJU SSO — live owner pilot (supersedes "PENDING_EXTERNAL_APPROVAL")
+Adapter `@mju/sso-integration` v1.0.0-rc.6 (`2d30b35`, same as Attendance V2 PR #86), `citizenID` → application HMAC, C-14 for the
+**CMS purpose** signed by the owner (the 2026-11-06 record covers attendance only), ADR-006 owner risk acceptance, one approved
+link to the existing admin user. Real sign-in ×2 + sign-out passed. One real defect found and fixed: the runtime container resolved
+`sso.mju.ac.th` to a public address this host cannot reach → `--add-host sso.mju.ac.th:10.1.254.54` in the systemd unit (TLS stays
+verified). Details, results and rollback: `docs/ops/mju-sso-live-e2e.md`. Activation script: `~/rae/ops/mju-sso-activate.sh`.
+
+### 10.5 Tests
+- Repo suite 183 → **192** passing (0 failing; 12 skipped without a database/adapter). New: `cms-media-library` (4), production-config SSO (2), OpenAPI contract extended, contrast alias tests (5).
+- Database-backed (disposable MariaDB 10.6, `RAE_CMS_DB_HOST`): `cms-media-library-db` (3), repeated 8× without a failure.
+- Isolated SSO suite (`MJU_SSO_MODULE`): 7/7 — replay, revocation, token death after logout, CSRF, RBAC, C-14 flag off, no acceptance.
+- Browser acceptance on production (headless Chromium + axe, UITEST data removed after each run): **24/24** desk checks (confirm → keep → confirm → toast on FAQ, events, announcements, departments, documents, media; officer-refused error stays as an inline Alert after the toast is gone) and **18/18** news/picker checks (publish and withdraw confirms, picker adds an image, thumbnail renders). axe WCAG A/AA on the logged-in desk, **light and dark, with a toast on screen: 0 violations**. The scripts were one-off (session scratchpad), not committed.
+- Final production verification after the last deploy: SSO status enabled and `/sso/login` redirects to MJU; container reaches MJU with TLS verified; local login for all four UAT roles and the owner account; RBAC (viewer 403 on the library, officer 403 on SSO links, admin 200, officer cannot publish); site 200 on both hosts; media code non-reuse proven live (delete a row, the next code is higher).
+
+### 10.6 Decisions of the day (owner)
+SSO pilot accepted and kept on; no third-party reviewer as an internal gate; M15 on the existing CMS media volume with access control and the nightly backup (it already tars the whole volume), documents stay in SharePoint (ADR-0004); test tombstones removed from `withdrawn.json` (backup kept); M365 onboarding and Cloudflare Access deferred; media codes must never be reused.
+
+### 10.7 Remaining issues (none blocks production)
+1. Other modules (FAQ, events, announcements, …) still assign `MAX(code)+1`, so a deleted row frees its code. Same fix as the media library if wanted.
+2. The personnel desk was not exercised in the browser (publishing a person needs a consent record); it is covered by API tests and the shared confirm component only. The other desks, the news desk and the picker were exercised in a real browser.
+3. The desk's confirm/toast flows are not in CI: `check:contrast`/`check:a11y` read the static export, where the admin page is off. The CDP+axe run above is the only coverage; committing it as a script is a candidate task.
+4. The public site does not render library images yet (API/desk only; news can use them).
+5. Backups: `BACKUP_SCHEDULE_VERIFIED` is still PENDING (first checks 2026-11-28 02:45Z and 2026-11-29 04:30Z). `PERSONNEL_KEY` offline copy is the owner's task.
+6. SSO: only one account is linked; revoking a link cannot be undone in the CMS (approve needs `pending`), so do not revoke the owner link without a recovery plan. If MJU renumbers `sso.mju.ac.th`, update the `--add-host` line.
+7. Obsidian is unreachable from this host; two sync notes are staged for Hermes (below).
+

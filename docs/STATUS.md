@@ -1,11 +1,13 @@
-# RAE Digital Platform — STATUS (2026-11-27, DAY_20261127_CLOSED)
+# RAE Digital Platform — STATUS (2026-11-27, DAY_20261127_CLOSED — final, 09:00 UTC)
 
 | | |
 |---|---|
-| **GitHub `main`** | `623913e624c3` + docs (docs only, not redeployed) |
-| **Production runtime (deployed SHA)** | **`cc05a18e5c53`** — site builds (PR #149: shadcn setup, toast + confirm dialogs in the documents desk); CMS runtime unchanged at `623913e624c3`. Previous release `623913e624c3` kept for rollback |
+| **GitHub `main`** | `35cb736` (+ this closeout PR; docs only) |
+| **Production runtime (deployed SHA)** | **`35cb73653153`** — CMS runtime and both site builds on the same release (previous `a8dc8b2497bc` kept for rollback) |
 | RAE_UNIFIED_PLATFORM_READY | **YES** |
 | M03_PRODUCTION_READY | **YES** |
+| M15_PRODUCTION_READY | **YES** — media library (migration 018), news picker, public read of released images; `docs/ops/media-library.md` |
+| CMS_DARK_MODE_PASS | **YES** — browser axe on the logged-in desk, light and dark, toast visible: 0 violations |
 | BACKUP_CRON_INSTALLED | **YES** (owner, 2026-11-27 06:06Z; crontab == proposed file; server TZ UTC) |
 | BACKUP_SCHEDULE_VERIFIED | **PENDING** — until 2026-11-28 02:45Z backup and 2026-11-29 04:30Z weekly restore both succeed (`docs/ops/backup-restore.md`) |
 | MJU SSO | **LIVE (owner pilot, 2026-11-27)** — `MJU_SSO_ENABLED=true`, adapter rc.6, `citizenID` HMAC, one approved link (existing admin user); local login unchanged. Record, container-DNS fix and rollback: `docs/ops/mju-sso-live-e2e.md` |
@@ -17,7 +19,7 @@ via host nginx). The CMS hook notifies both. Persistence is the hand-written MyS
 
 **Deploy system:** symlink-based releases (`~/rae/releases/<sha> → ~/rae/current`). Containers mount `~/rae/current:/app`. Verified with `readlink ~/rae/current`, not `docker inspect` SHA. Backups: `~/rae/rae-cms-backups/pre-*` + nightly `daily/`. Static landing backup: `~/rae/rae-landing-static-backup/`.
 
-**Migrations on `rae_cms`:** 001–005, 007, 008 (SSO links/handoffs), 009 (documents), 010 (link health), 011 (knowledge/FAQ), 012 (events), 013 (contact inbox), 014 (analytics), 015 (announcements), 016 (departments), 017 (personnel). DDL applied by hand with root inside DB container after backup. **No schema_migrations tracking table** — verify migrations by comparing file names vs actual table names in DB.
+**Migrations on `rae_cms`:** 001–005, 007, 008 (SSO links/handoffs), 009 (documents), 010 (link health), 011 (knowledge/FAQ), 012 (events), 013 (contact inbox), 014 (analytics), 015 (announcements), 016 (departments), 017 (personnel), 018 (media library). DDL applied by hand with root inside DB container after backup. **No schema_migrations tracking table** — verify migrations by comparing file names vs actual table names in DB.
 
 ## 2026-11-27 Deploy Summary
 
@@ -35,6 +37,8 @@ Known gaps: withdrawn.json contains test entries (uat-withdraw-0 through -7, new
 **Stabilization 2026-11-27 (PRs #140–#146):** releases, M05 month view, M17 landmark names, M12 personnel + M13 head of unit. Live acceptance of M12 caught and fixed a real defect (duplicate national id overwrote another person's restricted row — PR #146, DB-backed regression test). Measured downtime per switch ≈ 2.4–4 s (container restart); with the runtime restart the visible window was 11–17 s. Rollback tested (switch back and forward, month route 404↔200). Axe: 0 violations on 24 runs (6 pages × light/dark × desktop/phone) with live records incl. identical announcement titles. Backup 04:56Z verified (17 tables restored). Backup cron since installed by the owner (see flags above).
 **PERSONNEL_KEY:** `~/rae/rae-cms-secrets/personnel.key` (also in runtime.env). DB dumps hold ciphertext only — the owner must keep an offline copy of the key; a lost key cannot be recovered.
 **Releases:** production now serves `~/rae/current` (SHA-tagged release dirs, isolated builds, spare-port probe, auto-rollback — `docs/ops/releases.md`). Measured cutover downtime 2.4 s (was ~8 min with in-place builds).
+
+**Later session (PRs #149–#155):** shadcn/ui on every desk (toast, inline error, confirm before publish/archive/withdraw); MJU SSO live pilot; **M15 media library** (images only, RBAC, public read of released assets, news can reuse them; codes never reused); CMS dark-mode fix. Full record: `docs/reports/2026-11-27-day-closeout.md` §10.
 
 **Pending, owner-side:** M365 onboarding (no verified SharePoint link list exists yet; needs the list of existing SharePoint links; tool + guide ready); Cloudflare Access on `/th|en/cms-admin/*` (leave `/cms-api/*` open).
 Full detail: `docs/reports/2026-11-25-day-closeout.md`. Handoff: `docs/memory/NEXT_SESSION.md`.
