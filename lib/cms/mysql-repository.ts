@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { formatDocumentCode, type RegistryDocument } from "./document-registry.ts";
+import { formatAnnouncementCode, type Announcement } from "./announcement-registry.ts";
 import { formatContactCode, type ContactMessage, type ContactStatus } from "./contact-registry.ts";
 import { formatEventCode, type EventRecord } from "./event-registry.ts";
 import { formatKnowledgeCode, type KnowledgeEntry } from "./knowledge-registry.ts";
@@ -51,6 +52,11 @@ export type SsoLink = {
 export type DocumentVersionRecord = { version: string; storageUrl: string; changedBy: string; changedAt: number; changeNote: string };
 
 export type Repository = {
+  /** M17 announcements. Code assignment is the repository's job. */
+  createAnnouncement(a: Omit<Announcement, "code">, audit: Omit<AuditRecord, "createdAt" | "entityId">): Promise<Announcement>;
+  listAnnouncements(): Promise<Announcement[]>;
+  getAnnouncement(code: string): Promise<Announcement | null>;
+  updateAnnouncement(a: Announcement, audit: Omit<AuditRecord, "createdAt">): Promise<void>;
   /** M08 analytics: +1 for (day, path); paths beyond the per-day cap are folded into "/other". */
   recordPageView(day: string, path: string, maxPaths: number): Promise<void>;
   listPageViews(sinceDay: string): Promise<{ day: string; path: string; hits: number }[]>;
@@ -189,6 +195,14 @@ type DocRow = {
   note: string; created_by: string; updated_at: Date; download_count: number;
   link_status: "ok" | "broken" | "unreachable" | null; link_checked_at: Date | null;
 };
+type AnRow = {
+  code: string; kind: Announcement["kind"]; title_th: string; title_en: string; body_th: string; body_en: string; link_url: string;
+  starts_at: Date; ends_at: Date; status: Announcement["status"]; created_by: string; updated_at: Date;
+};
+const toAnnouncement = (r: AnRow): Announcement => ({
+  code: r.code, kind: r.kind, titleTh: r.title_th, titleEn: r.title_en, bodyTh: r.body_th, bodyEn: r.body_en, linkUrl: r.link_url,
+  startsAt: asMillis(r.starts_at), endsAt: asMillis(r.ends_at), status: r.status, createdBy: r.created_by, updatedAt: asMillis(r.updated_at),
+});
 type CtRow = {
   code: string; name: string; email: string; subject: string; message: string; locale: "th" | "en";
   notice_version: string; consented_at: Date; status: ContactStatus; created_at: Date;
@@ -447,6 +461,56 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
         after: parseJson(row.after_json),
         createdAt: new Date(row.created_at).toISOString(),
       }));
+    },
+
+    async createAnnouncement(a, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM announcements FOR UPDATE");
+        const code = formatAnnouncementCode(Number((rows as { n: number }[])[0].n) + 1);
+        await connection.query(
+          "INSERT INTO announcements (code, kind, title_th, title_en, body_th, body_en, link_url, starts_at, ends_at, status, created_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [code, a.kind, a.titleTh, a.titleEn, a.bodyTh, a.bodyEn, a.linkUrl, asDate(a.startsAt), asDate(a.endsAt), a.status, a.createdBy, asDate(a.updatedAt)],
+        );
+        await insertAudit(connection, { ...audit, entityId: code });
+        await connection.commit();
+        return { ...a, code };
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    },
+
+    async listAnnouncements() {
+      const [rows] = await pool.query("SELECT * FROM announcements ORDER BY starts_at DESC, code DESC");
+      return (rows as AnRow[]).map(toAnnouncement);
+    },
+
+    async getAnnouncement(code) {
+      const [rows] = await pool.query("SELECT * FROM announcements WHERE code = ?", [code]);
+      const row = (rows as AnRow[])[0];
+      return row ? toAnnouncement(row) : null;
+    },
+
+    async updateAnnouncement(a, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        await connection.query(
+          "UPDATE announcements SET kind = ?, title_th = ?, title_en = ?, body_th = ?, body_en = ?, link_url = ?, starts_at = ?, ends_at = ?, status = ?, updated_at = ? WHERE code = ?",
+          [a.kind, a.titleTh, a.titleEn, a.bodyTh, a.bodyEn, a.linkUrl, asDate(a.startsAt), asDate(a.endsAt), a.status, asDate(a.updatedAt), a.code],
+        );
+        await insertAudit(connection, audit);
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
     },
 
     async recordPageView(day, path, maxPaths) {

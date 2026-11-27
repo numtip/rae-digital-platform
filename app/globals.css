@@ -62,3 +62,18 @@ body {
     opacity: 1;
   }
 }
+
+/* M17 ticker: scrolls only for readers who have not asked for reduced motion, and it can always be paused
+   (WCAG 2.2.2). With reduced motion it is a static line that wraps. */
+.rae-ticker-track { white-space: normal; }
+@media (prefers-reduced-motion: no-preference) {
+  .rae-ticker { white-space: nowrap; }
+  .rae-ticker-track { white-space: nowrap; padding-left: 100%; animation: rae-ticker 28s linear infinite; }
+  .rae-ticker:hover .rae-ticker-track,
+  .rae-ticker:focus-within .rae-ticker-track,
+  .rae-ticker[data-paused="true"] .rae-ticker-track { animation-play-state: paused; }
+}
+@keyframes rae-ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
