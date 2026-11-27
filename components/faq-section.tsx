@@ -9,7 +9,7 @@ const COPY = {
   en: { title: "Frequently asked questions", topic: "Topic" },
 } as const;
 
-export function FaqSection({ entries, locale, jsonLd = true, className = "py-12" }: { entries: PublicKnowledge[]; locale: Locale; jsonLd?: boolean; className?: string }) {
+export function FaqSection({ entries, locale, jsonLd = true, className = "bg-surface-50 py-12" }: { entries: PublicKnowledge[]; locale: Locale; jsonLd?: boolean; className?: string }) {
   if (entries.length === 0) return null;
   const q = (e: PublicKnowledge) => (locale === "th" ? e.questionTh : e.questionEn);
   const a = (e: PublicKnowledge) => (locale === "th" ? e.answerTh : e.answerEn);
