@@ -19,3 +19,27 @@ export const matchesQuery = (text: string, query: string) => {
   const tokens = foldForSearch(query).split(/\s+/).filter(Boolean);
   return tokens.length > 0 && tokens.every((token) => haystack.includes(token));
 };
+
+// Relevance for the results list (M06). Before this, results came back in index order, so a story whose
+// body merely mentioned the word could sit above the page whose title is the word. Score per entry:
+// every word in the title (+4), the title starts with the first word (+2), the first word is a
+// whole-word hit in the title (+1), an exact match on a document/FAQ/event code (+8). Ties keep the original
+// order (Array.prototype.sort is stable), so equal results never reshuffle between renders.
+export function relevance(entry: { title: string; text: string }, query: string): number {
+  const tokens = foldForSearch(query).split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return 0;
+  const title = foldForSearch(entry.title);
+  let score = 0;
+  if (tokens.every((token) => title.includes(token))) score += 4;
+  if (title.startsWith(tokens[0])) score += 2;
+  if (new RegExp(`(^|[^\\p{L}\\p{N}])${tokens[0].replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[^\\p{L}\\p{N}])`, "u").test(title)) score += 1;
+  if (/^rae-(dc|kb|ev)-\d+$/.test(tokens[0]) && foldForSearch(entry.text).split(/[\s·]+/).includes(tokens[0])) score += 8;
+  return score;
+}
+
+export function rankResults<T extends { title: string; text: string }>(entries: T[], query: string): T[] {
+  return entries
+    .map((entry, index) => ({ entry, index, score: relevance(entry, query) }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((item) => item.entry);
+}
