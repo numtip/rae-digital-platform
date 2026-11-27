@@ -23,6 +23,7 @@ import {
   publicDocumentView,
   validateNewDocument,
 } from "../lib/cms/document-registry.ts";
+import { applyDepartmentUpdate, bySort, formatDepartmentCode, publicDepartments, validateDepartment } from "../lib/cms/department-registry.ts";
 import { applyAnnouncementUpdate, byStartDesc, formatAnnouncementCode, isLiveAnnouncement, publicAnnouncementView, validateAnnouncement } from "../lib/cms/announcement-registry.ts";
 import { MAX_PATHS_PER_DAY, bangkokDay, normalizeAnalyticsPath, readAnalyticsConfig } from "../lib/cms/analytics.ts";
 import { CONTACT_STATUSES, ContactInvalid, formatContactCode, readContactConfig, validateContact } from "../lib/cms/contact-registry.ts";
@@ -57,6 +58,7 @@ const events = new Map();
 const contactMessages = new Map();
 const pageViews = new Map();
 const announcements = new Map();
+const departments = new Map();
 const viewsByIp = createIpLimiter({ max: 120, windowMs: 60_000 });
 const contactByIp = createIpLimiter({ max: 5, windowMs: 10 * 60_000 });
 const documentVersions = new Map();
@@ -80,6 +82,7 @@ export function resetRuntime() {
   contactMessages.clear();
   pageViews.clear();
   announcements.clear();
+  departments.clear();
   viewsByIp.reset();
   contactByIp.reset();
   documentVersions.clear();
@@ -161,6 +164,24 @@ export function memoryRepository() {
     },
     async listAudit() {
       return [...audit];
+    },
+    async createDepartment(d, audit) {
+      const n = [...departments.keys()].reduce((max, code) => Math.max(max, Number(code.slice(7))), 0) + 1;
+      const code = formatDepartmentCode(n);
+      departments.set(code, { ...d, code });
+      await this.appendAudit({ ...audit, entityId: code });
+      return { ...d, code };
+    },
+    async listDepartments() {
+      return [...departments.values()].map((d) => ({ ...d })).sort(bySort);
+    },
+    async getDepartment(code) {
+      const d = departments.get(code);
+      return d ? { ...d } : null;
+    },
+    async updateDepartment(d, audit) {
+      departments.set(d.code, { ...d });
+      await this.appendAudit(audit);
     },
     async createAnnouncement(a, audit) {
       const n = [...announcements.keys()].reduce((max, code) => Math.max(max, Number(code.slice(7))), 0) + 1;
@@ -643,6 +664,40 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
         };
         if (hasPermission(actor.role, "audit:read")) body.recent = await repo.recentAudit(10);
         return send(response, 200, body, origin);
+      }
+      // M13 departments. Public: published units whose whole chain is published.
+      if (request.method === "GET" && url.pathname === "/v1/public/departments") {
+        return send(response, 200, { departments: publicDepartments(await repo.listDepartments()) }, origin);
+      }
+      if (url.pathname === "/v1/departments" || url.pathname.startsWith("/v1/departments/")) {
+        const actor = await actorFrom(request, now(), repo);
+        if (!actor) return send(response, 401, { error: "UNAUTHORIZED" }, origin);
+        requirePermission(actor.role, "news:draft");
+        const audit = (action, code) => ({ actorId: actor.id, action, entityType: "department", entityId: code });
+        if (request.method === "GET" && url.pathname === "/v1/departments") {
+          return send(response, 200, { departments: await repo.listDepartments() }, origin);
+        }
+        if (request.method === "POST" && url.pathname === "/v1/departments") {
+          const fields = validateDepartment(await readBody(request), await repo.listDepartments(), null);
+          if (fields.status !== "draft") requirePermission(actor.role, "news:publish");
+          const record = await repo.createDepartment({ ...fields, createdBy: actor.id, updatedAt: now() }, audit("department.create", ""));
+          await notifySite({});
+          return send(response, 201, record, origin);
+        }
+        const dp = /^\/v1\/departments\/(RAE-DP-\d{4,})$/.exec(url.pathname);
+        if (dp) {
+          const current = await repo.getDepartment(dp[1]);
+          if (!current) return send(response, 404, { error: "NOT_FOUND" }, origin);
+          if (request.method === "GET") return send(response, 200, current, origin);
+          if (request.method === "PATCH") {
+            const next = applyDepartmentUpdate(current, await readBody(request), await repo.listDepartments(), now());
+            if (current.status === "published" || next.status === "published") requirePermission(actor.role, "news:publish");
+            await repo.updateDepartment(next, audit("department.update", next.code));
+            await notifySite({});
+            return send(response, 200, next, origin);
+          }
+        }
+        return send(response, 404, { error: "NOT_FOUND" }, origin);
       }
       // M17 announcements. The public list is decided here, now: published AND inside its window.
       if (request.method === "GET" && url.pathname === "/v1/public/announcements") {

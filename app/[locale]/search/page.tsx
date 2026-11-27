@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { ContentSearch } from "@/components/content-search";
 import { Breadcrumb, PageHero } from "@/components/page-shell";
 import { readPublicDocuments } from "@/lib/cms/documents-live";
+import { readPublicDepartments } from "@/lib/cms/departments-live";
 import { readPublicEvents } from "@/lib/cms/events-live";
 import { readPublicKnowledge } from "@/lib/cms/knowledge-live";
 import { liveNews } from "@/lib/cms/live";
@@ -40,6 +41,7 @@ export default async function Search({ params }: Props) {
   const registry = await readPublicDocuments();
   const faqEntries = await readPublicKnowledge();
   const eventList = await readPublicEvents();
+  const unitList = await readPublicDepartments();
   // Same shape the index uses, so the client component and the category chips need no special
   // case: a published story is a "news" item like any archive story.
   const published = items.map((item) => ({
@@ -74,6 +76,14 @@ export default async function Search({ params }: Props) {
     href: `/${locale}/news/events#ev-${e.code}`,
   }));
 
+  // Organisation units (M13): found by name or description; the result opens the unit on the about page.
+  const units = unitList.map((d) => ({
+    kind: "item" as const,
+    title: locale === "th" ? d.nameTh : d.nameEn,
+    text: [d.code, locale === "th" ? d.descriptionTh : d.descriptionEn, locale === "th" ? d.nameEn : d.nameTh].filter(Boolean).join(" · "),
+    href: `/${locale}/about#dp-${d.code}`,
+  }));
+
   return (
     <main id="main-content" tabIndex={-1}>
       <PageHero title={search.hero.title} lead={search.hero.lead} />
@@ -87,7 +97,7 @@ export default async function Search({ params }: Props) {
             ]}
           />
           <Suspense fallback={<p className="text-neutral-700">{search.labels.empty}</p>}>
-            <ContentSearch entries={[...buildSearchIndex(locale), ...published, ...documents, ...faq, ...events]} labels={search.labels} />
+            <ContentSearch entries={[...buildSearchIndex(locale), ...published, ...documents, ...faq, ...events, ...units]} labels={search.labels} />
           </Suspense>
         </div>
       </section>

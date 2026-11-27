@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { formatDocumentCode, type RegistryDocument } from "./document-registry.ts";
+import { formatDepartmentCode, type Department } from "./department-registry.ts";
 import { formatAnnouncementCode, type Announcement } from "./announcement-registry.ts";
 import { formatContactCode, type ContactMessage, type ContactStatus } from "./contact-registry.ts";
 import { formatEventCode, type EventRecord } from "./event-registry.ts";
@@ -54,6 +55,11 @@ export type DocumentVersionRecord = { version: string; storageUrl: string; chang
 export type Repository = {
   /** M18: the newest audit rows (read only; before/after payloads are not returned). */
   recentAudit(limit: number): Promise<{ actorId: string; action: string; entityType: string; entityId: string; createdAt: string }[]>;
+  /** M13 departments. Code assignment is the repository's job. */
+  createDepartment(d: Omit<Department, "code">, audit: Omit<AuditRecord, "createdAt" | "entityId">): Promise<Department>;
+  listDepartments(): Promise<Department[]>;
+  getDepartment(code: string): Promise<Department | null>;
+  updateDepartment(d: Department, audit: Omit<AuditRecord, "createdAt">): Promise<void>;
   /** M17 announcements. Code assignment is the repository's job. */
   createAnnouncement(a: Omit<Announcement, "code">, audit: Omit<AuditRecord, "createdAt" | "entityId">): Promise<Announcement>;
   listAnnouncements(): Promise<Announcement[]>;
@@ -197,6 +203,14 @@ type DocRow = {
   note: string; created_by: string; updated_at: Date; download_count: number;
   link_status: "ok" | "broken" | "unreachable" | null; link_checked_at: Date | null;
 };
+type DpRow = {
+  code: string; parent_code: string | null; name_th: string; name_en: string; description_th: string; description_en: string;
+  sort_order: number; status: Department["status"]; created_by: string; updated_at: Date;
+};
+const toDepartment = (r: DpRow): Department => ({
+  code: r.code, parentCode: r.parent_code, nameTh: r.name_th, nameEn: r.name_en, descriptionTh: r.description_th, descriptionEn: r.description_en,
+  sortOrder: Number(r.sort_order), status: r.status, createdBy: r.created_by, updatedAt: asMillis(r.updated_at),
+});
 type AnRow = {
   code: string; kind: Announcement["kind"]; title_th: string; title_en: string; body_th: string; body_en: string; link_url: string;
   starts_at: Date; ends_at: Date; status: Announcement["status"]; created_by: string; updated_at: Date;
@@ -470,6 +484,56 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
         after: parseJson(row.after_json),
         createdAt: new Date(row.created_at).toISOString(),
       }));
+    },
+
+    async createDepartment(d, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM departments FOR UPDATE");
+        const code = formatDepartmentCode(Number((rows as { n: number }[])[0].n) + 1);
+        await connection.query(
+          "INSERT INTO departments (code, parent_code, name_th, name_en, description_th, description_en, sort_order, status, created_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [code, d.parentCode, d.nameTh, d.nameEn, d.descriptionTh, d.descriptionEn, d.sortOrder, d.status, d.createdBy, asDate(d.updatedAt)],
+        );
+        await insertAudit(connection, { ...audit, entityId: code });
+        await connection.commit();
+        return { ...d, code };
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    },
+
+    async listDepartments() {
+      const [rows] = await pool.query("SELECT * FROM departments ORDER BY sort_order, code");
+      return (rows as DpRow[]).map(toDepartment);
+    },
+
+    async getDepartment(code) {
+      const [rows] = await pool.query("SELECT * FROM departments WHERE code = ?", [code]);
+      const row = (rows as DpRow[])[0];
+      return row ? toDepartment(row) : null;
+    },
+
+    async updateDepartment(d, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        await connection.query(
+          "UPDATE departments SET parent_code = ?, name_th = ?, name_en = ?, description_th = ?, description_en = ?, sort_order = ?, status = ?, updated_at = ? WHERE code = ?",
+          [d.parentCode, d.nameTh, d.nameEn, d.descriptionTh, d.descriptionEn, d.sortOrder, d.status, asDate(d.updatedAt), d.code],
+        );
+        await insertAudit(connection, audit);
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
     },
 
     async createAnnouncement(a, audit) {
