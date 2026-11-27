@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { toast } from "sonner";
+import { DeskError, FEEDBACK, StatusConfirm, needsConfirm, type ConfirmStatus } from "@/components/cms/desk-feedback";
 
 // M05 desk: write events (Thai + English), keep them as drafts, and let a publisher release, edit,
 // cancel or archive them. Times are entered in Bangkok time (UTC+7) and sent with that offset.
@@ -33,7 +35,8 @@ const toIso = (local: FormDataEntryValue | null) => (typeof local === "string" &
 export function EventsDesk({ apiBase, token, locale }: { apiBase: string; token: string; locale: "th" | "en" }) {
   const copy = COPY[locale];
   const [events, setEvents] = useState<Ev[] | null>(null);
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [pending, setPending] = useState<{ code: string; status: ConfirmStatus } | null>(null);
 
   const call = useCallback(
     async (path: string, method = "GET", body?: unknown) => {
@@ -77,7 +80,9 @@ export function EventsDesk({ apiBase, token, locale }: { apiBase: string; token:
     const form = event.currentTarget;
     const body = fields(new FormData(form));
     const result = code ? await call(`/v1/events/${code}`, "PATCH", body) : await call("/v1/events", "POST", body);
-    setMessage(result.ok ? copy.saved : fail(result));
+    setError(result.ok ? "" : fail(result));
+    if (result.ok) toast.success(copy.saved);
+    else toast.error(`${FEEDBACK[locale].errorTitle}: ${fail(result)}`);
     if (result.ok) {
       if (!code) form.reset();
       await refresh();
@@ -86,8 +91,16 @@ export function EventsDesk({ apiBase, token, locale }: { apiBase: string; token:
 
   async function setStatus(code: string, status: string) {
     const result = await call(`/v1/events/${code}`, "PATCH", { status });
-    setMessage(result.ok ? "" : fail(result));
+    setError(result.ok ? "" : fail(result));
+    if (result.ok) toast.success(FEEDBACK[locale].statusChanged);
+    else toast.error(`${FEEDBACK[locale].errorTitle}: ${fail(result)}`);
     await refresh();
+  }
+
+  // Going live, archiving and cancelling are the moves readers notice, so they ask first.
+  function onStatusChange(code: string, status: string) {
+    if (needsConfirm(status)) setPending({ code, status });
+    else void setStatus(code, status);
   }
 
   const form = (ev?: Ev) => (
@@ -109,7 +122,7 @@ export function EventsDesk({ apiBase, token, locale }: { apiBase: string; token:
       <h2 className="text-xl font-bold" id="events-desk">{copy.heading}</h2>
       <p className="mt-1 text-sm text-neutral-700">{copy.hint}</p>
       {form()}
-      <p className="mt-2 text-sm" role="status">{message}</p>
+      <DeskError locale={locale} message={error} />
       <ul className="mt-4 divide-y divide-neutral-200">
         {events.length === 0 ? <li className="py-2 text-sm text-neutral-600">{copy.none}</li> : null}
         {events.map((ev) => (
@@ -124,7 +137,7 @@ export function EventsDesk({ apiBase, token, locale }: { apiBase: string; token:
             </div>
             <label className="flex items-center gap-2 text-sm">
               {copy.status}
-              <select className="h-10 rounded-md border border-neutral-300 px-2" onChange={(event) => void setStatus(ev.code, event.target.value)} value={ev.status}>
+              <select className="h-10 rounded-md border border-neutral-300 px-2" onChange={(event) => onStatusChange(ev.code, event.target.value)} value={ev.status}>
                 {Object.entries(copy.statuses).map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>
                 ))}
@@ -133,6 +146,12 @@ export function EventsDesk({ apiBase, token, locale }: { apiBase: string; token:
           </li>
         ))}
       </ul>
+      <StatusConfirm
+        locale={locale}
+        onCancel={() => setPending(null)}
+        onConfirm={(code, status) => { setPending(null); void setStatus(code, status); }}
+        pending={pending}
+      />
     </section>
   );
 }
