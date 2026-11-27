@@ -13,6 +13,7 @@ import { EventsDesk } from "@/components/cms/events-desk";
 import { DepartmentsDesk } from "@/components/cms/departments-desk";
 import { PersonnelDesk } from "@/components/cms/personnel-desk";
 import { KnowledgeDesk } from "@/components/cms/knowledge-desk";
+import { MediaDesk } from "@/components/cms/media-desk";
 import { adminCopy } from "@/lib/cms/admin-copy";
 
 const FOCUS =
@@ -568,6 +569,7 @@ export function NewsDesk({ locale, apiBase }: { locale: "th" | "en"; apiBase: st
       </div>
       <DashboardDesk apiBase={apiBase} locale={locale} token={token} />
       <DocumentsDesk apiBase={apiBase} locale={locale} token={token} />
+      <MediaDesk apiBase={apiBase} locale={locale} token={token} />
       <KnowledgeDesk apiBase={apiBase} locale={locale} token={token} />
       <PersonnelDesk apiBase={apiBase} locale={locale} token={token} />
       <DepartmentsDesk apiBase={apiBase} locale={locale} token={token} />

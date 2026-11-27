@@ -6,6 +6,7 @@ import { formatAnnouncementCode, type Announcement } from "./announcement-regist
 import { formatContactCode, type ContactMessage, type ContactStatus } from "./contact-registry.ts";
 import { formatEventCode, type EventRecord } from "./event-registry.ts";
 import { formatKnowledgeCode, type KnowledgeEntry } from "./knowledge-registry.ts";
+import { formatMediaCode, type MediaAsset } from "./media-library.ts";
 import mysql from "mysql2/promise";
 import type { NewsRecord, PublishedSnapshot } from "./news-workflow.ts";
 import type { RoleName } from "./permissions.ts";
@@ -88,6 +89,11 @@ export type Repository = {
   listEvents(): Promise<EventRecord[]>;
   getEvent(code: string): Promise<EventRecord | null>;
   updateEvent(event: EventRecord, audit: Omit<AuditRecord, "createdAt">): Promise<void>;
+  /** M15 media library assets (metadata; the bytes live on the media volume). Code assignment is the repository's job. */
+  createMediaAsset(asset: Omit<MediaAsset, "code">, audit: Omit<AuditRecord, "createdAt" | "entityId">): Promise<MediaAsset>;
+  listMediaAssets(): Promise<MediaAsset[]>;
+  getMediaAsset(code: string): Promise<MediaAsset | null>;
+  updateMediaAsset(asset: MediaAsset, audit: Omit<AuditRecord, "createdAt">): Promise<void>;
   /** M04 knowledge / FAQ entries. Code assignment is the repository's job. */
   createKnowledge(entry: Omit<KnowledgeEntry, "code">, audit: Omit<AuditRecord, "createdAt" | "entityId">): Promise<KnowledgeEntry>;
   listKnowledge(): Promise<KnowledgeEntry[]>;
@@ -265,6 +271,14 @@ type KbRow = {
 const toKb = (r: KbRow): KnowledgeEntry => ({
   code: r.code, kind: r.kind, topic: r.topic, questionTh: r.question_th, questionEn: r.question_en, answerTh: r.answer_th, answerEn: r.answer_en,
   status: r.status, sortOrder: Number(r.sort_order), createdBy: r.created_by, updatedAt: asMillis(r.updated_at),
+});
+type MdRow = {
+  code: string; title_th: string; title_en: string; alt_th: string; alt_en: string; caption_th: string; caption_en: string;
+  filename: string; mime: MediaAsset["mime"]; bytes: number; sha256: string; status: MediaAsset["status"]; created_by: string; updated_at: Date;
+};
+const toMedia = (r: MdRow): MediaAsset => ({
+  code: r.code, titleTh: r.title_th, titleEn: r.title_en, altTh: r.alt_th, altEn: r.alt_en, captionTh: r.caption_th, captionEn: r.caption_en,
+  filename: r.filename, mime: r.mime, bytes: Number(r.bytes), sha256: r.sha256, status: r.status, createdBy: r.created_by, updatedAt: asMillis(r.updated_at),
 });
 const toDoc = (r: DocRow): RegistryDocument => ({
   code: r.code, category: r.category, titleTh: r.title_th, titleEn: r.title_en, docType: r.doc_type,
@@ -796,6 +810,56 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
         await connection.query(
           "UPDATE events SET title_th = ?, title_en = ?, description_th = ?, description_en = ?, location_th = ?, location_en = ?, starts_at = ?, ends_at = ?, status = ?, updated_at = ? WHERE code = ?",
           [event.titleTh, event.titleEn, event.descriptionTh, event.descriptionEn, event.locationTh, event.locationEn, asDate(event.startsAt), event.endsAt === null ? null : asDate(event.endsAt), event.status, asDate(event.updatedAt), event.code],
+        );
+        await insertAudit(connection, audit);
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    },
+
+    async createMediaAsset(asset, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM media_assets FOR UPDATE");
+        const code = formatMediaCode(Number((rows as { n: number }[])[0].n) + 1);
+        await connection.query(
+          "INSERT INTO media_assets (code, title_th, title_en, alt_th, alt_en, caption_th, caption_en, filename, mime, bytes, sha256, status, created_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [code, asset.titleTh, asset.titleEn, asset.altTh, asset.altEn, asset.captionTh, asset.captionEn, asset.filename, asset.mime, asset.bytes, asset.sha256, asset.status, asset.createdBy, asDate(asset.updatedAt)],
+        );
+        await insertAudit(connection, { ...audit, entityId: code });
+        await connection.commit();
+        return { ...asset, code };
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    },
+
+    async listMediaAssets() {
+      const [rows] = await pool.query("SELECT * FROM media_assets ORDER BY updated_at DESC, code DESC");
+      return (rows as MdRow[]).map(toMedia);
+    },
+
+    async getMediaAsset(code) {
+      const [rows] = await pool.query("SELECT * FROM media_assets WHERE code = ?", [code]);
+      const row = (rows as MdRow[])[0];
+      return row ? toMedia(row) : null;
+    },
+
+    async updateMediaAsset(asset, audit) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        await connection.query(
+          "UPDATE media_assets SET title_th = ?, title_en = ?, alt_th = ?, alt_en = ?, caption_th = ?, caption_en = ?, status = ?, updated_at = ? WHERE code = ?",
+          [asset.titleTh, asset.titleEn, asset.altTh, asset.altEn, asset.captionTh, asset.captionEn, asset.status, asDate(asset.updatedAt), asset.code],
         );
         await insertAudit(connection, audit);
         await connection.commit();

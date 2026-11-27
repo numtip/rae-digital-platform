@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { addUser, createCmsServer, resetRuntime } from "../cms-runtime/server.mjs";
 import { buildOpenApi } from "../lib/cms/openapi.ts";
 
@@ -17,6 +19,7 @@ test("every public GET route in the runtime is documented, and every documented 
 
 test("documented responses match the live shapes (keys, required fields, no internal fields)", async () => {
   resetRuntime();
+  process.env.RAE_CMS_MEDIA_DIR = mkdtempSync(join(tmpdir(), "rae-openapi-media-")); // the library writes bytes; never into the repo
   addUser({ id: "publisher", role: "publisher", password: "publisher-password-12" });
   const server = createCmsServer({ contact: { enabled: false } });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -24,6 +27,8 @@ test("documented responses match the live shapes (keys, required fields, no inte
   const token = (await (await fetch(`${url}/v1/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ userId: "publisher", password: "publisher-password-12" }) })).json()).token;
   const post = (path, body) => fetch(`${url}${path}`, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${token}` }, body: JSON.stringify(body) });
   try {
+    const PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    await post("/v1/media-library", { titleTh: "ก", titleEn: "m", altTh: "ภาพ", altEn: "image", status: "published", dataBase64: PNG });
     await post("/v1/knowledge", { questionTh: "ก", questionEn: "q", answerTh: "ข", answerEn: "a", status: "published" });
     await post("/v1/events", { titleTh: "ก", titleEn: "e", startsAt: "2026-12-05T09:00:00+07:00", status: "published" });
     await post("/v1/personnel", { firstTh: "ก", lastTh: "ข", positionTh: "ผอ.", isPublic: true, consent: true });
@@ -45,10 +50,11 @@ test("documented responses match the live shapes (keys, required fields, no inte
         assert.ok(sample, `${concrete}: expected one sample row`);
         for (const key of rowSchema.required) assert.ok(key in sample, `${concrete}: row missing ${key}`);
         for (const key of Object.keys(sample)) assert.ok(key in rowSchema.properties, `${concrete}: undocumented field ${key}`);
-        for (const secret of ["createdBy", "storageUrl", "status", "visibility", "linkStatus", "employeeCode", "consentAt", "consentBy", "nationalId", "source", "isPublic"]) assert.ok(!(secret in sample), `${concrete}: leaks ${secret}`);
+        for (const secret of ["createdBy", "storageUrl", "status", "visibility", "linkStatus", "employeeCode", "consentAt", "consentBy", "nationalId", "source", "isPublic", "sha256", "filename"]) assert.ok(!(secret in sample), `${concrete}: leaks ${secret}`);
       }
     }
   } finally {
+    delete process.env.RAE_CMS_MEDIA_DIR;
     await new Promise((resolve) => server.close(resolve));
   }
 });

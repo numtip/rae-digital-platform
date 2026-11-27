@@ -39,6 +39,7 @@ export function buildOpenApi(serverUrl = "/cms-api") {
         },
       },
       "/v1/public/knowledge": { ...get("Published FAQ entries, ordered", list("entries", "FaqEntry")) },
+      "/v1/public/media": { ...get("Published library images (metadata and a URL; the bytes are served at that URL with their stored type)", list("assets", "MediaAsset")) },
       "/v1/public/events": { ...get("Published and cancelled events, by start time", list("events", "Event")) },
       "/v1/public/departments": { ...get("Published organisation units (flat; nest by parentCode)", list("departments", "Department")) },
       "/v1/public/personnel": { ...get("Directory of active people who are public and have recorded consent (work contact only; no restricted data)", list("personnel", "Person")) },
@@ -54,6 +55,7 @@ export function buildOpenApi(serverUrl = "/cms-api") {
     components: {
       schemas: {
         Document: { type: "object", required: ["code", "category", "titleTh", "titleEn"], properties: { code: str, category: str, titleTh: str, titleEn: str, fileType: str, version: str, note: str, updatedAt: iso, downloadCount: { type: "integer" } } },
+        MediaAsset: { type: "object", required: ["code", "titleTh", "titleEn", "mime", "url"], properties: { code: str, titleTh: str, titleEn: str, altTh: str, altEn: str, captionTh: str, captionEn: str, mime: { type: "string", enum: ["image/png", "image/jpeg", "image/webp"] }, bytes: { type: "integer" }, url: str, updatedAt: iso } },
         FaqEntry: { type: "object", required: ["code", "questionTh", "questionEn", "answerTh", "answerEn"], properties: { code: str, topic: str, questionTh: str, questionEn: str, answerTh: str, answerEn: str, sortOrder: { type: "integer" }, updatedAt: iso } },
         Event: { type: "object", required: ["code", "titleTh", "titleEn", "startsAt", "cancelled"], properties: { code: str, titleTh: str, titleEn: str, descriptionTh: str, descriptionEn: str, locationTh: str, locationEn: str, startsAt: iso, endsAt: { ...iso, nullable: true }, cancelled: { type: "boolean" }, updatedAt: iso } },
         Department: { type: "object", required: ["code", "nameTh", "nameEn"], properties: { code: str, parentCode: { ...str, nullable: true }, nameTh: str, nameEn: str, descriptionTh: str, descriptionEn: str, sortOrder: { type: "integer" }, head: { nullable: true, allOf: [{ $ref: "#/components/schemas/PersonRef" }] } } },
