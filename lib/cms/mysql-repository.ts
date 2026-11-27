@@ -825,8 +825,13 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
       const connection = await pool.getConnection();
       try {
         await connection.beginTransaction();
+        // The next code must never be one that existed before: audit rows outlive the asset rows (a test or an
+        // administrator may delete a row), and a reused code would make an old audit trail describe a new asset.
+        // The locking read serialises creators; the audit high-water mark is read after the lock is held.
         const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM media_assets FOR UPDATE");
-        const code = formatMediaCode(Number((rows as { n: number }[])[0].n) + 1);
+        const [past] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(entity_id, 8) AS UNSIGNED)), 0) AS n FROM audit_logs WHERE entity_type = 'media' AND entity_id LIKE 'RAE-MD-%'");
+        const next = Math.max(Number((rows as { n: number }[])[0].n), Number((past as { n: number }[])[0].n)) + 1;
+        const code = formatMediaCode(next);
         await connection.query(
           "INSERT INTO media_assets (code, title_th, title_en, alt_th, alt_en, caption_th, caption_en, filename, mime, bytes, sha256, status, created_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [code, asset.titleTh, asset.titleEn, asset.altTh, asset.altEn, asset.captionTh, asset.captionEn, asset.filename, asset.mime, asset.bytes, asset.sha256, asset.status, asset.createdBy, asDate(asset.updatedAt)],

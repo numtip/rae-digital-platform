@@ -47,12 +47,28 @@ test("repository: codes increase, rows round-trip, update changes metadata and s
     const list = await repository.listMediaAssets();
     assert.ok(list.findIndex((x) => x.code === a.code) < list.findIndex((x) => x.code === b.code), "most recently updated first");
     assert.equal(await auditCount(a.code), before + 1, "the update wrote exactly one more audit row");
-    const [rows] = await pool.query("SELECT action FROM audit_logs WHERE entity_type = 'media' AND entity_id = ? ORDER BY id DESC LIMIT 2", [a.code]);
-    assert.deepEqual(rows.map((r) => r.action), ["media.update", "media.create"]);
+    // audit ids are UUIDs, so order is not recoverable from them (and a created_at tie is possible): compare as a set
+    const [rows] = await pool.query("SELECT action FROM audit_logs WHERE entity_type = 'media' AND entity_id = ?", [a.code]);
+    assert.deepEqual(rows.map((r) => r.action).sort(), ["media.create", "media.update"]);
   } finally {
     for (const code of made) {
       await pool.query("DELETE FROM media_assets WHERE code = ?", [code]);
     }
+    await pool.end();
+    await repository.close();
+  }
+});
+
+test("a code is never reused after its row is deleted: the audit trail keeps the number", { skip }, async () => {
+  const repository = await createMysqlRepository(db);
+  const pool = await mysql.createPool({ ...db, connectionLimit: 1 });
+  try {
+    const a = await repository.createMediaAsset(asset(11), audit("media.create"));
+    await pool.query("DELETE FROM media_assets WHERE code = ?", [a.code]); // an operator removed the row; its audit row stays
+    const b = await repository.createMediaAsset(asset(12), audit("media.create"));
+    assert.ok(Number(b.code.slice(7)) > Number(a.code.slice(7)), `${b.code} must come after the deleted ${a.code}`);
+    await pool.query("DELETE FROM media_assets WHERE code = ?", [b.code]);
+  } finally {
     await pool.end();
     await repository.close();
   }
