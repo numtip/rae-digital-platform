@@ -1,0 +1,27 @@
+[Unit]
+Description=RAE digital platform Next.js, canonical /rae-landing build (loopback 3418, CMS network)
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/docker run --rm --name rae-digital-landing \
+  --network rae-cms-net \
+  -p 127.0.0.1:3418:3418 \
+  --env-file %h/rae/rae-cms-secrets/site.env \
+  -e HOSTNAME=0.0.0.0 -e PORT=3418 \
+  -e RAE_CMS_DATA_DIR=/data \
+  -e NEXT_SERVER_BASE_PATH=/rae-landing \
+  -e NEXT_DIST_DIR=.next-landing -e NEXT_NOINDEX=0 \
+  -e NEXT_PUBLIC_SITE_URL=https://raeservice.mju.ac.th/rae-landing \
+  -e NEXT_PUBLIC_CMS_API=/rae-landing/cms-api \
+  -v %h/rae/current:/app \
+  -v %h/rae/rae-cms-data:/data \
+  -w /app \
+  node:22-bookworm-slim \
+  node node_modules/next/dist/bin/next start --hostname 0.0.0.0 --port 3418
+ExecStop=/usr/bin/docker stop rae-digital-landing
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target
