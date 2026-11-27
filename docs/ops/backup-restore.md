@@ -18,3 +18,12 @@ crontab ~/rae/ops/crontab.rae-admin.proposed      # previous one saved at ~/rae/
 crontab -l | grep rae-cms                          # expect the two lines above
 ```
 Verify the next morning: `tail -2 ~/rae/rae-cms-backups/backup.log` shows `backup ok` for 02:45Z, and on Sunday `tail -3 ~/rae/rae-cms-backups/restore-verify.log` shows `restore verification OK`.
+
+## Cron installation record (2026-11-27)
+
+- Installed by the owner as `rae_admin`: syslog `06:06:43Z crontab REPLACE`, `06:07:01Z cron RELOAD`. `crontab -l` is identical to `~/rae/ops/crontab.rae-admin.proposed` (verified with `diff`, no differences). Cron daemon active.
+- Server timezone: **Etc/UTC** (`timedatectl`), so the crontab times are UTC.
+- **Next nightly backup:** 2026-11-28 02:45Z → check `tail -2 ~/rae/rae-cms-backups/backup.log` for `backup ok`.
+- **Next weekly restore verification:** Sunday 2026-11-29 04:30Z → check `tail -3 ~/rae/rae-cms-backups/restore-verify.log` for `restore verification OK`.
+- No scheduled run has executed yet. Status flags: `BACKUP_CRON_INSTALLED=YES`, `BACKUP_SCHEDULE_VERIFIED=PENDING` (becomes YES only after both scheduled runs above succeed).
+- Observation (not changed, outside scope): legacy entries in the same crontab point at missing files — `~/docker-raeserver/backup_db.sh` and `~/risk/kri_collect.sh` (the latter fires every 10 min and fails); `/opt/raenew2026/logs/` is root-owned so the 02:15 `backup.sh` redirect cannot write its log. Owner to decide whether to remove them.
