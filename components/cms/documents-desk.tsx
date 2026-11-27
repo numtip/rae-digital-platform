@@ -17,7 +17,7 @@ const COPY = {
     hint: "วางลิงก์ไฟล์ SharePoint ของมหาวิทยาลัย ระบบไม่เก็บสำเนาไฟล์",
     category: "หมวด", titleTh: "ชื่อเอกสาร (ไทย)", titleEn: "ชื่อเอกสาร (อังกฤษ)", version: "ฉบับ", url: "ลิงก์ไฟล์ SharePoint", note: "หมายเหตุ",
     register: "ลงทะเบียนเป็นฉบับร่าง", saved: "ลงทะเบียนแล้ว", newVersion: "ไฟล์ฉบับใหม่", changeNote: "สิ่งที่เปลี่ยน", saveVersion: "บันทึกฉบับใหม่", checkLinks: "ตรวจลิงก์ทั้งหมดตอนนี้", checking: "กำลังตรวจลิงก์ในเบื้องหลัง ผลจะแสดงในรายการภายในไม่กี่นาที", link: { ok: "ลิงก์ใช้ได้", broken: "ลิงก์เสีย", unreachable: "ตรวจไม่ได้ (ลองใหม่)" }, unchecked: "ยังไม่ตรวจ", status: "สถานะ", none: "ยังไม่มีเอกสาร", opens: "เปิดแล้ว",
-    errorTitle: "ทำรายการไม่สำเร็จ", statusChanged: "เปลี่ยนสถานะแล้ว", versionSaved: "บันทึกไฟล์ฉบับใหม่แล้ว", cancelBtn: "ยกเลิก",
+    errorTitle: "ทำรายการไม่สำเร็จ", statusChanged: "เปลี่ยนสถานะแล้ว", versionSaved: "บันทึกไฟล์ฉบับใหม่แล้ว", cancelBtn: "คงไว้ตามเดิม",
     confirmPublishTitle: "เผยแพร่เอกสารนี้?", confirmPublishBody: "เอกสารจะแสดงบนเว็บไซต์สาธารณะทันที", confirmPublishAction: "เผยแพร่",
     confirmObsoleteTitle: "ยกเลิกใช้เอกสารนี้?", confirmObsoleteBody: "เอกสารจะถูกทำเครื่องหมายว่ายกเลิกใช้ และผู้อ่านจะเห็นว่าไม่ใช้งานแล้ว", confirmObsoleteAction: "ยกเลิกใช้เอกสาร",
     cats: { administration: "บริหารจัดการ", research: "งานวิจัย", "academic-services": "งานบริการวิชาการ" },
