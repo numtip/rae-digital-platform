@@ -67,3 +67,20 @@ test("the page filters through the shared rule, not an inline substring", () => 
   assert.match(src, /entries\.filter\(\(entry\) => matchesQuery\(/);
   assert.doesNotMatch(src, /\$\{entry\.title\} \$\{entry\.text\}`\)\.includes\(/);
 });
+
+import { rankResults, relevance } from "../lib/search-text.ts";
+
+test("ranking details", () => {
+  const body = { title: "Annual report", text: "research grants" };
+  const title = { title: "Research grants", text: "" };
+  assert.ok(relevance(title, "research grants") > relevance(body, "research grants"));
+  assert.deepEqual(rankResults([body, title], "research grants"), [title, body]);
+  const a = { title: "A", text: "x" }, b = { title: "B", text: "x" };
+  assert.deepEqual(rankResults([a, b], "x"), [a, b], "equal scores keep their order");
+  const doc = { title: "Leave form", text: "RAE-DC-0007 · PDF" };
+  const other = { title: "RAE-DC-0007 mentioned", text: "" };
+  assert.equal(relevance(doc, "rae-dc-0007") >= 8, true);
+  assert.deepEqual(rankResults([other, doc], "rae-dc-0007")[0], doc);
+  assert.equal(relevance(body, "   "), 0);
+  assert.doesNotThrow(() => relevance(title, "(research"), "regex metacharacters in the query are inert");
+});

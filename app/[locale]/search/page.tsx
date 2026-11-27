@@ -62,7 +62,7 @@ export default async function Search({ params }: Props) {
   const faq = faqEntries.map((entry) => ({
     kind: "item" as const,
     title: locale === "th" ? entry.questionTh : entry.questionEn,
-    text: [locale === "th" ? entry.answerTh : entry.answerEn, entry.topic, locale === "th" ? entry.questionEn : entry.questionTh].filter(Boolean).join(" · "),
+    text: [entry.code, locale === "th" ? entry.answerTh : entry.answerEn, entry.topic, locale === "th" ? entry.questionEn : entry.questionTh].filter(Boolean).join(" · "),
     href: `/${locale}/knowledge#faq-${entry.code}`,
   }));
 
@@ -70,7 +70,7 @@ export default async function Search({ params }: Props) {
   const events = eventList.map((e) => ({
     kind: "item" as const,
     title: locale === "th" ? e.titleTh : e.titleEn,
-    text: [locale === "th" ? e.locationTh : e.locationEn, locale === "th" ? e.descriptionTh : e.descriptionEn, locale === "th" ? e.titleEn : e.titleTh].filter(Boolean).join(" · "),
+    text: [e.code, locale === "th" ? e.locationTh : e.locationEn, locale === "th" ? e.descriptionTh : e.descriptionEn, locale === "th" ? e.titleEn : e.titleTh].filter(Boolean).join(" · "),
     href: `/${locale}/news/events#ev-${e.code}`,
   }));
 
