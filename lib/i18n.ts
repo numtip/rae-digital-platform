@@ -1,5 +1,6 @@
 import { enDirectory } from "@/content/en/directory";
 import { enKnowledge } from "@/content/en/knowledge";
+import { enMedia } from "@/content/en/media";
 import { thDirectory, type DirectoryContent } from "@/content/th/directory";
 import { en } from "@/content/en/site";
 import { enAbout } from "@/content/en/about";
@@ -12,6 +13,7 @@ import { th, type SiteContent } from "@/content/th/site";
 import { thAbout, type AboutContent } from "@/content/th/about";
 import { thDocuments, type DocumentsContent } from "@/content/th/documents";
 import { thKnowledge, type KnowledgeContent } from "@/content/th/knowledge";
+import { thMedia, type MediaContent } from "@/content/th/media";
 import { thNews, type NewsContent, type NewsItem } from "@/content/th/news";
 import { thResearch, type ResearchContent } from "@/content/th/research";
 import { thSearch, type SearchContent } from "@/content/th/search";
@@ -29,6 +31,7 @@ export type { DocumentsContent } from "@/content/th/documents";
 export type { NewsContent, NewsItem } from "@/content/th/news";
 export type { SearchContent } from "@/content/th/search";
 export type { KnowledgeContent } from "@/content/th/knowledge";
+export type { MediaContent } from "@/content/th/media";
 
 const CONTENT: Record<Locale, SiteContent> = { th, en };
 
@@ -42,6 +45,7 @@ const NEWS: Record<Locale, NewsContent> = { th: thNews, en: enNews };
 const SEARCH: Record<Locale, SearchContent> = { th: thSearch, en: enSearch };
 const DIRECTORY: Record<Locale, DirectoryContent> = { th: thDirectory, en: enDirectory };
 const KNOWLEDGE: Record<Locale, KnowledgeContent> = { th: thKnowledge, en: enKnowledge };
+const MEDIA: Record<Locale, MediaContent> = { th: thMedia, en: enMedia };
 
 export function isLocale(value: string): value is Locale {
   return (LOCALES as readonly string[]).includes(value);
@@ -84,6 +88,10 @@ export function getDirectory(locale: Locale): DirectoryContent {
 
 export function getKnowledge(locale: Locale): KnowledgeContent {
   return KNOWLEDGE[locale];
+}
+
+export function getMedia(locale: Locale): MediaContent {
+  return MEDIA[locale];
 }
 
 // One page of the news index. Every page is a real URL, so the whole thing stays a

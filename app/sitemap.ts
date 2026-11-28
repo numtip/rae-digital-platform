@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { readPublicDocuments } from "@/lib/cms/documents-live";
+import { readPublicMedia } from "@/lib/cms/media-live";
 import { readPublicPersonnel } from "@/lib/cms/personnel-live";
 import { liveNews, liveSitemap } from "@/lib/cms/live";
 import { eventsPageCount } from "@/components/events-index";
@@ -120,9 +121,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     alternates: { languages: languagesFor("people") },
   }));
 
+  // Media library (M15): listed once the office has released an image, because the page is a 404 while the
+  // library is empty. It is not in PAGES for that reason — a fixed entry would advertise a page the export
+  // never writes, which `check:export` refuses.
+  const media = (await readPublicMedia()).length === 0 ? [] : LOCALES.map((locale) => ({
+    url: `${SITE_URL}/${locale}/media/`,
+    changeFrequency: "monthly" as const,
+    priority: 0.5,
+    alternates: { languages: languagesFor("media") },
+  }));
+
   return [
     ...home,
     ...people,
+    ...media,
     ...pages,
     ...events,
     ...eventsArchivePages,

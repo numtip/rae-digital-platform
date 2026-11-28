@@ -6,6 +6,7 @@ import { LinkTiles } from "@/components/legacy-modules";
 import { Breadcrumb, PageHero, SourceLine } from "@/components/page-shell";
 import { KNOWLEDGE_DATABASE_IDS, linksByIds, linksByGroup } from "@/content/links";
 import { readPublicKnowledge } from "@/lib/cms/knowledge-live";
+import { readPublicMedia } from "@/lib/cms/media-live";
 import { getContent, getKnowledge, isLocale } from "@/lib/i18n";
 
 // FAQ entries come from the CMS (M04) and are shown only once an editor has published some.
@@ -41,6 +42,7 @@ export default async function Knowledge({ params }: Props) {
   const knowledge = getKnowledge(locale);
   const site = getContent(locale);
   const faq = await readPublicKnowledge();
+  const library = await readPublicMedia();
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -80,7 +82,16 @@ export default async function Knowledge({ params }: Props) {
         <div className="mx-auto w-full max-w-7xl px-4">
           <p className="max-w-3xl text-neutral-700">{knowledge.gap}</p>
           <p className="mt-4 max-w-3xl text-neutral-700">{knowledge.note}</p>
-          <p className="mt-6">
+          <p className="mt-6 flex flex-wrap gap-6">
+            {/* The gallery is a 404 while the library is empty, so the hub only links to it once it exists. */}
+            {library.length > 0 ? (
+              <Link
+                className="min-h-11 text-sm font-medium text-brand-600 underline underline-offset-2"
+                href={`/${locale}/media`}
+              >
+                {knowledge.mediaLibraryLabel}
+              </Link>
+            ) : null}
             <Link
               className="min-h-11 text-sm font-medium text-brand-600 underline underline-offset-2"
               href={`/${locale}/documents`}
