@@ -16,7 +16,8 @@
     "check:export": "node scripts/check-export.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
     "qa": "npm test && npm run lint && npm run typecheck && npm run build && npm run build:export && npm run check:export && npm run check:contrast && npm run check:a11y",
-    "check:a11y": "node scripts/check-a11y.mjs"
+    "check:a11y": "node scripts/check-a11y.mjs",
+    "acceptance:desk": "node scripts/desk-acceptance.mjs"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
