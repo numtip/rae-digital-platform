@@ -10,7 +10,7 @@ import { formatMediaCode, type MediaAsset } from "./media-library.ts";
 import mysql from "mysql2/promise";
 import type { NewsRecord, PublishedSnapshot } from "./news-workflow.ts";
 import type { RoleName } from "./permissions.ts";
-import type { Session } from "./session.ts";
+import { SESSION_ABSOLUTE_MS, SESSION_IDLE_MS, type Session } from "./session.ts";
 
 // Persistence for the CMS runtime. The runtime owns the rules; this file only moves records.
 // Two implementations behind one shape: MySQL (the isolated rae_cms database) and the
@@ -124,6 +124,8 @@ export type Repository = {
   getSession(tokenHash: string): Promise<Session | null>;
   saveSession(tokenHash: string, session: Session): Promise<void>;
   touchSession(tokenHash: string, lastSeenAt: number): Promise<void>;
+  /** Deletes sessions either clock has expired; returns how many rows went. */
+  deleteExpiredSessions(nowMs: number): Promise<number>;
   deleteSession(tokenHash: string): Promise<void>;
   listArticles(): Promise<NewsRecord[]>;
   getArticle(id: string): Promise<NewsRecord | null>;
@@ -410,6 +412,18 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
 
     async deleteSession(tokenHash) {
       await pool.query("DELETE FROM sessions WHERE token_hash = ?", [tokenHash]);
+    },
+
+    // One statement for both clocks: a session is dead when it has been idle past the idle window OR
+    // alive past the absolute cap. Nothing still valid can match either condition, so an active
+    // session is never deleted. expires_at only tracks the absolute cap, so the idle clock has to be
+    // derived from last_seen_at here rather than read from that column.
+    async deleteExpiredSessions(nowMs) {
+      const [result] = await pool.query("DELETE FROM sessions WHERE last_seen_at <= ? OR created_at <= ?", [
+        asDate(nowMs - SESSION_IDLE_MS),
+        asDate(nowMs - SESSION_ABSOLUTE_MS),
+      ]);
+      return Number((result as { affectedRows?: number }).affectedRows ?? 0);
     },
 
     async listArticles() {
