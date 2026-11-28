@@ -155,6 +155,16 @@ export function memoryRepository() {
     async deleteSession(tokenHash) {
       sessions.delete(tokenHash);
     },
+    async deleteExpiredSessions(nowMs) {
+      let removed = 0;
+      for (const [tokenHash, session] of sessions) {
+        if (isSessionExpired(session, nowMs)) {
+          sessions.delete(tokenHash);
+          removed += 1;
+        }
+      }
+      return removed;
+    },
     async listArticles() {
       return [...articles.values()];
     },
@@ -1511,6 +1521,33 @@ export function createCmsServer({ now = () => Date.now(), repository = memoryRep
 }
 
 /**
+ * Expired-session garbage collection. A session is dead once either clock has passed it (30 minutes
+ * idle, 8 hours absolute) and authorisation already refuses it, so deleting it changes no behaviour:
+ * it only stops the sessions table growing without limit. Nothing that is still valid matches the
+ * repository's DELETE, so an active session is never removed — and the number is all that is logged,
+ * never a token or a user id.
+ */
+export async function sweepSessions(repository, { now = () => Date.now() } = {}) {
+  return repository.deleteExpiredSessions(now());
+}
+
+/** Runs the sweep on a timer. The first pass waits a minute so a restart storm is not a DB storm. */
+export function startSessionSweep(repository, { intervalMs = 60 * 60 * 1000, now = () => Date.now(), log = () => {} } = {}) {
+  if (!(intervalMs > 0)) return () => {};
+  const run = async () => {
+    try {
+      const removed = await sweepSessions(repository, { now });
+      if (removed > 0) log(`sessions: removed ${removed} expired`);
+    } catch (error) {
+      log(`sessions: sweep failed (${error instanceof Error ? error.message : String(error)})`);
+    }
+  };
+  setTimeout(run, 60 * 1000).unref();
+  const timer = setInterval(run, intervalMs).unref();
+  return () => clearInterval(timer);
+}
+
+/**
  * Starts the runtime as a service. Requires a database: an operator who forgot the environment
  * must get an error, not a desk that quietly loses every article on restart. Tests call
  * `createCmsServer()` directly, which still defaults to the in-memory repository.
@@ -1536,6 +1573,11 @@ export async function startRuntime(env = process.env) {
     const run = () => startLinkCheck(repository);
     setTimeout(run, 5 * 60 * 1000).unref();
     setInterval(run, hours * 3600 * 1000).unref();
+  }
+  // Expired-session GC (RAE_SESSION_SWEEP_MINUTES, 0 turns it off). Same shape as the link check.
+  const sweepMinutes = Number(env.RAE_SESSION_SWEEP_MINUTES ?? 60);
+  if (sweepMinutes > 0) {
+    startSessionSweep(repository, { intervalMs: sweepMinutes * 60 * 1000, log: (line) => console.log(line) });
   }
   await new Promise((resolve) => server.listen(port, bind, resolve));
   return { server, repository, port, bind };
