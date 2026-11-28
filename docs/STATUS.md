@@ -19,7 +19,7 @@ via host nginx). The CMS hook notifies both. Persistence is the hand-written MyS
 
 **Deploy system:** symlink-based releases (`~/rae/releases/<sha> → ~/rae/current`). Containers mount `~/rae/current:/app`. Verified with `readlink ~/rae/current`, not `docker inspect` SHA. Backups: `~/rae/rae-cms-backups/pre-*` + nightly `daily/`. Static landing backup: `~/rae/rae-landing-static-backup/`.
 
-**Migrations on `rae_cms`:** 001–005, 007, 008 (SSO links/handoffs), 009 (documents), 010 (link health), 011 (knowledge/FAQ), 012 (events), 013 (contact inbox), 014 (analytics), 015 (announcements), 016 (departments), 017 (personnel), 018 (media library). DDL applied by hand with root inside DB container after backup. **No schema_migrations tracking table** — verify migrations by comparing file names vs actual table names in DB.
+**Migrations on `rae_cms`:** 001–005, 007, 008 (SSO links/handoffs), 009 (documents), 010 (link health), 011 (knowledge/FAQ), 012 (events), 013 (contact inbox), 014 (analytics), 015 (announcements), 016 (departments), 017 (personnel), 018 (media library), 019 (code sequences — public codes are allocated from a counter row, so a deleted row cannot free its code). DDL applied by hand with root inside DB container after backup. **No schema_migrations tracking table** — verify migrations by comparing file names vs actual table names in DB.
 
 ## 2026-11-27 Deploy Summary
 
