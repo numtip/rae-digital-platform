@@ -357,6 +357,26 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
         ],
       );
 
+  // Codes are public — they appear in URLs and in audit rows — so they must never be reused: a deleted
+  // row's code may not come back, or an old audit trail would describe a new record. MAX(code)+1 cannot
+  // promise that: with the highest row gone there is no row to lock, so two writers can read the same
+  // maximum, and deleting the top row frees its code. This counter row IS the lock, and it only ever
+  // moves forward. Called inside the caller's transaction (every create method below opens one).
+  const allocateNumber = async (connection: Pick<mysql.Pool, "query">, entityType: string): Promise<number> => {
+    // One statement, so the row lock is taken exactly once and two creators cannot deadlock between an
+    // insert and a locking read. LAST_INSERT_ID(expr) carries the new number back on this connection;
+    // a brand-new entity type starts at 1. A row that was migrated before the entity existed is covered
+    // by the ON DUPLICATE branch, which continues from the stored value.
+    const now = asDate(Date.now());
+    await connection.query(
+      "INSERT INTO code_sequences (entity_type, last_number, updated_at) VALUES (?, LAST_INSERT_ID(1), ?) " +
+        "ON DUPLICATE KEY UPDATE last_number = LAST_INSERT_ID(last_number + 1), updated_at = ?",
+      [entityType, now, now],
+    );
+    const [rows] = await connection.query("SELECT LAST_INSERT_ID() AS n");
+    return Number((rows as { n: number }[])[0].n);
+  };
+
   const insertAudit = (db: Pick<mysql.Pool, "query">, record: Omit<AuditRecord, "createdAt">) =>
     db.query(
         "INSERT INTO audit_logs (id, actor_id, action, entity_type, entity_id, before_json, after_json) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -526,8 +546,7 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
       const connection = await pool.getConnection();
       try {
         await connection.beginTransaction();
-        const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM personnel FOR UPDATE");
-        const code = formatPersonnelCode(Number((rows as { n: number }[])[0].n) + 1);
+        const code = formatPersonnelCode(await allocateNumber(connection, "personnel"));
         await connection.query(
           "INSERT INTO personnel (code, employee_code, prefix_th, first_th, last_th, first_en, last_en, position_th, position_en, academic_rank, level, work_group, department_code, email, phone_office, expertise, is_public, consent_at, consent_by, status, source, created_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [code, p.employeeCode, p.prefixTh, p.firstTh, p.lastTh, p.firstEn, p.lastEn, p.positionTh, p.positionEn, p.academicRank, p.level, p.workGroup, p.departmentCode, p.email, p.phoneOffice, JSON.stringify(p.expertise), p.isPublic ? 1 : 0, p.consentAt === null ? null : asDate(p.consentAt), p.consentBy, p.status, p.source, p.createdBy, asDate(p.updatedAt)],
@@ -609,8 +628,7 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
       const connection = await pool.getConnection();
       try {
         await connection.beginTransaction();
-        const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM departments FOR UPDATE");
-        const code = formatDepartmentCode(Number((rows as { n: number }[])[0].n) + 1);
+        const code = formatDepartmentCode(await allocateNumber(connection, "department"));
         await connection.query(
           "INSERT INTO departments (code, parent_code, head_personnel_code, name_th, name_en, description_th, description_en, sort_order, status, created_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [code, d.parentCode, d.headPersonnelCode, d.nameTh, d.nameEn, d.descriptionTh, d.descriptionEn, d.sortOrder, d.status, d.createdBy, asDate(d.updatedAt)],
@@ -659,8 +677,7 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
       const connection = await pool.getConnection();
       try {
         await connection.beginTransaction();
-        const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM announcements FOR UPDATE");
-        const code = formatAnnouncementCode(Number((rows as { n: number }[])[0].n) + 1);
+        const code = formatAnnouncementCode(await allocateNumber(connection, "announcement"));
         await connection.query(
           "INSERT INTO announcements (code, kind, title_th, title_en, body_th, body_en, link_url, starts_at, ends_at, status, created_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [code, a.kind, a.titleTh, a.titleEn, a.bodyTh, a.bodyEn, a.linkUrl, asDate(a.startsAt), asDate(a.endsAt), a.status, a.createdBy, asDate(a.updatedAt)],
@@ -724,8 +741,7 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
       const connection = await pool.getConnection();
       try {
         await connection.beginTransaction();
-        const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM contact_messages FOR UPDATE");
-        const code = formatContactCode(Number((rows as { n: number }[])[0].n) + 1);
+        const code = formatContactCode(await allocateNumber(connection, "contact"));
         await connection.query(
           "INSERT INTO contact_messages (code, name, email, subject, message, locale, notice_version, consented_at, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [code, m.name, m.email, m.subject, m.message, m.locale, m.noticeVersion, asDate(m.consentedAt), m.status, asDate(m.createdAt)],
@@ -775,8 +791,7 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
       const connection = await pool.getConnection();
       try {
         await connection.beginTransaction();
-        const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM events FOR UPDATE");
-        const code = formatEventCode(Number((rows as { n: number }[])[0].n) + 1);
+        const code = formatEventCode(await allocateNumber(connection, "event"));
         await connection.query(
           "INSERT INTO events (code, title_th, title_en, description_th, description_en, location_th, location_en, starts_at, ends_at, status, created_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [code, event.titleTh, event.titleEn, event.descriptionTh, event.descriptionEn, event.locationTh, event.locationEn, asDate(event.startsAt), event.endsAt === null ? null : asDate(event.endsAt), event.status, event.createdBy, asDate(event.updatedAt)],
@@ -827,11 +842,8 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
         await connection.beginTransaction();
         // The next code must never be one that existed before: audit rows outlive the asset rows (a test or an
         // administrator may delete a row), and a reused code would make an old audit trail describe a new asset.
-        // The locking read serialises creators; the audit high-water mark is read after the lock is held.
-        const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM media_assets FOR UPDATE");
-        const [past] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(entity_id, 8) AS UNSIGNED)), 0) AS n FROM audit_logs WHERE entity_type = 'media' AND entity_id LIKE 'RAE-MD-%'");
-        const next = Math.max(Number((rows as { n: number }[])[0].n), Number((past as { n: number }[])[0].n)) + 1;
-        const code = formatMediaCode(next);
+        // The counter row is the lock; the audit high-water mark is what seeded it (migration 019).
+        const code = formatMediaCode(await allocateNumber(connection, "media"));
         await connection.query(
           "INSERT INTO media_assets (code, title_th, title_en, alt_th, alt_en, caption_th, caption_en, filename, mime, bytes, sha256, status, created_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [code, asset.titleTh, asset.titleEn, asset.altTh, asset.altEn, asset.captionTh, asset.captionEn, asset.filename, asset.mime, asset.bytes, asset.sha256, asset.status, asset.createdBy, asDate(asset.updatedAt)],
@@ -880,8 +892,7 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
       const connection = await pool.getConnection();
       try {
         await connection.beginTransaction();
-        const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM knowledge_entries FOR UPDATE");
-        const code = formatKnowledgeCode(Number((rows as { n: number }[])[0].n) + 1);
+        const code = formatKnowledgeCode(await allocateNumber(connection, "knowledge"));
         await connection.query(
           "INSERT INTO knowledge_entries (code, kind, topic, question_th, question_en, answer_th, answer_en, status, sort_order, created_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [code, entry.kind, entry.topic, entry.questionTh, entry.questionEn, entry.answerTh, entry.answerEn, entry.status, entry.sortOrder, entry.createdBy, asDate(entry.updatedAt)],
@@ -930,8 +941,7 @@ export async function createMysqlRepository(config: MysqlConfig): Promise<Reposi
       const connection = await pool.getConnection();
       try {
         await connection.beginTransaction();
-        const [rows] = await connection.query("SELECT COALESCE(MAX(CAST(SUBSTRING(code, 8) AS UNSIGNED)), 0) AS n FROM documents FOR UPDATE");
-        const code = formatDocumentCode(Number((rows as { n: number }[])[0].n) + 1);
+        const code = formatDocumentCode(await allocateNumber(connection, "document"));
         await connection.query(
           "INSERT INTO documents (code, category, title_th, title_en, doc_type, version, status, visibility, storage_url, note, created_by, updated_at, download_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
           [code, doc.category, doc.titleTh, doc.titleEn, doc.docType, doc.version, doc.status, doc.visibility, doc.storageUrl, doc.note, doc.createdBy, asDate(doc.updatedAt)],
