@@ -2,8 +2,9 @@
 
 Scripts live in `scripts/ops/` and are installed to `~/rae/rae-cms-backups/bin/` (reuses the existing `rae-cms-db` dump, media tarball, retention and `daily/`/`weekly/` layout). Paths derive from `RAE_HOME` (default `~/rae`).
 
-- `backup-rae-cms.sh` — nightly dump of `rae_cms` + media, `gzip -t`, table check (users, sessions, news_articles, audit_logs, documents), sha256. Retention 14 daily / ~26 weekly.
-- `verify-restore-rae-cms.sh [dump]` — checks sha256, restores into a **throwaway MariaDB container with no network**, compares per-table row counts with live, removes the container. Live DB is read only.
+- `backup-rae-cms.sh` — nightly dump of `rae_cms` + media, `gzip -t`, table check (driven by the live table list, not a hardcoded handful), sha256, **and a `.manifest` file**: the backup-time evidence (dump sha256, table set, exact row count per table).
+- `verify-restore-rae-cms.sh [dump]` — checks the dump against its manifest (sha256, gzip, table set, per-table row counts) after restoring it into a **throwaway MariaDB container with no network**, which it removes on exit. **It never reads the live database**: comparing with a moving target can pass a broken backup and fail a good one. It exits 1 on a missing dump/manifest, hash mismatch, corrupt stream, restore error, a disposable server that never becomes ready, a missing/extra table, or any row-count difference.
+- `self-test-verify-restore.sh [dump]` — proves both directions in disposable containers: an intact backup passes and each kind of damage (missing table, unloadable dump, edited count, truncated file, edited dump without a manifest update, missing manifest) is rejected. `IMAGE=mariadb:10.6` by default; run it after touching either script.
 
 Crontab (user `rae_admin`):
 ```
