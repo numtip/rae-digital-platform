@@ -24,6 +24,7 @@ export const enKnowledge: KnowledgeContent = {
   gap: "Individual knowledge articles and the E-book library have no text the office has approved for publication, so this page lists only the sources that can be checked — no article titles are invented",
   note: "Every link opens a university system directly; nothing is copied onto this site",
   relatedLabel: "Documents and forms",
+  mediaLibraryLabel: "Media library",
   source: {
     label: "Source",
     url: "https://rae.mju.ac.th/wtms_index.aspx?lang=th-TH",
